@@ -1,0 +1,1300 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🔍 GitHub Copilot Lens</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🤖</text></svg>">
+<style>
+:root {
+  --bg: #f6f8fa; --surface: #ffffff; --surface-hover: #f3f4f6;
+  --border: #d0d7de; --text: #1f2328; --text-secondary: #656d76; --text-muted: #6e7781;
+  --accent: #0969da; --success: #1a7f37; --danger: #cf222e; --warning: #9a6700;
+  --purple: #8250df; --orange: #bc4c00;
+  --accent-bg: #ddf4ff;
+}
+
+/* VSCode Dark theme */
+[data-theme="dark"] {
+  --bg: #1e1e1e; --surface: #252526; --surface-hover: #2a2d2e;
+  --border: #3c3c3c; --text: #e8e8e8; --text-secondary: #b5b5b5; --text-muted: #969696;
+  --accent: #6cb6ff; --success: #58d68d; --danger: #f87171; --warning: #fbbf24;
+  --purple: #d19aef; --orange: #e8a36d;
+  --accent-bg: #264f78;
+}
+
+/* VSCode Gray theme */
+[data-theme="gray"] {
+  --bg: #2d2d2d; --surface: #383838; --surface-hover: #424242;
+  --border: #515151; --text: #e0e0e0; --text-secondary: #b0b0b0; --text-muted: #a0a0a0;
+  --accent: #75beff; --success: #89d185; --danger: #f48771; --warning: #cca700;
+  --purple: #d7a3e0; --orange: #e8a36d;
+  --accent-bg: #37475a;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* Scrollbar — VSCode style */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 0; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+::-webkit-scrollbar-corner { background: transparent; }
+[data-theme="dark"] ::-webkit-scrollbar-thumb { background: #555; }
+[data-theme="dark"] ::-webkit-scrollbar-thumb:hover { background: #888; }
+[data-theme="gray"] ::-webkit-scrollbar-thumb { background: #606060; }
+[data-theme="gray"] ::-webkit-scrollbar-thumb:hover { background: #909090; }
+
+body {
+  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif;
+  background: var(--bg); color: var(--text); line-height: 1.5; min-height: 100vh;
+  font-size: 13px; scrollbar-color: var(--border) transparent; scrollbar-width: thin;
+}
+
+/* Header */
+.header {
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  padding: 8px 20px; display: flex; align-items: center; gap: 16px;
+  position: sticky; top: 0; z-index: 100;
+}
+.header h1 { font-size: 14px; font-weight: 600; white-space: nowrap; }
+.header-right { margin-left: auto; display: flex; gap: 6px; align-items: center; }
+.btn {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 4px 10px; font-size: 12px; font-weight: 500;
+  border: 1px solid var(--border); border-radius: 2px;
+  background: var(--surface); color: var(--text); text-decoration: none;
+  cursor: pointer; transition: all 0.1s;
+}
+.btn:hover { background: var(--surface-hover); }
+
+/* Theme Selector */
+.theme-selector {
+  display: flex; border: 1px solid var(--border); border-radius: 0; overflow: hidden;
+}
+.lang-selector {
+  display: flex; border: 1px solid var(--border); border-radius: 0; overflow: hidden; margin-right: 8px;
+}
+.lang-btn {
+  padding: 3px 8px; font-size: 11px; border: none; border-right: 1px solid var(--border);
+  background: var(--surface); color: var(--text-secondary); cursor: pointer; transition: all 0.1s;
+}
+.lang-btn:last-child { border-right: none; }
+.lang-btn:hover { background: var(--surface-hover); }
+.lang-btn.active { background: var(--accent); color: #fff; }
+.theme-btn {
+  padding: 3px 8px; font-size: 13px; border: none; cursor: pointer;
+  background: var(--surface); color: var(--text); transition: all 0.1s;
+  border-right: 1px solid var(--border); line-height: 1;
+}
+.theme-btn:last-child { border-right: none; }
+.theme-btn:hover { background: var(--surface-hover); }
+.theme-btn.active { background: var(--accent); filter: brightness(1.1); }
+
+/* Main */
+/* Main */
+
+/* Stats Bar */
+.stats-bar {
+  display: flex; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; align-items: center;
+}
+.stat {
+  display: flex; align-items: center; gap: 6px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 0; padding: 4px 10px; font-size: 12px; font-weight: 500;
+}
+.stat-badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 18px; height: 18px; border-radius: 2px;
+  font-size: 11px; font-weight: 600; color: #fff; padding: 0 5px;
+}
+.stat-badge.green { background: var(--success); }
+.stat-badge.blue { background: var(--accent); }
+.stat-badge.yellow { background: var(--warning); }
+.stat-badge.gray { background: var(--text-muted); }
+
+/* Toggle switch */
+.toggle-wrap {
+  display: flex; align-items: center; gap: 6px; margin-left: auto;
+  font-size: 11px; color: var(--text-secondary); user-select: none; cursor: pointer;
+}
+.toggle-track {
+  width: 28px; height: 14px; border-radius: 2px; background: var(--border);
+  position: relative; transition: background 0.15s;
+}
+.toggle-track.on { background: var(--accent); }
+.toggle-knob {
+  width: 10px; height: 10px; border-radius: 1px; background: #fff;
+  position: absolute; top: 2px; left: 2px; transition: left 0.15s;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+.toggle-track.on .toggle-knob { left: 16px; }
+
+/* Polling interval selector */
+.poll-ctrl {
+  display: flex; align-items: center; gap: 2px; margin-left: 8px;
+}
+.poll-btn {
+  padding: 2px 6px; font-size: 11px; border: 1px solid var(--border);
+  border-radius: 0; cursor: pointer; background: var(--surface);
+  color: var(--text-secondary); transition: all 0.1s;
+}
+.poll-btn:hover { border-color: var(--accent); color: var(--accent); }
+.poll-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+/* ─── Session Tree List ─── */
+.session-tree {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 0;
+  overflow: hidden;
+}
+
+/* Project group header */
+.st-group {
+  border-bottom: 1px solid var(--border);
+}
+.st-group:last-child { border-bottom: none; }
+.st-group-header {
+  display: flex; align-items: center; gap: 6px;
+  padding: 6px 12px; cursor: pointer; user-select: none;
+  transition: background 0.1s;
+}
+.st-group-header:hover { background: var(--surface-hover); }
+.st-group-toggle {
+  font-size: 10px; color: var(--text-muted); width: 14px; text-align: center;
+  transition: transform 0.1s;
+}
+.st-group.collapsed .st-group-toggle { transform: rotate(-90deg); }
+.st-group-icon { font-size: 14px; }
+.st-group-name {
+  font-size: 12px; font-weight: 600; color: var(--text);
+  flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.st-group-badges {
+  display: flex; gap: 4px; align-items: center; flex-shrink: 0;
+}
+.st-group-badge {
+  font-size: 10px; font-weight: 600; padding: 1px 6px; border-radius: 2px;
+}
+.st-group-badge.working { background: var(--accent-bg); color: var(--accent); }
+.st-group-badge.idle { background: #dafbe1; color: var(--success); }
+.st-group-badge.count { background: var(--bg); color: var(--text-secondary); border: 1px solid var(--border); }
+
+.st-group-body { }
+.st-group.collapsed .st-group-body { display: none; }
+
+/* Session row */
+.st-row {
+  display: flex; align-items: center; gap: 0;
+  padding: 4px 12px 4px 32px; border-top: 1px solid var(--border);
+  cursor: pointer; transition: background 0.1s; min-height: 30px;
+}
+.st-row:hover { background: var(--surface-hover); }
+.st-row.selected { background: var(--accent-bg); }
+
+.dot {
+  width: 7px; height: 7px; border-radius: 50%; display: inline-block; flex-shrink: 0;
+}
+.dot.working { background: var(--accent); animation: breathe 1.5s ease-in-out infinite; }
+.dot.waiting { background: var(--warning); animation: breathe 2s ease-in-out infinite; }
+.dot.idle { background: var(--success); }
+.dot.completed { background: var(--text-muted); }
+.dot.unknown { background: var(--text-muted); opacity: 0.5; }
+
+@keyframes breathe {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.3); opacity: 0.6; }
+}
+
+.st-col-status { width: 20px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+.st-col-summary {
+  width: 260px; flex-shrink: 0; font-size: 12px; font-weight: 500; color: var(--text);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 0 8px;
+}
+.st-col-intent {
+  font-size: 11px; color: var(--accent); font-weight: 400;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  margin-left: 4px;
+}
+.st-col-lastmsg {
+  flex: 1; min-width: 0; font-size: 11px; color: var(--text-secondary);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding-right: 8px;
+}
+.st-col-stats {
+  width: 20%; flex-shrink: 0; font-size: 11px; color: var(--text-muted);
+  text-align: right; white-space: nowrap; padding-right: 8px;
+}
+.st-col-time {
+  width: 64px; flex-shrink: 0; font-size: 11px; color: var(--text-muted);
+  text-align: right; white-space: nowrap;
+}
+
+/* Table header */
+.st-header {
+  display: flex; align-items: center; gap: 0;
+  padding: 4px 12px 4px 32px; background: var(--bg);
+  border-bottom: 1px solid var(--border); font-size: 10px;
+  font-weight: 600; color: var(--text-muted); text-transform: uppercase;
+  letter-spacing: 0.5px; position: relative;
+}
+.st-header > div { position: relative; border-right: 1px solid var(--border); padding: 0 12px; }
+.st-header > div:last-child { border-right: none; }
+.st-header > div:first-child { padding-left: 0; }
+.col-resize-handle {
+  position: absolute; right: -2px; top: 0; width: 5px; height: 100%;
+  cursor: col-resize; z-index: 10;
+}
+.col-resize-handle:hover, .col-resize-handle.dragging {
+  background: var(--accent); opacity: 0.6;
+}
+
+/* Inactive section */
+.st-inactive-header {
+  padding: 6px 12px; cursor: pointer; user-select: none;
+  display: flex; align-items: center; gap: 6px;
+  border-top: 1px solid var(--border); font-size: 12px; font-weight: 600;
+  color: var(--text-muted); transition: background 0.1s;
+}
+.st-inactive-header:hover { background: var(--surface-hover); }
+
+/* VSCode launch buttons */
+.vscode-btn {
+  padding: 4px 10px; font-size: 11px; border: 1px solid var(--border);
+  border-radius: 2px; cursor: pointer; background: var(--surface);
+  color: var(--text-secondary); transition: all 0.1s; line-height: 1;
+  white-space: nowrap; display: inline-flex; align-items: center; gap: 6px;
+}
+.vscode-btn:hover { background: #007ACC; color: #fff; border-color: #007ACC; }
+.vscode-btn:hover svg path { fill: #fff; }
+.vscode-btn.insiders:hover { background: #24903e; color: #fff; border-color: #24903e; }
+.vscode-btn.insiders:hover svg path { fill: #fff; }
+.dp-vscode-row { display: flex; gap: 8px; margin: 8px 0 4px; }
+
+.empty-state {
+  text-align: center; padding: 40px 20px; color: var(--text-muted); font-size: 13px;
+}
+.empty-state .empty-icon { font-size: 36px; margin-bottom: 8px; }
+
+/* ─── Right Detail Panel ─── */
+/* Split pane container */
+.split-container {
+  display: flex; height: calc(100vh - 37px); overflow: hidden;
+}
+.split-left {
+  flex: 7; min-width: 300px; overflow-y: auto; padding: 12px 16px;
+}
+.split-divider {
+  width: 4px; background: var(--border); cursor: col-resize; flex-shrink: 0;
+  transition: background 0.1s; display: none;
+}
+.split-divider:hover, .split-divider.dragging { background: var(--accent); }
+.split-container.has-detail .split-divider { display: block; }
+.split-right {
+  flex: 0; min-width: 0; overflow: hidden;
+  background: var(--surface); border-left: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  transition: flex 0.15s ease;
+}
+.split-container.has-detail .split-right { flex: 3; min-width: 280px; }
+.split-container.has-agent-detail .split-left { display: none; }
+.split-container.has-agent-detail .split-divider { display: none; }
+.split-container.has-agent-detail .split-right { flex: 3; min-width: 200px; }
+.split-container.has-agent-detail .agent-panel { display: flex; flex-direction: column; flex: 7; min-width: 300px; border-left: 1px solid var(--border); }
+.agent-panel { display: none; background: var(--surface); }
+.agent-panel-header {
+  padding: 8px 12px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  background: var(--bg); flex-shrink: 0;
+}
+.agent-panel-header h2 { font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+.agent-panel-body { flex: 1; overflow-y: auto; padding: 0; }
+.agent-summary { display: flex; flex-wrap: wrap; gap: 6px; padding: 10px 12px; border-bottom: 1px solid var(--border); }
+.agent-summary-badge {
+  padding: 3px 10px; font-size: 11px; border-radius: 2px;
+  background: var(--surface-hover); color: var(--text-secondary);
+  display: inline-flex; align-items: center; gap: 4px;
+}
+.agent-summary-badge .num { font-weight: 700; color: var(--text); }
+.agent-list { padding: 0; }
+.agent-item {
+  padding: 8px 12px; border-bottom: 1px solid var(--border);
+  cursor: pointer; transition: background 0.1s; font-size: 12px;
+}
+.agent-item:hover { background: var(--surface-hover); }
+.agent-item.selected { background: var(--accent-bg); border-left: 3px solid var(--accent); }
+.agent-item-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2px; }
+.agent-item-name { font-weight: 600; color: var(--text); }
+.agent-item-status { font-size: 10px; padding: 1px 6px; border-radius: 2px; }
+.agent-item-status.done { background: #d4edda; color: #155724; }
+.agent-item-status.running { background: #cce5ff; color: #004085; }
+.agent-item-status.failed { background: #f8d7da; color: #721c24; }
+.agent-item-prompt { color: var(--text-muted); font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.agent-item-time { color: var(--text-muted); font-size: 10px; margin-top: 2px; }
+.agent-btn {
+  padding: 4px 10px; font-size: 11px; border: 1px solid var(--border);
+  border-radius: 2px; cursor: pointer; background: var(--surface);
+  color: var(--text-secondary); transition: all 0.1s;
+  display: inline-flex; align-items: center; gap: 5px;
+}
+.agent-btn:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+.detail-panel-header {
+  padding: 8px 12px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  background: var(--bg); flex-shrink: 0;
+}
+.detail-panel-header h2 { font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+.detail-close {
+  background: none; border: none; font-size: 16px; cursor: pointer;
+  color: var(--text-muted); padding: 2px 6px; border-radius: 0;
+  transition: all 0.1s;
+}
+.detail-close:hover { background: var(--surface-hover); color: var(--text); }
+.detail-panel-body {
+  flex: 1; overflow-y: auto; padding: 0;
+}
+
+/* Detail sections */
+.dp-section {
+  padding: 12px 16px; border-bottom: 1px solid var(--border);
+}
+.dp-section:last-child { border-bottom: none; }
+.dp-section-title {
+  font-size: 10px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 8px;
+}
+.dp-state-row {
+  display: flex; align-items: center; gap: 6px; margin-bottom: 8px;
+}
+.dp-state-pill {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 2px 8px; border-radius: 2px; font-size: 11px; font-weight: 600;
+}
+.dp-state-pill.working { background: var(--accent-bg); color: var(--accent); }
+.dp-state-pill.waiting { background: #fff8c5; color: var(--warning); }
+.dp-state-pill.idle { background: #dafbe1; color: var(--success); }
+.dp-state-pill.completed { background: var(--bg); color: var(--text-muted); }
+.dp-state-pill.unknown { background: var(--bg); color: var(--text-muted); }
+
+.dp-field { display: flex; margin-bottom: 6px; font-size: 12px; line-height: 1.5; }
+.dp-field-label { color: var(--text-muted); min-width: 72px; flex-shrink: 0; font-size: 11px; }
+.dp-field-value { color: var(--text); word-break: break-all; }
+.dp-field-value.mono { font-family: 'SFMono-Regular', Consolas, 'Courier New', monospace; font-size: 11px; }
+
+.dp-intent { 
+  padding: 6px 10px; background: var(--accent-bg); border-radius: 0;
+  font-size: 12px; color: var(--accent); font-weight: 500;
+  margin-bottom: 8px; border-left: 3px solid var(--accent);
+}
+.dp-waiting-box {
+  padding: 6px 10px; background: #fff8c5; border: 1px solid #d4a72c44;
+  border-radius: 0; font-size: 11px; color: var(--warning); margin-top: 6px;
+  border-left: 3px solid var(--warning);
+}
+
+/* Stat pills */
+.dp-stats {
+  display: flex; gap: 6px; flex-wrap: wrap;
+}
+.dp-stat {
+  display: flex; align-items: center; gap: 3px;
+  padding: 2px 8px; border-radius: 0; font-size: 11px; font-weight: 500;
+  background: var(--bg); border: 1px solid var(--border);
+}
+.dp-stat .num { font-weight: 700; color: var(--accent); }
+
+/* Tool chart */
+.dp-tool-bar {
+  display: flex; align-items: center; gap: 6px; margin-bottom: 3px; font-size: 11px;
+}
+.dp-tool-name { min-width: 90px; color: var(--text-secondary); font-family: 'SFMono-Regular', Consolas, monospace; font-size: 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dp-tool-fill {
+  flex: 1; height: 12px; background: var(--bg); border-radius: 0; overflow: hidden;
+}
+.dp-tool-fill-inner {
+  height: 100%; background: var(--accent); border-radius: 0; transition: width 0.2s;
+}
+.dp-tool-count { min-width: 32px; text-align: right; font-size: 10px; color: var(--text-muted); font-weight: 600; }
+
+/* Turns / Events timeline */
+.dp-timeline { list-style: none; }
+.dp-timeline-item {
+  padding: 5px 0; border-bottom: 1px solid var(--border); font-size: 12px;
+  display: flex; flex-direction: column; gap: 2px;
+}
+.dp-timeline-item:last-child { border-bottom: none; }
+.dp-timeline-time { font-size: 10px; color: var(--text-muted); font-family: 'SFMono-Regular', Consolas, monospace; }
+.dp-timeline-msg {
+  color: var(--text); line-height: 1.4; max-height: 48px; overflow: hidden;
+  text-overflow: ellipsis; cursor: pointer; font-size: 12px;
+}
+.dp-timeline-msg.expanded { max-height: none; }
+.dp-timeline-msg:hover { color: var(--accent); }
+
+/* Checkpoint cards */
+.dp-checkpoint {
+  padding: 6px 10px; border: 1px solid var(--border); border-radius: 0;
+  margin-bottom: 4px; cursor: pointer; transition: all 0.1s;
+}
+.dp-checkpoint:hover { border-color: var(--accent); background: var(--surface-hover); }
+.dp-checkpoint-num { font-size: 10px; font-weight: 700; color: var(--accent); margin-right: 4px; }
+.dp-checkpoint-title { font-size: 11px; color: var(--text-secondary); }
+.dp-checkpoint-content {
+  display: none; margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--border);
+  font-size: 11px; color: var(--text-secondary); white-space: pre-wrap;
+  max-height: 200px; overflow-y: auto; line-height: 1.4;
+}
+.dp-checkpoint.expanded .dp-checkpoint-content { display: block; }
+
+/* Plan content */
+.dp-plan {
+  font-size: 11px; color: var(--text-secondary); white-space: pre-wrap;
+  line-height: 1.5; max-height: 300px; overflow-y: auto;
+  padding: 8px 10px; background: var(--bg); border-radius: 0;
+  font-family: 'SFMono-Regular', Consolas, 'Courier New', monospace;
+}
+
+/* Files list */
+
+/* Copy icon button */
+.copy-icon-btn {
+  background: none; border: none; cursor: pointer;
+  color: var(--text-muted); padding: 2px; margin-left: 6px;
+  vertical-align: middle; transition: color 0.1s; line-height: 1;
+}
+.copy-icon-btn:hover { color: var(--accent); }
+
+/* Toast notification */
+.toast-msg {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px);
+  background: var(--surface); border: 1px solid var(--accent); color: var(--text);
+  padding: 10px 20px; font-size: 13px; z-index: 999;
+  opacity: 0; transition: opacity 0.3s, transform 0.3s;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+.toast-msg.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.dp-file {
+  font-size: 11px; font-family: 'SFMono-Regular', Consolas, monospace;
+  color: var(--text-secondary); padding: 2px 0; overflow: hidden;
+  text-overflow: ellipsis; white-space: nowrap;
+}
+.dp-file:hover { color: var(--accent); }
+
+/* BG tasks */
+.dp-bgtask {
+  padding: 4px 8px; background: var(--bg); border-radius: 0;
+  font-size: 11px; margin-bottom: 3px; display: flex; align-items: center; gap: 4px;
+}
+.dp-bgtask-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); animation: breathe 1.5s ease-in-out infinite; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🔍 GitHub Copilot Lens</h1>
+  <div class="header-right">
+    <div class="lang-selector">
+      <button class="lang-btn active" data-lang="ko" onclick="setLang('ko')">한</button>
+      <button class="lang-btn" data-lang="en" onclick="setLang('en')">EN</button>
+      <button class="lang-btn" data-lang="ja" onclick="setLang('ja')">日</button>
+      <button class="lang-btn" data-lang="zh" onclick="setLang('zh')">中</button>
+    </div>
+    <div class="theme-selector">
+      <button class="theme-btn light active" onclick="setTheme('light')" title="Light">☀️</button>
+      <button class="theme-btn gray" onclick="setTheme('gray')" title="Gray">🌗</button>
+      <button class="theme-btn dark" onclick="setTheme('dark')" title="Dark">🌙</button>
+    </div>
+  </div>
+</div>
+
+<div class="split-container" id="splitContainer">
+  <div class="split-left" id="splitLeft">
+    <div id="panel-monitor">
+      <div class="stats-bar" id="stats-bar"></div>
+      <div id="session-tree-container"></div>
+    </div>
+  </div>
+  <div class="split-divider" id="splitDivider"></div>
+  <div class="split-right" id="splitRight">
+    <div class="detail-panel-header">
+      <h2 id="detailTitle">세션 상세</h2>
+      <button class="detail-close" onclick="closeDetail()">✕</button>
+    </div>
+    <div class="detail-panel-body" id="detailBody">
+      <div style="padding:40px;text-align:center;color:var(--text-muted)">세션을 선택하세요</div>
+    </div>
+  </div>
+  <div class="agent-panel" id="agentPanel">
+    <div class="agent-panel-header">
+      <h2 id="agentPanelTitle">🤖 Agents</h2>
+      <button class="detail-close" onclick="closeAgentPanel()">✕</button>
+    </div>
+    <div class="agent-panel-body" id="agentPanelBody"></div>
+  </div>
+</div>
+
+<script>
+/* ─── i18n ─── */
+const I18N = {
+  ko: {
+    working: '작업 중', waiting: '질문 중', idle: '대기', completed: '종료', unknown: '알 수 없음',
+    stateWorking: '🔵 작업 중', stateWaiting: '🟡 질문 중', stateIdle: '🟢 대기', stateCompleted: '⚪ 종료', stateUnknown: '⚪ 알 수 없음',
+    sessionDetail: '세션 상세', selectSession: '세션을 선택하세요', noSessions: '세션이 없습니다',
+    session: '세션', lastMsg: '최근 대화', stats: '턴 · 도구 · 토큰', recent: '최근',
+    summary: '📝 요약', path: '📁 경로', repo: '🏠 저장소', branch: '🌿 브랜치',
+    sessionId: '🆔 세션', created: '📅 생성', updated: '🕐 수정',
+    statsTitle: '📊 통계', toolUsage: '🔧 도구 사용량', checkpoints: '📋 체크포인트',
+    recentTurns: '💬 최근 대화', timeline: '🔔 이벤트 타임라인', filesModified: '📝 수정된 파일',
+    emptySession: '(빈 세션)', noValue: '(없음)', showEmpty: '빈 세션 보기',
+    total: '총', turns: '턴', tools: '도구',
+    copyPath: '경로가 복사되었습니다', copyResume: '복사 완료 — VSCode 터미널에서 붙여넣고 세션을 이어가세요',
+    copyPathTitle: '전체 경로 복사', copyResumeTitle: '세션 이어가기 명령 복사',
+    vscodeOpened: 'VSCode가 열렸습니다 — 터미널(Ctrl+`)에서 Ctrl+V로 붙여넣으세요',
+    launchFail: '실행 실패', serverFail: '서버 연결 실패', loadFail: '세션 데이터를 불러올 수 없습니다',
+    copied: '복사되었습니다',
+    secAgo: '초 전', minAgo: '분 전', hrAgo: '시간 전', dayAgo: '일 전',
+    statsTooltip: '대화 수 · 도구 호출 수',
+    agentPanelTitle: 'Agents',
+  },
+  en: {
+    working: 'Working', waiting: 'Asking', idle: 'Idle', completed: 'Ended', unknown: 'Unknown',
+    stateWorking: '🔵 Working', stateWaiting: '🟡 Asking', stateIdle: '🟢 Idle', stateCompleted: '⚪ Ended', stateUnknown: '⚪ Unknown',
+    sessionDetail: 'Session Detail', selectSession: 'Select a session', noSessions: 'No sessions found',
+    session: 'Session', lastMsg: 'Last Message', stats: 'Turns · Tools · Tokens', recent: 'Recent',
+    summary: '📝 Summary', path: '📁 Path', repo: '🏠 Repository', branch: '🌿 Branch',
+    sessionId: '🆔 Session', created: '📅 Created', updated: '🕐 Updated',
+    statsTitle: '📊 Statistics', toolUsage: '🔧 Tool Usage', checkpoints: '📋 Checkpoints',
+    recentTurns: '💬 Recent Turns', timeline: '🔔 Event Timeline', filesModified: '📝 Modified Files',
+    emptySession: '(empty)', noValue: '(none)', showEmpty: 'Show empty sessions',
+    total: 'Total', turns: 'turns', tools: 'tools',
+    copyPath: 'Path copied', copyResume: 'Copied — paste in VSCode terminal to resume',
+    copyPathTitle: 'Copy full path', copyResumeTitle: 'Copy resume command',
+    vscodeOpened: 'VSCode opened — paste with Ctrl+V in terminal (Ctrl+`)',
+    launchFail: 'Launch failed', serverFail: 'Server connection failed', loadFail: 'Failed to load session data',
+    copied: 'Copied',
+    secAgo: 's ago', minAgo: 'm ago', hrAgo: 'h ago', dayAgo: 'd ago',
+    statsTooltip: 'Turns · Tool calls',
+    agentPanelTitle: 'Agents',
+  },
+  ja: {
+    working: '実行中', waiting: '質問中', idle: '待機', completed: '終了', unknown: '不明',
+    stateWorking: '🔵 実行中', stateWaiting: '🟡 質問中', stateIdle: '🟢 待機', stateCompleted: '⚪ 終了', stateUnknown: '⚪ 不明',
+    sessionDetail: 'セッション詳細', selectSession: 'セッションを選択してください', noSessions: 'セッションがありません',
+    session: 'セッション', lastMsg: '最近の会話', stats: 'ターン · ツール · トークン', recent: '最近',
+    summary: '📝 概要', path: '📁 パス', repo: '🏠 リポジトリ', branch: '🌿 ブランチ',
+    sessionId: '🆔 セッション', created: '📅 作成', updated: '🕐 更新',
+    statsTitle: '📊 統計', toolUsage: '🔧 ツール使用量', checkpoints: '📋 チェックポイント',
+    recentTurns: '💬 最近の会話', timeline: '🔔 イベントタイムライン', filesModified: '📝 変更ファイル',
+    emptySession: '(空)', noValue: '(なし)', showEmpty: '空セッション表示',
+    total: '計', turns: 'ターン', tools: 'ツール',
+    copyPath: 'パスをコピーしました', copyResume: 'コピー完了 — VSCodeターミナルに貼り付けてください',
+    copyPathTitle: 'フルパスをコピー', copyResumeTitle: 'レジュームコマンドをコピー',
+    vscodeOpened: 'VSCodeが開きました — ターミナル(Ctrl+`)でCtrl+Vで貼り付け',
+    launchFail: '起動失敗', serverFail: 'サーバー接続失敗', loadFail: 'セッションデータを読み込めません',
+    copied: 'コピーしました',
+    secAgo: '秒前', minAgo: '分前', hrAgo: '時間前', dayAgo: '日前',
+    statsTooltip: '会話数 · ツール呼出数',
+    agentPanelTitle: 'エージェント',
+  },
+  zh: {
+    working: '工作中', waiting: '提问中', idle: '空闲', completed: '结束', unknown: '未知',
+    stateWorking: '🔵 工作中', stateWaiting: '🟡 提问中', stateIdle: '🟢 空闲', stateCompleted: '⚪ 结束', stateUnknown: '⚪ 未知',
+    sessionDetail: '会话详情', selectSession: '请选择一个会话', noSessions: '没有会话',
+    session: '会话', lastMsg: '最近对话', stats: '轮次 · 工具 · 令牌', recent: '最近',
+    summary: '📝 摘要', path: '📁 路径', repo: '🏠 仓库', branch: '🌿 分支',
+    sessionId: '🆔 会话', created: '📅 创建', updated: '🕐 更新',
+    statsTitle: '📊 统计', toolUsage: '🔧 工具使用', checkpoints: '📋 检查点',
+    recentTurns: '💬 最近对话', timeline: '🔔 事件时间线', filesModified: '📝 修改文件',
+    emptySession: '(空会话)', noValue: '(无)', showEmpty: '显示空会话',
+    total: '共', turns: '轮', tools: '工具',
+    copyPath: '路径已复制', copyResume: '已复制 — 请在VSCode终端中粘贴',
+    copyPathTitle: '复制完整路径', copyResumeTitle: '复制恢复命令',
+    vscodeOpened: 'VSCode已打开 — 在终端(Ctrl+`)中用Ctrl+V粘贴',
+    launchFail: '启动失败', serverFail: '服务器连接失败', loadFail: '无法加载会话数据',
+    copied: '已复制',
+    secAgo: '秒前', minAgo: '分前', hrAgo: '小时前', dayAgo: '天前',
+    statsTooltip: '对话数 · 工具调用数',
+    agentPanelTitle: '代理',
+  }
+};
+let currentLang = localStorage.getItem('lang') || 'ko';
+const t = (key) => (I18N[currentLang] || I18N.ko)[key] || (I18N.ko)[key] || key;
+const setLang = (lang) => {
+  currentLang = lang;
+  localStorage.setItem('lang', lang);
+  document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
+  document.getElementById('detailTitle').textContent = t('sessionDetail');
+  document.getElementById('detailBody').innerHTML = `<div style="padding:40px;text-align:center;color:var(--text-muted)">${t('selectSession')}</div>`;
+  if (lastSessions) { renderStats(lastSessions); renderSessions(lastSessions); }
+  if (selectedSessionId) openDetail(selectedSessionId);
+};
+
+/* ─── Utilities ─── */
+const shortenPath = (cwd) => {
+  if (!cwd) return '—';
+  const parts = cwd.replace(/\\/g, '/').split('/').filter(Boolean);
+  return parts.length <= 2 ? parts.join('/') : parts.slice(-2).join('/');
+};
+
+const timeAgo = (isoStr) => {
+  if (!isoStr) return '';
+  const diff = Math.floor((Date.now() - new Date(isoStr).getTime()) / 1000);
+  if (diff < 60) return `${diff}${t('secAgo')}`;
+  if (diff < 3600) return `${Math.floor(diff / 60)}${t('minAgo')}`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)}${t('hrAgo')}`;
+  return `${Math.floor(diff / 86400)}${t('dayAgo')}`;
+};
+
+const escHtml = (s) => {
+  if (!s) return '';
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+};
+
+const formatTokens = (n) => {
+  if (!n || n === 0) return '0';
+  if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
+  if (n >= 1000) return (n / 1000).toFixed(1) + 'K';
+  return String(n);
+};
+
+const stateLabel = (state) => {
+  return t(state) || 'Unknown';
+};
+
+const stateClass = (state) => ['working','waiting','idle','completed'].includes(state) ? state : 'unknown';
+
+/* ─── Session Monitor (Tree List) ─── */
+let selectedSessionId = null;
+let collapsedGroups = new Set();
+let initialCollapseApplied = false;
+let inactiveExpanded = false;
+let showEmpty = false;
+let collapsedInactiveGroups = new Set();
+let allGroupsExpanded = true;
+
+const getProjectName = (cwd) => {
+  if (!cwd) return '(Unknown)';
+  const parts = cwd.replace(/\\/g, '/').split('/').filter(Boolean);
+  return parts.length >= 2 ? parts.slice(-2).join('/') : parts[parts.length - 1] || '(Unknown)';
+};
+
+const getProjectFolder = (cwd) => {
+  if (!cwd) return '(Unknown)';
+  const parts = cwd.replace(/\\/g, '/').split('/').filter(Boolean);
+  return parts[parts.length - 1] || '(Unknown)';
+};
+
+const renderStats = (sessions) => {
+  const active = sessions.filter(s => s.isActive);
+  const working = active.filter(s => s.state === 'working');
+  const waiting = active.filter(s => s.state === 'waiting');
+  const allExpanded = allGroupsExpanded;
+  document.getElementById('stats-bar').innerHTML = `
+    <div class="stat"><span class="stat-badge blue">${working.length}</span> ${t('working')}</div>
+    <div class="stat"><span class="stat-badge yellow">${waiting.length}</span> ${t('waiting')}</div>
+    <div class="stat"><span class="stat-badge green">${active.length}</span> ${t('idle')}</div>
+    <div class="stat"><span class="stat-badge gray">${sessions.length}</span> ${t('total')}</div>
+    <div class="toggle-wrap" onclick="toggleAllGroups()">
+      <div class="toggle-track ${allExpanded ? 'on' : ''}"><div class="toggle-knob"></div></div>
+    </div>
+    <div class="poll-ctrl">
+      ${[1,3,5,10].map(v => `<button class="poll-btn${pollInterval===v?' active':''}" onclick="setPollInterval(${v})">${v}s</button>`).join('')}
+    </div>
+  `;
+};
+
+const renderSessions = (sessions) => {
+  if (!Array.isArray(sessions)) sessions = [];
+  renderStats(sessions);
+
+  // Filter out empty sessions unless toggled on
+  const visible = sessions.filter(s => showEmpty || !s.isEmpty);
+
+  // Group ALL sessions by project folder (unified)
+  const groups = new Map();
+  visible.forEach(s => {
+    const project = getProjectName(s.cwd);
+    if (!groups.has(project)) groups.set(project, []);
+    groups.get(project).push(s);
+  });
+
+  // Sort groups: most recently updated first
+  const sortedGroups = [...groups.entries()].sort((a, b) => {
+    const aLatest = a[1].reduce((m, s) => s.updatedAt > m ? s.updatedAt : m, '');
+    const bLatest = b[1].reduce((m, s) => s.updatedAt > m ? s.updatedAt : m, '');
+    return bLatest.localeCompare(aLatest);
+  });
+
+  const container = document.getElementById('session-tree-container');
+
+  if (visible.length === 0) {
+    container.innerHTML = `<div class="empty-state"><div class="empty-icon">📭</div>${t('noSessions')}</div>`;
+    return;
+  }
+
+  let html = '<div class="session-tree">';
+
+  // Column header with resize handles
+  html += `<div class="st-header" id="stHeader">
+    <div class="st-col-status"></div>
+    <div class="st-col-summary">${t('session')}<span class="col-resize-handle" data-col="summary"></span></div>
+    <div class="st-col-lastmsg">${t('lastMsg')}<span class="col-resize-handle" data-col="lastmsg"></span></div>
+    <div class="st-col-stats">${t('stats')}<span class="col-resize-handle" data-col="stats"></span></div>
+    <div class="st-col-time">${t('recent')}</div>
+  </div>`;
+
+  // Auto-collapse folders with no active sessions on first load
+  if (!initialCollapseApplied) {
+    initialCollapseApplied = true;
+    sortedGroups.forEach(([project, items]) => {
+      if (!items.some(s => s.isActive)) collapsedGroups.add(project);
+    });
+    allGroupsExpanded = collapsedGroups.size === 0;
+  }
+
+  // Render all groups
+  sortedGroups.forEach(([project, items]) => {
+    const isCollapsed = collapsedGroups.has(project);
+    const activeItems = items.filter(s => s.isActive);
+    const workingCount = activeItems.filter(s => s.state === 'working').length;
+    const idleCount = activeItems.filter(s => s.state === 'idle').length;
+    const folder = getProjectFolder(items[0].cwd);
+    const cwdJs = (items[0].cwd || '').replace(/\\/g, '\\\\');
+    const hasActive = activeItems.length > 0;
+
+    html += `<div class="st-group ${isCollapsed ? 'collapsed' : ''}">`;
+    html += `<div class="st-group-header" onclick="toggleGroup('${escHtml(project)}')">`;
+    html += `<span class="st-group-toggle">▼</span>`;
+    html += `<span class="st-group-icon">${hasActive ? '📂' : '📁'}</span>`;
+    html += `<span class="st-group-name">${escHtml(folder)}</span>`;
+    html += `<div class="st-group-badges">`;
+    html += `<span class="st-group-badge count">${t('total')} ${items.length}</span>`;
+    html += `</div></div>`;
+
+    html += `<div class="st-group-body">`;
+    // Sort: active first, then by updatedAt desc
+    items.sort((a, b) => {
+      if (a.isActive !== b.isActive) return a.isActive ? -1 : 1;
+      return (b.updatedAt || '').localeCompare(a.updatedAt || '');
+    });
+
+    items.forEach(s => {
+      const sc = s.isActive ? stateClass(s.state) : 'completed';
+      const sel = s.id === selectedSessionId ? ' selected' : '';
+      const dimStyle = s.isActive ? '' : ' style="opacity:0.55"';
+      html += `<div class="st-row${sel}"${dimStyle} onclick="openDetail('${s.id}')">`;
+      html += `<div class="st-col-status"><span class="dot ${sc}"></span></div>`;
+      html += `<div class="st-col-summary"${s.isActive ? '' : ' style="color:var(--text-secondary)"'}>${escHtml(s.summary || t('emptySession'))}${s.intent ? '<span class="st-col-intent"> · ' + escHtml(s.intent) + '</span>' : (s.isActive && s.state === 'waiting' ? '<span class="st-col-intent"> · ⏳ ' + escHtml((s.waitingContext || '').substring(0, 30)) + '</span>' : '')}</div>`;
+      html += `<div class="st-col-lastmsg">${escHtml(s.lastUserMessage || '')}</div>`;
+      html += `<div class="st-col-stats">${s.turnCount ?? 0} · ${s.toolCalls ?? 0} · ${formatTokens(s.outputTokens || 0)}</div>`;
+      html += `<div class="st-col-time">${timeAgo(s.updatedAt)}</div>`;
+      html += `</div>`;
+    });
+    html += `</div></div>`;
+  });
+
+  // Empty session toggle
+  const emptyCount = sessions.filter(s => s.isEmpty).length;
+  if (emptyCount > 0) {
+    html += `<div style="padding:8px 16px;display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-muted);border-top:1px solid var(--border)">`;
+    html += `<label style="display:flex;align-items:center;gap:4px;cursor:pointer">`;
+    html += `<input type="checkbox" ${showEmpty ? 'checked' : ''} onchange="toggleEmpty()">`;
+    html += `${t('showEmpty')} (${emptyCount})`;
+    html += `</label></div>`;
+  }
+
+  html += '</div>';
+  container.innerHTML = html;
+};
+
+const toggleGroup = (project) => {
+  if (project.startsWith('inactive:')) {
+    if (collapsedInactiveGroups.has(project)) collapsedInactiveGroups.delete(project);
+    else collapsedInactiveGroups.add(project);
+  } else {
+    if (collapsedGroups.has(project)) collapsedGroups.delete(project);
+    else collapsedGroups.add(project);
+    // Sync allGroupsExpanded: if any collapsed, it's not "all expanded"
+    allGroupsExpanded = collapsedGroups.size === 0;
+  }
+  if (lastSessions) renderSessions(lastSessions);
+};
+
+const toggleInactive = () => {
+  inactiveExpanded = !inactiveExpanded;
+  if (lastSessions) renderSessions(lastSessions);
+};
+
+const toggleEmpty = () => {
+  showEmpty = !showEmpty;
+  if (lastSessions) renderSessions(lastSessions);
+};
+
+const toggleAllGroups = () => {
+  allGroupsExpanded = !allGroupsExpanded;
+  if (allGroupsExpanded) {
+    collapsedGroups.clear();
+  } else {
+    // Collapse all groups by collecting all project keys from current sessions
+    if (lastSessions) {
+      const visible = lastSessions.filter(s => showEmpty || !s.isEmpty);
+      visible.forEach(s => collapsedGroups.add(getProjectName(s.cwd)));
+    }
+  }
+  if (lastSessions) renderSessions(lastSessions);
+};
+
+const launchVSCode = (folder, insiders, sessionId) => {
+  fetch('/api/launch-vscode', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ folder, insiders })
+  }).then(r => r.json()).then(d => {
+    if (!d.ok) return alert(t('launchFail') + ': ' + (d.error || ''));
+    if (sessionId) {
+      const cmd = `copilot --resume=${sessionId}`;
+      navigator.clipboard.writeText(cmd).then(() => {
+        copyText(cmd, t('vscodeOpened'));
+      });
+    }
+  }).catch(() => alert(t('serverFail')));
+};
+
+/* ─── Theme ─── */
+const setTheme = (theme) => {
+  if (theme === 'light') document.documentElement.removeAttribute('data-theme');
+  else document.documentElement.setAttribute('data-theme', theme);
+  localStorage.setItem('theme', theme);
+  document.querySelectorAll('.theme-btn').forEach(b => {
+    b.classList.toggle('active', b.classList.contains(theme) || (theme === 'light' && b.classList.contains('light')));
+  });
+};
+// Restore saved theme
+const savedTheme = localStorage.getItem('theme') || 'light';
+if (savedTheme !== 'light') setTheme(savedTheme);
+
+// Restore language
+const savedLang = localStorage.getItem('lang') || 'ko';
+if (savedLang !== 'ko') {
+  currentLang = savedLang;
+  document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.dataset.lang === savedLang));
+}
+// Apply i18n to static HTML
+document.getElementById('detailTitle').textContent = t('sessionDetail');
+document.getElementById('detailBody').innerHTML = `<div style="padding:40px;text-align:center;color:var(--text-muted)">${t('selectSession')}</div>`;
+
+let lastSessions = null;
+
+// Initial load
+let firstLoadDone = false;
+const fetchSessions = () => {
+  fetch('/api/sessions').then(r => r.json()).then(s => {
+    lastSessions = s;
+    renderSessions(s);
+    if (!firstLoadDone && s.length > 0) {
+      firstLoadDone = true;
+      // Auto-open first session of the top folder (most recent active)
+      const firstActive = s.find(x => x.isActive) || s[0];
+      if (firstActive) openDetail(firstActive.id);
+    }
+  }).catch(() => {});
+};
+
+// Intervals
+let pollInterval = 3;
+let pollTimerId = null;
+
+const setPollInterval = (sec) => {
+  pollInterval = sec;
+  if (pollTimerId) clearInterval(pollTimerId);
+  pollTimerId = setInterval(fetchSessions, sec * 1000);
+  if (lastSessions) renderStats(lastSessions);
+};
+
+fetchSessions();
+pollTimerId = setInterval(fetchSessions, 3000);
+
+/* ─── Session Detail Panel ─── */
+let detailOpen = false;
+
+const openDetail = (sessionId) => {
+  selectedSessionId = sessionId;
+  if (lastSessions) renderSessions(lastSessions);
+  document.getElementById('splitContainer').classList.add('has-detail');
+  document.getElementById('detailBody').innerHTML = '<div style="padding:40px;text-align:center;color:var(--text-muted)">불러오는 중...</div>';
+  detailOpen = true;
+
+  fetch(`/api/sessions/${sessionId}`)
+    .then(r => r.json())
+    .then(renderDetail)
+    .catch(() => {
+      document.getElementById('detailBody').innerHTML = `<div style="padding:40px;text-align:center;color:var(--danger)">${t('loadFail')}</div>`;
+    });
+};
+
+const closeDetail = () => {
+  selectedSessionId = null;
+  if (lastSessions) renderSessions(lastSessions);
+  document.getElementById('splitContainer').classList.remove('has-detail');
+  document.getElementById('splitContainer').classList.remove('has-agent-detail');
+  const left = document.getElementById('splitLeft');
+  const right = document.getElementById('splitRight');
+  left.style.flex = ''; left.style.width = '';
+  right.style.flex = ''; right.style.width = '';
+  detailOpen = false;
+};
+
+/* ─── Agent Panel ─── */
+let agentPanelOpen = false;
+let agentData = null;
+
+const openAgentPanel = async (sessionId) => {
+  try {
+    const res = await fetch(`/api/sessions/${sessionId}/agents`);
+    agentData = await res.json();
+    renderAgentPanel(agentData);
+    document.getElementById('splitContainer').classList.add('has-agent-detail');
+    agentPanelOpen = true;
+  } catch (e) {
+    console.error('Failed to load agents:', e);
+  }
+};
+
+const closeAgentPanel = () => {
+  document.getElementById('splitContainer').classList.remove('has-agent-detail');
+  agentPanelOpen = false;
+  agentData = null;
+};
+
+const renderAgentPanel = (data) => {
+  const body = document.getElementById('agentPanelBody');
+  const title = document.getElementById('agentPanelTitle');
+  title.textContent = `🤖 ${t('agentPanelTitle')} (${data.total})`;
+
+  let html = '';
+
+  // Summary badges
+  html += `<div class="agent-summary">`;
+  for (const [type, count] of Object.entries(data.summary || {})) {
+    html += `<div class="agent-summary-badge"><span class="num">${count}</span> ${escHtml(type)}</div>`;
+  }
+  html += `</div>`;
+
+  // Agent list
+  html += `<div class="agent-list">`;
+  (data.agents || []).forEach((a, i) => {
+    const statusCls = a.status === 'completed' ? 'done' : a.status === 'running' ? 'running' : 'failed';
+    const statusLabel = a.status === 'completed' ? '✓' : a.status === 'running' ? '⟳' : '✗';
+    const duration = a.startedAt && a.completedAt
+      ? formatDuration(new Date(a.completedAt) - new Date(a.startedAt))
+      : a.startedAt ? '...' : '';
+    const promptPreview = (a.prompt || '').substring(0, 120).replace(/\n/g, ' ');
+    html += `<div class="agent-item" onclick="toggleAgentDetail(${i})">
+      <div class="agent-item-header">
+        <span class="agent-item-name">${escHtml(a.name || a.type || 'Agent')}</span>
+        <span class="agent-item-status ${statusCls}">${statusLabel} ${a.status}</span>
+      </div>
+      <div class="agent-item-prompt">${escHtml(promptPreview)}</div>
+      <div class="agent-item-time">${duration}</div>
+      <div class="agent-item-detail" id="agent-detail-${i}" style="display:none"></div>
+    </div>`;
+  });
+  html += `</div>`;
+
+  body.innerHTML = html;
+};
+
+const toggleAgentDetail = (idx) => {
+  if (!agentData) return;
+  const el = document.getElementById(`agent-detail-${idx}`);
+  if (!el) return;
+  if (el.style.display !== 'none') {
+    el.style.display = 'none';
+    el.parentElement.classList.remove('selected');
+    return;
+  }
+  // Close others
+  document.querySelectorAll('.agent-item-detail').forEach(d => { d.style.display = 'none'; d.parentElement.classList.remove('selected'); });
+  const a = agentData.agents[idx];
+  let html = `<div style="margin-top:6px;padding:8px;background:var(--bg);border-radius:4px;font-size:11px;line-height:1.5">`;
+  html += `<div><strong>Type:</strong> ${escHtml(a.type || '-')}</div>`;
+  html += `<div><strong>Name:</strong> ${escHtml(a.name || '-')}</div>`;
+  if (a.description) html += `<div><strong>Desc:</strong> ${escHtml(a.description)}</div>`;
+  if (a.startedAt) html += `<div><strong>Started:</strong> ${new Date(a.startedAt).toLocaleTimeString()}</div>`;
+  if (a.completedAt) html += `<div><strong>Completed:</strong> ${new Date(a.completedAt).toLocaleTimeString()}</div>`;
+  html += `<div style="margin-top:6px"><strong>Prompt:</strong></div>`;
+  html += `<div style="max-height:200px;overflow-y:auto;white-space:pre-wrap;color:var(--text-secondary);background:var(--surface-hover);padding:6px;border-radius:2px;font-family:var(--font-mono);font-size:10px">${escHtml(a.prompt || '-')}</div>`;
+  if (a.result) {
+    html += `<div style="margin-top:6px"><strong>Result:</strong></div>`;
+    html += `<div style="max-height:200px;overflow-y:auto;white-space:pre-wrap;color:var(--text-secondary);background:var(--surface-hover);padding:6px;border-radius:2px;font-family:var(--font-mono);font-size:10px">${escHtml(typeof a.result === 'string' ? a.result : JSON.stringify(a.result, null, 2))}</div>`;
+  }
+  html += `</div>`;
+  el.innerHTML = html;
+  el.style.display = 'block';
+  el.parentElement.classList.add('selected');
+};
+
+const formatDuration = (ms) => {
+  if (ms < 1000) return `${ms}ms`;
+  const s = Math.floor(ms / 1000);
+  if (s < 60) return `${s}s`;
+  const m = Math.floor(s / 60);
+  const rem = s % 60;
+  return `${m}m ${rem}s`;
+};
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    if (agentPanelOpen) closeAgentPanel();
+    else if (detailOpen) closeDetail();
+  }
+});
+
+/* ─── Split Divider Drag ─── */
+(() => {
+  const divider = document.getElementById('splitDivider');
+  const container = document.getElementById('splitContainer');
+  const left = document.getElementById('splitLeft');
+  const right = document.getElementById('splitRight');
+  let dragging = false;
+
+  divider.addEventListener('mousedown', (e) => {
+    e.preventDefault();
+    dragging = true;
+    divider.classList.add('dragging');
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+  });
+
+  document.addEventListener('mousemove', (e) => {
+    if (!dragging) return;
+    const rect = container.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const total = rect.width;
+    const leftPct = Math.max(30, Math.min(80, (x / total) * 100));
+    left.style.flex = 'none';
+    left.style.width = leftPct + '%';
+    right.style.flex = 'none';
+    right.style.width = (100 - leftPct) + '%';
+  });
+
+  document.addEventListener('mouseup', () => {
+    if (!dragging) return;
+    dragging = false;
+    divider.classList.remove('dragging');
+    document.body.style.cursor = '';
+    document.body.style.userSelect = '';
+  });
+})();
+
+/* ─── Column Resize Drag ─── */
+const colWidths = { summary: 260, lastmsg: null, stats: 90, time: 64 };
+
+function applyColWidths() {
+  const style = document.getElementById('colWidthStyle') || (() => {
+    const s = document.createElement('style');
+    s.id = 'colWidthStyle';
+    document.head.appendChild(s);
+    return s;
+  })();
+  let css = '';
+  if (colWidths.summary) css += `.st-col-summary { width: ${colWidths.summary}px !important; flex: none !important; }\n`;
+  if (colWidths.stats) css += `.st-col-stats { width: ${colWidths.stats}px !important; }\n`;
+  if (colWidths.time) css += `.st-col-time { width: ${colWidths.time}px !important; }\n`;
+  style.textContent = css;
+}
+
+(() => {
+  let dragCol = null, startX = 0, startW = 0;
+
+  document.addEventListener('mousedown', (e) => {
+    const handle = e.target.closest('.col-resize-handle');
+    if (!handle) return;
+    e.preventDefault();
+    dragCol = handle.dataset.col;
+    startX = e.clientX;
+    const colEl = handle.parentElement;
+    startW = colEl.getBoundingClientRect().width;
+    handle.classList.add('dragging');
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+  });
+
+  document.addEventListener('mousemove', (e) => {
+    if (!dragCol) return;
+    const diff = e.clientX - startX;
+    const newW = Math.max(60, startW + diff);
+    if (dragCol !== 'lastmsg') {
+      colWidths[dragCol] = newW;
+    } else {
+      // lastmsg is flex, adjust summary instead (shrink/grow summary)
+      colWidths.summary = Math.max(100, startW + diff);
+    }
+    applyColWidths();
+  });
+
+  document.addEventListener('mouseup', () => {
+    if (!dragCol) return;
+    document.querySelectorAll('.col-resize-handle.dragging').forEach(h => h.classList.remove('dragging'));
+    dragCol = null;
+    document.body.style.cursor = '';
+    document.body.style.userSelect = '';
+  });
+})();
+
+const formatTs = (iso) => {
+  if (!iso) return '';
+  const d = new Date(iso);
+  const pad = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+};
+
+const shortenFile = (fp) => {
+  if (!fp) return '';
+  const parts = fp.replace(/\\/g, '/').split('/');
+  return parts.length <= 3 ? parts.join('/') : '…/' + parts.slice(-3).join('/');
+};
+
+const renderDetail = (d) => {
+  const sc = stateClass(d.state);
+  const stateLabels = { working: t('stateWorking'), waiting: t('stateWaiting'), idle: t('stateIdle'), completed: t('stateCompleted'), unknown: t('stateUnknown') };
+
+  let html = '';
+
+  // ── Section: State & Info ──
+  html += `<div class="dp-section">`;
+
+  if (d.intent) html += `<div class="dp-intent">🎯 ${escHtml(d.intent)}</div>`;
+  if (d.state === 'waiting' && d.waitingContext) html += `<div class="dp-waiting-box">⏳ ${escHtml(d.waitingContext)}</div>`;
+
+  html += `<div style="margin-top:10px">`;
+  html += `<div class="dp-field"><span class="dp-field-label">${t('summary')}</span><span class="dp-field-value">${escHtml(d.summary || t('noValue'))}</span></div>`;
+  html += `<div class="dp-field"><span class="dp-field-label">${t('path')}</span><span class="dp-field-value mono">${escHtml(shortenPath(d.cwd))} <button class="copy-icon-btn" onclick="copyText('${escHtml(d.cwd).replace(/\\/g,'\\\\')}',t('copyPath'))" title="${t('copyPathTitle')}"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="1"/><path d="M5 15H4a1 1 0 01-1-1V4a1 1 0 011-1h10a1 1 0 011 1v1"/></svg></button></span></div>`;
+  const cwdEsc = (d.cwd || '').replace(/\\/g, '\\\\');
+  html += `<div class="dp-vscode-row"><button class="vscode-btn" onclick="launchVSCode('${cwdEsc}',false,'${d.id}')"><svg width="14" height="14" viewBox="0 0 100 100"><path d="M95.2 8.1L74.5.3c-2.5-1-5.4-.2-7.1 1.9L26.6 45.8 11 34.2c-1.7-1.3-4.1-1.1-5.6.4L.7 39.5c-1 1-1 2.6 0 3.6L13.5 50 .7 56.9c-1 1-1 2.6 0 3.6l4.7 4.9c1.5 1.5 3.9 1.7 5.6.4l15.6-11.6 40.8 43.6c1.7 2.1 4.6 2.9 7.1 1.9l20.7-7.8c1.7-.7 2.8-2.3 2.8-4.1V12.2c0-1.8-1.1-3.4-2.8-4.1zM74.9 71.5L44.2 50l30.7-21.5v43z" fill="#007ACC"/></svg> Open in VSCode</button><button class="vscode-btn insiders" onclick="launchVSCode('${cwdEsc}',true,'${d.id}')"><svg width="14" height="14" viewBox="0 0 100 100"><path d="M95.2 8.1L74.5.3c-2.5-1-5.4-.2-7.1 1.9L26.6 45.8 11 34.2c-1.7-1.3-4.1-1.1-5.6.4L.7 39.5c-1 1-1 2.6 0 3.6L13.5 50 .7 56.9c-1 1-1 2.6 0 3.6l4.7 4.9c1.5 1.5 3.9 1.7 5.6.4l15.6-11.6 40.8 43.6c1.7 2.1 4.6 2.9 7.1 1.9l20.7-7.8c1.7-.7 2.8-2.3 2.8-4.1V12.2c0-1.8-1.1-3.4-2.8-4.1zM74.9 71.5L44.2 50l30.7-21.5v43z" fill="#24903e"/></svg> Open in Insiders</button></div>`;
+  if (d.repository) html += `<div class="dp-field"><span class="dp-field-label">${t('repo')}</span><span class="dp-field-value">${escHtml(d.repository)}</span></div>`;
+  if (d.branch) html += `<div class="dp-field"><span class="dp-field-label">${t('branch')}</span><span class="dp-field-value">${escHtml(d.branch)}</span></div>`;
+  html += `<div class="dp-field"><span class="dp-field-label">${t('sessionId')}</span><span class="dp-field-value mono" style="font-size:11px">${d.id} <button class="copy-icon-btn" onclick="copyResume('${d.id}')" title="${t('copyResumeTitle')}"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="1"/><path d="M5 15H4a1 1 0 01-1-1V4a1 1 0 011-1h10a1 1 0 011 1v1"/></svg></button></span></div>`;
+  html += `<div class="dp-field"><span class="dp-field-label">${t('created')}</span><span class="dp-field-value">${formatTs(d.created_at || d.createdAt)}</span></div>`;
+  html += `<div class="dp-field"><span class="dp-field-label">${t('updated')}</span><span class="dp-field-value">${formatTs(d.updated_at || d.updatedAt)}</span></div>`;
+  html += `</div></div>`;
+
+  // ── Section: Stats ──
+  html += `<div class="dp-section">`;
+  html += `<div class="dp-section-title">${t('statsTitle')}</div>`;
+  html += `<div class="dp-stats">`;
+  html += `<div class="dp-stat">💬 <span class="num">${d.turnCount ?? 0}</span> turns</div>`;
+  html += `<div class="dp-stat">🔧 <span class="num">${d.toolCalls ?? 0}</span> tools</div>`;
+  html += `<div class="dp-stat">🤖 <span class="num">${d.subagentRuns ?? 0}</span> agents</div>`;
+  if (d.outputTokens) html += `<div class="dp-stat">🔤 <span class="num">${formatTokens(d.outputTokens)}</span> output tokens</div>`;
+  if (d.subagentRuns > 0) html += `<div class="dp-stat"><button class="agent-btn" onclick="openAgentPanel('${d.id}')">🤖 View Agents</button></div>`;
+  if (d.checkpoints) html += `<div class="dp-stat">📋 <span class="num">${Array.isArray(d.checkpoints) ? d.checkpoints.length : 0}</span> checkpoints</div>`;
+  if (d.filesModified) html += `<div class="dp-stat">📝 <span class="num">${d.filesModified.length}</span> files</div>`;
+  html += `</div></div>`;
+
+  // ── Section: Background Tasks ──
+  if (d.bgTasks > 0 && d.bgTaskList && d.bgTaskList.length) {
+    html += `<div class="dp-section">`;
+    html += `<div class="dp-section-title">🔄 백그라운드 태스크 (${d.bgTasks})</div>`;
+    d.bgTaskList.forEach(t => {
+      html += `<div class="dp-bgtask"><span class="dp-bgtask-dot"></span><span>${escHtml(t.name || t.desc || 'Task')}</span></div>`;
+    });
+    html += `</div>`;
+  }
+
+  // ── Section: Top Tools ──
+  if (d.topTools && d.topTools.length) {
+    const maxCount = d.topTools[0].count;
+    html += `<div class="dp-section">`;
+    html += `<div class="dp-section-title">${t('toolUsage')}</div>`;
+    d.topTools.forEach(t => {
+      const pct = Math.round((t.count / maxCount) * 100);
+      html += `<div class="dp-tool-bar">`;
+      html += `<span class="dp-tool-name">${escHtml(t.name)}</span>`;
+      html += `<div class="dp-tool-fill"><div class="dp-tool-fill-inner" style="width:${pct}%"></div></div>`;
+      html += `<span class="dp-tool-count">${t.count}</span>`;
+      html += `</div>`;
+    });
+    html += `</div>`;
+  }
+
+  // ── Section: Checkpoints ──
+  if (d.checkpoints && d.checkpoints.length) {
+    html += `<div class="dp-section">`;
+    html += `<div class="dp-section-title">${t('checkpoints')}</div>`;
+    d.checkpoints.forEach(cp => {
+      html += `<div class="dp-checkpoint" onclick="this.classList.toggle('expanded')">`;
+      html += `<span class="dp-checkpoint-num">#${cp.number}</span>`;
+      html += `<span class="dp-checkpoint-title">${escHtml(cp.title)}</span>`;
+      if (cp.content) html += `<div class="dp-checkpoint-content">${escHtml(cp.content)}</div>`;
+      html += `</div>`;
+    });
+    html += `</div>`;
+  }
+
+  // ── Section: Plan ──
+  if (d.planContent) {
+    html += `<div class="dp-section">`;
+    html += `<div class="dp-section-title">📄 계획 (plan.md)</div>`;
+    html += `<div class="dp-plan">${escHtml(d.planContent)}</div>`;
+    html += `</div>`;
+  }
+
+  // ── Section: Recent Conversations ──
+  if (d.recentTurns && d.recentTurns.length) {
+    html += `<div class="dp-section">`;
+    html += `<div class="dp-section-title">${t('recentTurns')} (${d.recentTurns.length})</div>`;
+    html += `<ul class="dp-timeline">`;
+    d.recentTurns.slice().reverse().forEach(t => {
+      html += `<li class="dp-timeline-item">`;
+      html += `<span class="dp-timeline-time">${formatTs(t.timestamp)}</span>`;
+      html += `<div class="dp-timeline-msg" onclick="this.classList.toggle('expanded')">${escHtml(t.content)}</div>`;
+      html += `</li>`;
+    });
+    html += `</ul></div>`;
+  }
+
+  // ── Section: Recent Events ──
+  if (d.recentEvents && d.recentEvents.length) {
+    html += `<div class="dp-section">`;
+    html += `<div class="dp-section-title">${t('timeline')}</div>`;
+    html += `<ul class="dp-timeline">`;
+    d.recentEvents.forEach(ev => {
+      const icon = ev.type.includes('task_complete') ? '✅' : ev.type.includes('subagent') ? '🤖' : ev.type.includes('compaction') ? '📦' : '⚡';
+      html += `<li class="dp-timeline-item">`;
+      html += `<span class="dp-timeline-time">${formatTs(ev.timestamp)}</span>`;
+      html += `<div style="font-size:12px">${icon} ${escHtml(ev.type.split('.').pop())} ${ev.summary ? '— ' + escHtml(ev.summary) : ''}</div>`;
+      html += `</li>`;
+    });
+    html += `</ul></div>`;
+  }
+
+  // ── Section: Files Modified ──
+  if (d.filesModified && d.filesModified.length) {
+    html += `<div class="dp-section">`;
+    html += `<div class="dp-section-title">${t('filesModified')} (${d.filesModified.length})</div>`;
+    d.filesModified.forEach(f => {
+      html += `<div class="dp-file" title="${escHtml(f)}">${escHtml(shortenFile(f))}</div>`;
+    });
+    html += `</div>`;
+  }
+
+  document.getElementById('detailTitle').innerHTML = `<span class="dot ${sc}"></span> ${escHtml(d.summary || t('sessionDetail'))} <span style="font-size:11px;color:var(--text-muted);font-weight:normal;margin-left:6px">${timeAgo(d.updated_at || d.updatedAt)}</span>`;
+  document.getElementById('detailBody').innerHTML = html;
+};
+
+const copyResume = (sessionId) => {
+  copyText(`copilot --resume=${sessionId}`, t('copyResume'));
+};
+const copyText = (text, msg) => {
+  navigator.clipboard.writeText(text).then(() => {
+    const toast = document.createElement('div');
+    toast.className = 'toast-msg';
+    toast.textContent = '✅ ' + (msg || t('copied'));
+    document.body.appendChild(toast);
+    setTimeout(() => toast.classList.add('show'), 10);
+    setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 300); }, 3000);
+  });
+};
+</script>
+</body>
+</html>

@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🤖 활동 로그 — GitHub Copilot Studio</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🤖</text></svg>">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #f6f8fa; --surface: #ffffff; --surface-hover: #f3f4f6;
+  --border: #d0d7de; --text: #1f2328; --text-secondary: #656d76; --text-muted: #8c959f;
+  --accent: #0969da; --success: #1a7f37; --danger: #cf222e; --warning: #9a6700;
+  --purple: #8250df; --orange: #bc4c00;
+  --shadow: 0 1px 3px rgba(0,0,0,.04), 0 1px 2px rgba(0,0,0,.06);
+  --radius: 6px; --radius-pill: 20px;
+  --transition: 0.15s ease;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+  background: var(--bg); color: var(--text); line-height: 1.5;
+  min-height: 100vh;
+}
+
+/* ── Header ─────────────────────────────────────────────── */
+.header {
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  padding: 16px 24px; display: flex; align-items: center;
+  justify-content: space-between; position: sticky; top: 0; z-index: 100;
+  box-shadow: var(--shadow);
+}
+.header h1 { font-size: 18px; font-weight: 600; }
+.header-right { display: flex; gap: 8px; align-items: center; }
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 14px; border-radius: var(--radius); font-size: 13px;
+  font-weight: 500; text-decoration: none; border: 1px solid var(--border);
+  background: var(--surface); color: var(--text); cursor: pointer;
+  transition: background var(--transition), border-color var(--transition);
+}
+.btn:hover { background: var(--surface-hover); border-color: #b0b8c1; }
+
+/* ── Main ───────────────────────────────────────────────── */
+.main { max-width: 1200px; margin: 0 auto; padding: 24px; }
+
+/* ── Agent Dashboard ────────────────────────────────────── */
+.section-title { font-size: 15px; font-weight: 600; margin-bottom: 12px; color: var(--text-secondary); }
+.dashboard { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 32px; }
+
+.agent-card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 16px; box-shadow: var(--shadow); transition: border-color var(--transition);
+  position: relative; overflow: hidden;
+}
+.agent-card:hover { border-color: #b0b8c1; }
+.agent-card-top { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.agent-icon { font-size: 22px; line-height: 1; }
+.agent-name { font-size: 13px; font-weight: 600; }
+.agent-status { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-secondary); }
+.status-dot {
+  width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex-shrink: 0;
+}
+.status-dot.idle { background: var(--text-muted); }
+.status-dot.working { background: var(--accent); animation: pulse 1.5s ease-in-out infinite; }
+.status-dot.waiting { background: var(--warning); animation: pulse 1.5s ease-in-out infinite; }
+.status-dot.completed { background: var(--success); }
+.status-dot.unknown { background: var(--text-muted); opacity: .5; }
+.agent-task { font-size: 11px; color: var(--text-muted); margin-top: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.agent-task-id { font-weight: 600; color: var(--accent); cursor: pointer; }
+
+/* Breathing animation on icon when working */
+.agent-card.is-working .agent-icon { animation: breathe 2s ease-in-out infinite; }
+@keyframes breathe {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.15); opacity: .75; }
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: .4; }
+}
+
+/* Color stripe at top of card */
+.agent-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+}
+.agent-card[data-agent="pm"]::before { background: #8250df; }
+.agent-card[data-agent="ui"]::before { background: #953800; }
+.agent-card[data-agent="backend"]::before { background: #0550ae; }
+.agent-card[data-agent="tester"]::before { background: #1a7f37; }
+.agent-card[data-agent="infra"]::before { background: #cf222e; }
+
+/* ── Filter Tabs ────────────────────────────────────────── */
+.filter-bar {
+  display: flex; gap: 4px; margin-bottom: 16px; flex-wrap: wrap;
+}
+.filter-tab {
+  padding: 6px 14px; border-radius: var(--radius-pill); font-size: 13px;
+  font-weight: 500; border: 1px solid var(--border); background: var(--surface);
+  color: var(--text-secondary); cursor: pointer;
+  transition: all var(--transition);
+}
+.filter-tab:hover { background: var(--surface-hover); }
+.filter-tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+/* ── Log Cards ──────────────────────────────────────────── */
+.logs-container { display: flex; flex-direction: column; gap: 12px; }
+
+.log-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow);
+  overflow: hidden; transition: border-color var(--transition);
+}
+.log-card:hover { border-color: #b0b8c1; }
+
+.log-card-header {
+  display: flex; align-items: center; gap: 8px; padding: 12px 16px;
+  border-bottom: 1px solid var(--border); background: var(--bg);
+  cursor: pointer; user-select: none;
+}
+.log-agent-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 12px; font-weight: 600; padding: 2px 8px;
+  border-radius: var(--radius-pill); color: #fff;
+}
+.log-filename { font-size: 13px; font-weight: 500; color: var(--text); flex: 1; }
+.log-time { font-size: 12px; color: var(--text-muted); white-space: nowrap; }
+.log-status-badge {
+  display: inline-flex; align-items: center; gap: 3px;
+  font-size: 11px; font-weight: 600; padding: 2px 8px;
+  border-radius: var(--radius-pill);
+}
+.log-status-badge.done { background: #dafbe1; color: var(--success); }
+.log-status-badge.progress { background: #ddf4ff; color: var(--accent); }
+.log-status-badge.failed { background: #ffebe9; color: var(--danger); }
+
+.log-card-body {
+  padding: 16px; font-size: 14px; line-height: 1.7;
+  max-height: 400px; overflow-y: auto;
+}
+
+.log-card.collapsed .log-card-body { display: none; }
+.log-card-header .chevron {
+  font-size: 12px; color: var(--text-muted); transition: transform var(--transition);
+}
+.log-card.collapsed .log-card-header .chevron { transform: rotate(-90deg); }
+
+/* ── Markdown Rendered Content ──────────────────────────── */
+.md h1 { font-size: 18px; font-weight: 600; margin: 16px 0 8px; border-bottom: 1px solid var(--border); padding-bottom: 6px; }
+.md h2 { font-size: 16px; font-weight: 600; margin: 14px 0 6px; }
+.md h3 { font-size: 14px; font-weight: 600; margin: 12px 0 4px; }
+.md p { margin: 6px 0; }
+.md ul { padding-left: 20px; margin: 6px 0; }
+.md li { margin: 3px 0; }
+.md code {
+  background: #eff1f3; padding: 2px 6px; border-radius: 4px;
+  font-size: 12px; font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+}
+.md pre {
+  background: #f6f8fa; border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 12px; overflow-x: auto; margin: 8px 0;
+}
+.md pre code { background: none; padding: 0; font-size: 12px; }
+.md a { color: var(--accent); text-decoration: none; }
+.md a:hover { text-decoration: underline; }
+.md strong { font-weight: 600; }
+.md hr { border: none; border-top: 1px solid var(--border); margin: 12px 0; }
+
+.id-link {
+  display: inline-flex; align-items: center; gap: 2px;
+  background: #ddf4ff; color: var(--accent); padding: 1px 6px;
+  border-radius: 4px; font-weight: 600; font-size: 12px;
+  cursor: pointer; transition: background var(--transition);
+  text-decoration: none;
+}
+.id-link:hover { background: #b6e3ff; text-decoration: none; }
+
+/* ── Detail Modal ───────────────────────────────────────── */
+.detail-overlay {
+  display: none; position: fixed; inset: 0; background: rgba(0,0,0,.4);
+  z-index: 200; align-items: center; justify-content: center;
+}
+.detail-overlay.open { display: flex; }
+.detail-modal {
+  background: var(--surface); border-radius: var(--radius);
+  width: 560px; max-width: 92vw; max-height: 80vh;
+  box-shadow: 0 8px 30px rgba(0,0,0,.12), 0 2px 8px rgba(0,0,0,.08);
+  display: flex; flex-direction: column; overflow: hidden;
+}
+.detail-header {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  padding: 16px 20px; border-bottom: 1px solid var(--border);
+}
+.detail-header .close-btn {
+  background: none; border: none; font-size: 18px; color: var(--text-muted);
+  cursor: pointer; padding: 4px 8px; border-radius: 4px;
+  transition: background var(--transition), color var(--transition);
+}
+.detail-header .close-btn:hover { background: var(--surface-hover); color: var(--text); }
+#detailHierarchy { font-size: 13px; color: var(--text-secondary); line-height: 1.6; }
+#detailHierarchy .hierarchy-crumb { color: var(--text-muted); }
+
+#detailBody {
+  padding: 20px; overflow-y: auto; flex: 1;
+}
+.detail-field { margin-bottom: 12px; }
+.detail-field-label { font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--text-muted); margin-bottom: 2px; }
+.detail-field-value { font-size: 14px; }
+.detail-field-value .status-pill {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 2px 10px; border-radius: var(--radius-pill); font-size: 12px; font-weight: 600;
+}
+
+/* ── Empty State ────────────────────────────────────────── */
+.empty-state {
+  text-align: center; padding: 48px 24px; color: var(--text-muted);
+}
+.empty-state .empty-icon { font-size: 40px; margin-bottom: 12px; }
+.empty-state .empty-text { font-size: 14px; }
+
+/* ── Responsive ─────────────────────────────────────────── */
+@media (max-width: 900px) {
+  .dashboard { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 600px) {
+  .dashboard { grid-template-columns: repeat(2, 1fr); }
+  .header h1 { font-size: 15px; }
+  .main { padding: 16px; }
+}
+@media (max-width: 420px) {
+  .dashboard { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🤖 GitHub Copilot Studio — 활동 로그</h1>
+  <div class="header-right">
+    <a href="/" class="btn">📊 대시보드</a>
+  </div>
+</div>
+
+<div class="main">
+  <!-- Agent Dashboard -->
+  <div class="section-title">에이전트 실시간 상태</div>
+  <div class="dashboard" id="dashboard"></div>
+
+  <!-- Activity Logs -->
+  <div class="section-title">활동 로그</div>
+  <div class="filter-bar" id="filterBar"></div>
+  <div class="logs-container" id="logsContainer"></div>
+</div>
+
+<!-- Detail Modal -->
+<div class="detail-overlay" id="detailModal">
+  <div class="detail-modal">
+    <div class="detail-header">
+      <div id="detailHierarchy"></div>
+      <button onclick="closeDetailModal()" class="close-btn">✕</button>
+    </div>
+    <div id="detailBody"></div>
+  </div>
+</div>
+
+<script>
+// ── Config ──────────────────────────────────────────────────────────────────
+const AGENTS = ['pm', 'ui', 'backend', 'tester', 'infra'];
+const AGENT_ICONS = { pm:'🎼', ui:'🎨', backend:'🦾', tester:'🔬', infra:'🖥️' };
+const AGENT_COLORS = { pm:'#8250df', ui:'#953800', backend:'#0550ae', tester:'#1a7f37', infra:'#cf222e' };
+const AGENT_LABELS = { pm:'PM', ui:'UI', backend:'Backend', tester:'Tester', infra:'Infra' };
+const STATUS_LABELS = { idle:'대기 중', working:'작업 중', waiting:'입력 대기', completed:'완료', unknown:'알 수 없음' };
+
+let currentFilter = 'all';
+let kanbanCache = null;
+
+// ── Init ────────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  renderFilterBar();
+  loadStatus();
+  loadLogs();
+  setInterval(loadStatus, 3000);
+  setInterval(loadLogs, 10000);
+});
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeDetailModal();
+});
+
+// ── Filter Bar ──────────────────────────────────────────────────────────────
+function renderFilterBar() {
+  const bar = document.getElementById('filterBar');
+  const tabs = [
+    { key: 'all', label: 'All' },
+    ...AGENTS.map(a => ({ key: a, label: `${AGENT_ICONS[a]} ${AGENT_LABELS[a]}` }))
+  ];
+  bar.innerHTML = tabs.map(t =>
+    `<button class="filter-tab${t.key === currentFilter ? ' active' : ''}" data-filter="${t.key}">${t.label}</button>`
+  ).join('');
+  bar.addEventListener('click', e => {
+    const tab = e.target.closest('.filter-tab');
+    if (!tab) return;
+    currentFilter = tab.dataset.filter;
+    bar.querySelectorAll('.filter-tab').forEach(t => t.classList.toggle('active', t.dataset.filter === currentFilter));
+    loadLogs();
+  });
+}
+
+// ── Agent Dashboard ─────────────────────────────────────────────────────────
+function loadStatus() {
+  fetch('/api/status')
+    .then(r => r.json())
+    .then(renderDashboard)
+    .catch(() => renderDashboard({}));
+}
+
+function renderDashboard(data) {
+  const container = document.getElementById('dashboard');
+  container.innerHTML = AGENTS.map(agent => {
+    const info = data[agent] || {};
+    const status = info.status || 'idle';
+    const task = info.task || '';
+    const taskId = info.taskId || '';
+    const isWorking = status === 'working';
+
+    return `
+      <div class="agent-card${isWorking ? ' is-working' : ''}" data-agent="${agent}">
+        <div class="agent-card-top">
+          <span class="agent-icon">${AGENT_ICONS[agent]}</span>
+          <span class="agent-name">${AGENT_LABELS[agent]}</span>
+        </div>
+        <div class="agent-status">
+          <span class="status-dot ${status}"></span>
+          ${STATUS_LABELS[status] || status}
+        </div>
+        ${taskId ? `<div class="agent-task"><span class="agent-task-id" onclick="openDetailModal('${esc(taskId)}')">${esc(taskId)}</span>${task ? ' · ' + esc(task) : ''}</div>` : (task ? `<div class="agent-task">${esc(task)}</div>` : '')}
+      </div>
+    `;
+  }).join('');
+}
+
+// ── Activity Logs ───────────────────────────────────────────────────────────
+function loadLogs() {
+  fetch(`/api/logs?agent=${currentFilter}`)
+    .then(r => r.json())
+    .then(renderLogs)
+    .catch(() => renderLogs([]));
+}
+
+function renderLogs(logs) {
+  const container = document.getElementById('logsContainer');
+
+  if (!logs || !logs.length) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">📭</div>
+        <div class="empty-text">아직 활동 로그가 없습니다</div>
+      </div>`;
+    return;
+  }
+
+  // Sort by fileTime descending
+  logs.sort((a, b) => new Date(b.fileTime) - new Date(a.fileTime));
+
+  container.innerHTML = logs.map((log, i) => {
+    const agentColor = AGENT_COLORS[log.agent] || '#656d76';
+    const agentIcon = AGENT_ICONS[log.agent] || '📄';
+    const agentLabel = AGENT_LABELS[log.agent] || log.agent;
+    const statusBadge = extractStatusBadge(log.content);
+    const renderedContent = linkifyIds(renderMarkdown(log.content));
+
+    return `
+      <div class="log-card" id="log-${i}">
+        <div class="log-card-header" onclick="toggleLog(${i})">
+          <span class="log-agent-badge" style="background:${agentColor}">${agentIcon} ${agentLabel}</span>
+          <span class="log-filename">${esc(log.file)}</span>
+          ${statusBadge}
+          <span class="log-time">🕐 ${formatDate(log.fileTime)}</span>
+          <span class="chevron">▼</span>
+        </div>
+        <div class="log-card-body md">${renderedContent}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+function toggleLog(i) {
+  const card = document.getElementById('log-' + i);
+  if (card) card.classList.toggle('collapsed');
+}
+
+// ── Status Badge Extraction ─────────────────────────────────────────────────
+function extractStatusBadge(md) {
+  if (!md) return '';
+  if (/\*\*상태\*\*\s*:\s*✅/.test(md) || /완료/.test(md.split('\n').find(l => /\*\*상태\*\*/.test(l)) || ''))
+    return '<span class="log-status-badge done">✅ 완료</span>';
+  if (/\*\*상태\*\*\s*:\s*🔄/.test(md) || /진행/.test(md.split('\n').find(l => /\*\*상태\*\*/.test(l)) || ''))
+    return '<span class="log-status-badge progress">🔄 진행중</span>';
+  if (/\*\*상태\*\*\s*:\s*❌/.test(md) || /실패/.test(md.split('\n').find(l => /\*\*상태\*\*/.test(l)) || ''))
+    return '<span class="log-status-badge failed">❌ 실패</span>';
+  return '';
+}
+
+// ── Markdown Renderer ───────────────────────────────────────────────────────
+function renderMarkdown(md) {
+  if (!md) return '';
+  let html = esc(md);
+
+  // Code blocks (``` ... ```)
+  html = html.replace(/```(\w*)\n([\s\S]*?)```/g, (_, lang, code) =>
+    `<pre><code>${code.trim()}</code></pre>`
+  );
+
+  // Inline code
+  html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+
+  // Headers
+  html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+  html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+  html = html.replace(/^# (.+)$/gm, '<h1>$1</h1>');
+
+  // Bold
+  html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+
+  // Links [text](url)
+  html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+
+  // Horizontal rule
+  html = html.replace(/^---$/gm, '<hr>');
+
+  // Unordered lists — group consecutive lines starting with -
+  html = html.replace(/(^- .+$(\n|$))+/gm, match => {
+    const items = match.trim().split('\n').map(l => `<li>${l.replace(/^- /, '')}</li>`).join('');
+    return `<ul>${items}</ul>`;
+  });
+
+  // Paragraphs — wrap remaining loose lines
+  html = html.replace(/^(?!<[huplo]|<\/|<hr|<pre|<code)(.+)$/gm, '<p>$1</p>');
+
+  return html;
+}
+
+// ── Linkify IDs ─────────────────────────────────────────────────────────────
+function linkifyIds(html) {
+  return html.replace(/(EP-\d{3}|ST-\d{3}|FS-\d{3})/g,
+    '<span class="id-link" onclick="openDetailModal(\'$1\')">$1</span>'
+  );
+}
+
+// ── Detail Modal ────────────────────────────────────────────────────────────
+async function openDetailModal(id) {
+  const modal = document.getElementById('detailModal');
+  const hierarchy = document.getElementById('detailHierarchy');
+  const body = document.getElementById('detailBody');
+
+  hierarchy.innerHTML = `<strong>${id}</strong>`;
+  body.innerHTML = '<div style="text-align:center;padding:24px;color:var(--text-muted)">로딩 중...</div>';
+  modal.classList.add('open');
+
+  try {
+    if (!kanbanCache) {
+      const r = await fetch('/api/kanban');
+      kanbanCache = await r.json();
+    }
+    const result = findItemById(kanbanCache, id);
+    if (!result) {
+      body.innerHTML = '<div style="text-align:center;padding:24px;color:var(--text-muted)">항목을 찾을 수 없습니다</div>';
+      return;
+    }
+
+    const { item, parents } = result;
+    const crumbs = parents.map(p => `<span class="hierarchy-crumb">${esc(p.id)} ${esc(p.title)}</span>`);
+    crumbs.push(`<strong>${esc(item.id)} ${esc(item.title || '')}</strong>`);
+    hierarchy.innerHTML = crumbs.join(' <span class="hierarchy-crumb">›</span> ');
+
+    const statusColor = getStatusColor(item.status);
+    const priorityLabel = item.priority ? `<span style="text-transform:capitalize">${esc(item.priority)}</span>` : '—';
+    const agentTags = (item.agents || []).map(a =>
+      `<span style="display:inline-flex;align-items:center;gap:3px;background:${AGENT_COLORS[a] || '#656d76'};color:#fff;padding:2px 8px;border-radius:var(--radius-pill);font-size:11px;font-weight:600">${AGENT_ICONS[a] || ''} ${AGENT_LABELS[a] || a}</span>`
+    ).join(' ');
+
+    body.innerHTML = `
+      <div class="detail-field">
+        <div class="detail-field-label">ID</div>
+        <div class="detail-field-value" style="font-weight:600;font-size:16px">${esc(item.id)}</div>
+      </div>
+      <div class="detail-field">
+        <div class="detail-field-label">제목</div>
+        <div class="detail-field-value">${esc(item.title || '')}</div>
+      </div>
+      <div class="detail-field">
+        <div class="detail-field-label">상태</div>
+        <div class="detail-field-value">
+          <span class="status-pill" style="background:${statusColor.bg};color:${statusColor.fg}">${esc(item.status || 'unknown')}</span>
+        </div>
+      </div>
+      <div class="detail-field">
+        <div class="detail-field-label">우선순위</div>
+        <div class="detail-field-value">${priorityLabel}</div>
+      </div>
+      ${agentTags ? `<div class="detail-field"><div class="detail-field-label">담당 에이전트</div><div class="detail-field-value" style="display:flex;gap:6px;flex-wrap:wrap">${agentTags}</div></div>` : ''}
+      ${item.description ? `<div class="detail-field"><div class="detail-field-label">설명</div><div class="detail-field-value">${esc(item.description)}</div></div>` : ''}
+    `;
+  } catch (e) {
+    body.innerHTML = `<div style="text-align:center;padding:24px;color:var(--danger)">데이터를 불러올 수 없습니다</div>`;
+  }
+}
+
+function closeDetailModal() {
+  document.getElementById('detailModal').classList.remove('open');
+}
+
+// Click overlay to close
+document.getElementById('detailModal').addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeDetailModal();
+});
+
+// ── Find Item in Kanban Hierarchy ───────────────────────────────────────────
+function findItemById(data, id) {
+  const epics = data.epics || [];
+  for (const epic of epics) {
+    if (epic.id === id) return { item: epic, parents: [] };
+    const stories = epic.stories || [];
+    for (const story of stories) {
+      if (story.id === id) return { item: story, parents: [{ id: epic.id, title: epic.title }] };
+      const tasks = story.tasks || [];
+      for (const task of tasks) {
+        if (task.id === id) return {
+          item: task,
+          parents: [
+            { id: epic.id, title: epic.title },
+            { id: story.id, title: story.title }
+          ]
+        };
+      }
+    }
+  }
+  return null;
+}
+
+// ── Helpers ─────────────────────────────────────────────────────────────────
+function esc(s) {
+  if (!s) return '';
+  const d = document.createElement('div');
+  d.textContent = String(s);
+  return d.innerHTML;
+}
+
+function formatDate(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  const pad = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+}
+
+function getStatusColor(status) {
+  const map = {
+    backlog:           { bg: '#e8def8', fg: '#8250df' },
+    pending_approval:  { bg: '#fff8c5', fg: '#9a6700' },
+    in_progress:       { bg: '#ddf4ff', fg: '#0969da' },
+    review:            { bg: '#fff1e5', fg: '#bc4c00' },
+    done:              { bg: '#dafbe1', fg: '#1a7f37' },
+  };
+  return map[status] || { bg: '#eaeef2', fg: '#656d76' };
+}
+</script>
+</body>
+</html>

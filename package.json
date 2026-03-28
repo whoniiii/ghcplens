@@ -1,0 +1,17 @@
+{
+  "name": "ghcp-lens",
+  "version": "1.0.0",
+  "description": "GitHub Copilot Lens — Session Monitor Dashboard",
+  "main": "src/server.js",
+  "scripts": {
+    "test": "vitest run --reporter=verbose",
+    "start": "node src/server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "vitest": "^4.1.2"
+  }
+}
