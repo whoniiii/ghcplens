@@ -1250,7 +1250,7 @@ const renderSessions = (sessions) => {
       html += `<div class="st-row${sel}"${dimStyle} onclick="openDetail('${s.id}')">`;
       html += `<div class="st-col-status"><span class="dot ${sc}"></span></div>`;
       html += `<div class="st-col-summary"${s.isActive ? '' : ' style="color:var(--text-secondary)"'}>${escHtml(s.summary || t('emptySession'))}${s.intent ? '<span class="st-col-intent"> · ' + escHtml(s.intent) + '</span>' : (s.isActive && s.state === 'waiting' ? '<span class="st-col-intent"> · ⏳ ' + escHtml((s.waitingContext || '').substring(0, 30)) + '</span>' : '')}</div>`;
-      html += `<div class="st-col-lastmsg">${escHtml(s.description || s.lastUserMessage || '')}</div>`;
+      html += `<div class="st-col-lastmsg">${escHtml(s.lastUserMessage || '')}</div>`;
       html += `<div class="st-col-stats">${s.turnCount ?? 0} · ${s.toolCalls ?? 0} · ${formatTokens(s.outputTokens || 0)}</div>`;
       html += `<div class="st-col-time">${timeAgo(s.updatedAt)}</div>`;
       html += `</div>`;

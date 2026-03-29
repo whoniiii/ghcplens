@@ -193,9 +193,12 @@ function getSessionState(sessionDir, sessionId) {
   if (etype === 'user.message') return { state: 'working', waitingContext: '', bgTasks, bgTaskList };
   if (etype === 'assistant.turn_start' || etype === 'assistant.message') return { state: 'working', waitingContext: '', bgTasks, bgTaskList };
   if (etype === 'session.task_complete') return { state: 'idle', waitingContext: '', bgTasks, bgTaskList };
+  if (etype === 'tool.execution_complete') return { state: 'working', waitingContext: '', bgTasks, bgTaskList };
   if (etype === 'session.compaction' || etype === 'session.mode_changed') return { state: 'idle', waitingContext: '', bgTasks, bgTaskList };
   if (etype === 'session.resume' || etype === 'session.start') return { state: 'idle', waitingContext: '', bgTasks, bgTaskList };
   if (etype === 'session.warning' || etype === 'session.info' || etype === 'session.shutdown') return { state: 'idle', waitingContext: '', bgTasks, bgTaskList };
+  if (etype === 'subagent.completed' || etype === 'system.notification') return { state: 'working', waitingContext: '', bgTasks, bgTaskList };
+  if (etype === 'hook.start' || etype === 'hook.end') return { state: 'working', waitingContext: '', bgTasks, bgTaskList };
 
   return { state: 'unknown', waitingContext: '', bgTasks, bgTaskList };
 }
@@ -717,6 +720,151 @@ function parseAgentData(eventsFile) {
   return { agents, agentMap, turnMap };
 }
 
+// ── Tool Call Detail Parser ─────────────────────────────────────────────────
+// Reads events.jsonl and extracts tool call input/output for the main session.
+
+function getToolCalls(eventsFile, turnIndexFilter, toolNameFilter, iidFilter, parentFilter) {
+  const MAX_LEN = 5000;
+  const iidToIndex = new Map();
+  let turnCounter = 0;
+  const tcidToIid = new Map();
+  const toolEntries = new Map();
+  const toolResults = new Map();
+
+  try {
+    const content = fs.readFileSync(eventsFile, 'utf-8');
+    for (const line of content.split('\n')) {
+      if (!line) continue;
+
+      // ── user.message → build interactionId → turnIndex mapping
+      if (line.includes('"user.message"')) {
+        try {
+          const evt = JSON.parse(line);
+          const iid = (evt.data || {}).interactionId || '';
+          if (iid && !iidToIndex.has(iid)) {
+            iidToIndex.set(iid, turnCounter++);
+          }
+        } catch {}
+        continue;
+      }
+
+      // ── assistant.message (main session) → map toolCallIds to interactionId
+      if (line.includes('"assistant.message"')) {
+        try {
+          const evt = JSON.parse(line);
+          const d = evt.data || {};
+          if (d.parentToolCallId) continue; // skip agent-internal
+          const iid = d.interactionId || '';
+          if (iid && Array.isArray(d.toolRequests)) {
+            for (const tr of d.toolRequests) {
+              if (tr.toolCallId) tcidToIid.set(tr.toolCallId, iid);
+            }
+          }
+        } catch {}
+        continue;
+      }
+
+      // ── tool.execution_start → capture toolName, arguments, timestamp
+      if (line.includes('"tool.execution_start"')) {
+        try {
+          const evt = JSON.parse(line);
+          const d = evt.data || {};
+          const ptcid = d.parentToolCallId || '';
+          // parentFilter: show only agent-internal tools; no parentFilter: show only main-session tools
+          if (parentFilter) {
+            if (ptcid !== parentFilter) continue;
+          } else {
+            if (ptcid) continue;
+          }
+          const tcid = d.toolCallId || '';
+          if (tcid && d.toolName) {
+            toolEntries.set(tcid, {
+              toolName: d.toolName,
+              input: d.arguments || {},
+              timestamp: evt.timestamp || '',
+            });
+          }
+        } catch {}
+        continue;
+      }
+
+      // ── tool.execution_complete → capture result
+      if (line.includes('"tool.execution_complete"')) {
+        try {
+          const evt = JSON.parse(line);
+          const d = evt.data || {};
+          const ptcid = d.parentToolCallId || '';
+          if (parentFilter) {
+            if (ptcid !== parentFilter) continue;
+          } else {
+            if (ptcid) continue;
+          }
+          const tcid = d.toolCallId || '';
+          if (tcid) {
+            let result = d.result;
+            if (result && typeof result === 'object') {
+              result = result.content != null ? String(result.content) : JSON.stringify(result);
+            }
+            toolResults.set(tcid, result != null ? String(result) : '');
+          }
+        } catch {}
+        continue;
+      }
+    }
+  } catch {}
+
+  // ── Build output list with filters ──
+  const output = [];
+  for (const [tcid, entry] of toolEntries) {
+    const iid = tcidToIid.get(tcid) || '';
+    const turnIndex = iid ? (iidToIndex.get(iid) ?? -1) : -1;
+
+    // Apply filters
+    if (iidFilter && iid !== iidFilter) continue;
+    if (turnIndexFilter !== null && turnIndex !== turnIndexFilter) continue;
+    if (toolNameFilter && entry.toolName !== toolNameFilter) continue;
+
+    // Truncate input
+    let input = entry.input;
+    let inputTruncated = false;
+    if (typeof input === 'object') {
+      const s = JSON.stringify(input);
+      if (s.length > MAX_LEN) {
+        input = s.substring(0, MAX_LEN);
+        inputTruncated = true;
+      }
+    } else {
+      const s = String(input);
+      if (s.length > MAX_LEN) {
+        input = s.substring(0, MAX_LEN);
+        inputTruncated = true;
+      }
+    }
+
+    // Truncate result
+    let result = toolResults.get(tcid) || '';
+    let resultTruncated = false;
+    if (result.length > MAX_LEN) {
+      result = result.substring(0, MAX_LEN);
+      resultTruncated = true;
+    }
+
+    const item = {
+      toolCallId: tcid,
+      toolName: entry.toolName,
+      input,
+      result,
+      timestamp: entry.timestamp,
+      turnIndex,
+    };
+    if (inputTruncated || resultTruncated) item.truncated = true;
+
+    output.push(item);
+  }
+
+  return output;
+}
+
 // Single-pass events.jsonl parser for hierarchical timeline view.
 
 function buildTimeline(eventsFile, limit, page) {
@@ -751,7 +899,7 @@ function buildTimeline(eventsFile, limit, page) {
             turnMap.set(iid, {
               interactionId: iid,
               timestamp: evt.timestamp || '',
-              userMessage: (d.content || '').replace(/<[^>]+>/g, '').trim().substring(0, 500),
+              userMessage: (d.content || '').trim().substring(0, 500),
               assistantMessage: '',
               directToolCalls: [],
               targetAgent,
@@ -776,7 +924,9 @@ function buildTimeline(eventsFile, limit, page) {
               const turn = turnMap.get(iid);
               if (turn) {
                 const c = d.content || '';
-                if (c) turn.assistantMessage = c.substring(0, 500);
+                if (c && c.length > (turn.assistantMessage || '').length) {
+                  turn.assistantMessage = c.substring(0, 500);
+                }
               }
               // Map toolRequests toolCallIds → interactionId
               if (Array.isArray(d.toolRequests)) {
@@ -1245,6 +1395,27 @@ function handleRequest(req, res) {
     return;
   }
 
+  // GET /api/sessions/:id/tool-calls — Tool call input/output detail
+  if (pathname.match(/^\/api\/sessions\/[^/]+\/tool-calls$/) && req.method === 'GET') {
+    const id = pathname.split('/')[3];
+    const sessionDir = path.join(SESSION_STATE_DIR, id);
+    const eventsFile = path.join(sessionDir, 'events.jsonl');
+    if (!fs.existsSync(eventsFile)) {
+      res.writeHead(404, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Session not found' }));
+      return;
+    }
+    const turnIndexParam = url.searchParams.get('turnIndex');
+    const turnIndexFilter = turnIndexParam !== null ? parseInt(turnIndexParam, 10) : null;
+    const toolNameFilter = url.searchParams.get('toolName') || '';
+    const iidFilter = url.searchParams.get('interactionId') || '';
+    const parentFilter = url.searchParams.get('parentToolCallId') || '';
+    const toolCalls = getToolCalls(eventsFile, turnIndexFilter, toolNameFilter, iidFilter, parentFilter);
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ toolCalls }));
+    return;
+  }
+
   if (pathname.startsWith('/api/sessions/') && req.method === 'GET') {
     const id = pathname.slice('/api/sessions/'.length);
     const detail = getSessionDetail(id);
@@ -1259,7 +1430,7 @@ function handleRequest(req, res) {
   }
 
   // ── Static Files ──
-  let filePath = pathname === '/' ? '/index.html' : pathname === '/v2' ? '/index-v2.html' : pathname;
+  let filePath = pathname === '/' ? '/index-v2.html' : pathname === '/v1' ? '/index.html' : pathname;
   filePath = path.join(__dirname, '..', 'public', filePath);
 
   if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {

@@ -31,7 +31,7 @@ async function ensureServer() {
 }
 
 function getWebviewContent(extensionPath, port) {
-  const htmlPath = path.join(extensionPath, 'public', 'index.html');
+  const htmlPath = path.join(extensionPath, 'public', 'index-v2.html');
   let html = fs.readFileSync(htmlPath, 'utf-8');
 
   // Inject API base URL for fetch calls

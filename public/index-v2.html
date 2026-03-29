@@ -32,6 +32,7 @@
   --accent-bg: #2d3a4f;
 }
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { overflow: hidden; margin: 0; padding: 0; scrollbar-gutter: auto; }
 
 /* Scrollbar — VSCode style */
 ::-webkit-scrollbar { width: 8px; height: 8px; }
@@ -50,6 +51,7 @@ body {
   font-size: 13px; scrollbar-color: var(--border) transparent; scrollbar-width: thin;
   font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
   -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
+  overflow: hidden; margin: 0; padding: 0; scrollbar-gutter: auto;
 }
 
 /* Header */
@@ -98,39 +100,43 @@ body {
 
 /* Stats Bar */
 .stats-bar {
-  display: flex; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; align-items: center;
+  display: flex; gap: 0; margin-bottom: 8px; align-items: stretch;
+  border: 1px solid var(--border); border-radius: 4px; overflow: hidden;
+  background: var(--surface); font-size: 12px;
 }
 .stat {
   display: flex; align-items: center; gap: 6px;
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: 0; padding: 4px 10px; font-size: 12px; font-weight: 500;
+  padding: 6px 14px; font-weight: 400; color: var(--text-secondary);
+  border-right: 1px solid var(--border); cursor: default;
+  transition: background 0.1s;
 }
-.stat-badge {
-  display: inline-flex; align-items: center; justify-content: center;
-  min-width: 18px; height: 18px; border-radius: 2px;
-  font-size: 11px; font-weight: 600; color: #fff; padding: 0 5px;
+.stat:last-of-type { border-right: none; }
+.stat:hover { background: var(--surface-hover); }
+.stat-dot {
+  width: 7px; height: 7px; border-radius: 50%;
 }
-.stat-badge.green { background: var(--success); }
-.stat-badge.blue { background: var(--accent); }
-.stat-badge.yellow { background: var(--warning); }
-.stat-badge.gray { background: var(--text-muted); }
+.stat-dot.blue { background: var(--accent); }
+.stat-dot.yellow { background: var(--warning); }
+.stat-dot.green { background: var(--success); }
+.stat-count { font-weight: 600; color: var(--text); }
 
 /* Toggle switch */
 .toggle-wrap {
   display: flex; align-items: center; gap: 6px; margin-left: auto;
-  font-size: 11px; color: var(--text-secondary); user-select: none; cursor: pointer;
+  padding: 6px 12px;
+  font-size: 11px; color: var(--text-muted); user-select: none; cursor: pointer;
 }
 .toggle-track {
-  width: 28px; height: 14px; border-radius: 2px; background: var(--border);
+  width: 26px; height: 14px; border-radius: 7px; background: var(--border);
   position: relative; transition: background 0.15s;
 }
 .toggle-track.on { background: var(--accent); }
 .toggle-knob {
-  width: 10px; height: 10px; border-radius: 1px; background: #fff;
+  width: 10px; height: 10px; border-radius: 50%; background: #fff;
   position: absolute; top: 2px; left: 2px; transition: left 0.15s;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.15);
 }
-.toggle-track.on .toggle-knob { left: 16px; }
+.toggle-track.on .toggle-knob { left: 14px; }
 
 /* Polling interval selector */
 .poll-ctrl {
@@ -210,7 +216,7 @@ body {
 
 .st-col-status { width: 20px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
 .st-col-summary {
-  width: 260px; flex-shrink: 0; font-size: 12px; font-weight: 500; color: var(--text);
+  width: 200px; flex-shrink: 0; font-size: 12px; font-weight: 500; color: var(--text);
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 0 8px;
 }
 .st-col-intent {
@@ -218,12 +224,16 @@ body {
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   margin-left: 4px;
 }
+.st-col-memo {
+  width: 140px; flex-shrink: 0; font-size: 11px; color: var(--text-secondary);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 0 8px;
+}
 .st-col-lastmsg {
   flex: 1; min-width: 0; font-size: 11px; color: var(--text-secondary);
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding-right: 8px;
 }
-.st-col-stats {
-  width: 20%; flex-shrink: 0; font-size: 11px; color: var(--text-muted);
+.st-col-turns, .st-col-tokens {
+  width: 56px; flex-shrink: 0; font-size: 11px; color: var(--text-muted);
   text-align: right; white-space: nowrap; padding-right: 8px;
 }
 .st-col-time {
@@ -543,11 +553,11 @@ body {
 .tl-target-agent::before { content: '@'; font-weight: 400; opacity: 0.6; }
 .tl-user .tl-text, .tl-assistant .tl-text {
   overflow: hidden; text-overflow: ellipsis;
-  white-space: nowrap; display: block;
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
   min-width: 0; max-width: 100%;
 }
 .tl-user.expanded .tl-text, .tl-assistant.expanded .tl-text {
-  white-space: pre-wrap; word-break: break-word;
+  -webkit-line-clamp: unset; white-space: pre-wrap; word-break: break-word;
 }
 .tl-assistant {
   padding: 4px 10px; margin: 2px 0; font-size: 11px;
@@ -594,20 +604,61 @@ body {
 .tl-tool-count { font-size: 9px; color: var(--text-muted); width: 20px; }
 .tl-collapsible {
   max-height: 3em; overflow: hidden; cursor: pointer;
-  position: relative; padding: 2px 0;
+  position: relative; padding: 4px 8px;
   color: var(--text-secondary); font-size: 11px;
   white-space: pre-wrap; word-break: break-word;
+  background: var(--bg); border-radius: 3px;
+  border-left: 2px solid var(--border);
 }
 .tl-collapsible.expanded { max-height: none; }
 .tl-collapsible-label {
   font-size: 10px; color: var(--accent); cursor: pointer;
-  display: inline-block; margin-top: 2px;
+  display: none; margin-top: 2px;
 }
+.tl-collapsible-label.visible { display: inline-block; }
 .tl-collapsible-label:hover { text-decoration: underline; }
-.tl-children {
+.tl-section-label {
+  font-size: 10px; color: var(--text-muted); margin-bottom: 3px;
+  font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;
+}
+.tl-section-label.prompt { color: var(--accent); }
+.tl-section-label.result { color: var(--success); }
+/* Agent call chain tree connector */
+.tl-sub-agents {
+  margin: 8px 0 0 20px;
+  padding-left: 16px;
+  border-left: 2px solid var(--border);
+  position: relative;
+}
+.tl-sub-agents > .tl-agent {
+  position: relative;
+}
+.tl-sub-agents > .tl-agent::before {
+  content: '';
+  position: absolute;
+  left: -16px;
+  top: 14px;
+  width: 12px;
+  height: 0;
+  border-top: 2px solid var(--border);
+}
+.tl-sub-agents > .tl-agent:last-child {
+  margin-bottom: 0;
+}
+.tl-call-label {
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 8px 0 4px 0;
+  padding-left: 4px;
+  font-weight: 600;
+}
+.tl-called-by {
+  font-size: 10px;
+  color: var(--text-muted);
   margin-left: 8px;
-  border-left: 2px dashed var(--border);
-  padding-left: 8px;
+  font-weight: 400;
 }
 .tl-agent[data-status="done"] { border-left-color: #28a745; }
 .tl-agent[data-status="failed"] { border-left-color: #dc3545; }
@@ -628,15 +679,13 @@ body {
   padding-bottom: 4px; border-bottom: 1px solid var(--border);
 }
 .dp-desc {
-  font-size: 12px; color: var(--text); padding: 6px 8px;
-  background: var(--bg); border: 1px solid var(--border); border-radius: 4px;
-  min-height: 20px; cursor: pointer; line-height: 1.5;
-  transition: border-color 0.15s;
+  font-size: 12px; color: var(--text); display: inline; line-height: 1.5;
 }
-.dp-desc:hover { border-color: var(--accent); }
-.dp-desc:empty::before {
-  content: '클릭하여 설명 추가...'; color: var(--text-muted); font-style: italic;
+.dp-desc-btn {
+  font-size: 10px; color: var(--text-muted); background: none; border: 1px solid var(--border);
+  border-radius: 3px; padding: 1px 6px; cursor: pointer; margin-left: 6px; vertical-align: middle;
 }
+.dp-desc-btn:hover { border-color: var(--accent); color: var(--accent); }
 .dp-desc-edit {
   font-size: 12px; color: var(--text); padding: 6px 8px; width: 100%;
   background: var(--bg); border: 1px solid var(--accent); border-radius: 4px;
@@ -667,11 +716,7 @@ body {
 .dp-field-value { color: var(--text); word-break: break-all; }
 .dp-field-value.mono { font-family: 'SFMono-Regular', Consolas, 'Courier New', monospace; font-size: 11px; }
 
-.dp-intent { 
-  padding: 5px 10px; background: var(--accent-bg); border-radius: 0;
-  font-size: 12px; color: var(--accent); font-weight: 500;
-  margin-bottom: 8px; border-left: 2px solid var(--accent);
-}
+.dp-intent { display: none; }
 .dp-waiting-box {
   padding: 5px 10px; background: #fff8c5; border: 1px solid #d4a72c44;
   border-radius: 0; font-size: 11px; color: var(--warning); margin-top: 6px;
@@ -774,13 +819,14 @@ body {
 
 /* Toast notification */
 .toast-msg {
-  position: fixed; bottom: 24px; right: 24px; transform: translateY(20px);
-  background: var(--surface); border: 1px solid var(--border); color: var(--text);
-  padding: 8px 16px; font-size: 12px; z-index: 999;
+  position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%) translateY(20px);
+  background: #212529; color: #fff;
+  padding: 10px 28px; font-size: 13px; font-weight: 500; z-index: 9999;
   opacity: 0; transition: opacity 0.3s, transform 0.3s;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-radius: 2px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.25); border-radius: 6px;
+  white-space: nowrap;
 }
-.toast-msg.show { opacity: 1; transform: translateY(0); }
+.toast-msg.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 .dp-file {
   font-size: 11px; font-family: 'SFMono-Regular', Consolas, monospace;
   color: var(--text-secondary); padding: 2px 0; overflow: hidden;
@@ -836,6 +882,36 @@ body {
   margin-top: 20px; font-size: 11px; color: var(--text-muted);
   padding-top: 16px; border-top: 1px solid var(--border);
 }
+
+/* ─── Generic Modal ─── */
+.modal-overlay {
+  display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.5); z-index: 10000;
+  justify-content: center; align-items: center;
+}
+.modal-overlay.visible { display: flex; }
+.modal-container {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 6px; width: 90%; max-width: 700px; max-height: 80vh;
+  display: flex; flex-direction: column;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+}
+.modal-header {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 12px 16px; border-bottom: 1px solid var(--border);
+}
+.modal-title { font-size: 14px; font-weight: 600; color: var(--text); margin: 0; }
+.modal-close {
+  background: none; border: none; font-size: 18px; color: var(--text-muted);
+  cursor: pointer; padding: 0 4px; line-height: 1;
+}
+.modal-close:hover { color: var(--text); }
+.modal-body {
+  padding: 16px; overflow-y: auto; flex: 1;
+  font-size: 12px; color: var(--text);
+}
+.tl-tool-badge { cursor: pointer; }
+.tl-tool-badge:hover { background: var(--surface-hover); border-color: var(--accent); color: var(--text); }
 </style>
 </head>
 <body>
@@ -989,12 +1065,13 @@ const I18N = {
     stateWorking: '작업 중', stateWaiting: '질문 중', stateIdle: '대기', stateCompleted: '종료', stateUnknown: '알 수 없음',
     sessionDetail: '세션 상세', selectSession: '세션을 선택하세요', noSessions: '세션이 없습니다',
     session: '세션', lastMsg: '최근 대화', stats: '턴 · 도구 · 토큰', recent: '최근',
-    summary: 'Summary', path: 'Path', repo: 'Repository', branch: 'Branch',
-    sessionId: 'Session ID', created: 'Created', updated: 'Updated',
-    statsTitle: 'Statistics', toolUsage: 'Tool Usage', checkpoints: 'Checkpoints',
-    recentTurns: 'Recent Turns', timeline: 'Event Timeline', filesModified: 'Modified Files',
+    summary: '요약', path: '경로', repo: '저장소', branch: '브랜치',
+    sessionId: '세션 ID', created: '생성일', updated: '수정일',
+    statsTitle: '통계', toolUsage: '도구 사용', checkpoints: '체크포인트',
+    recentTurns: '최근 턴', timeline: '이벤트 타임라인', filesModified: '수정된 파일',
     emptySession: '(빈 세션)', noValue: '(없음)', showEmpty: '빈 세션 보기',
     total: '총', turns: '턴', tools: '도구',
+    colMemo: '메모', colTurns: '턴', colTokens: '토큰',
     copyPath: '경로가 복사되었습니다', copyResume: '복사 완료 — VSCode 터미널에서 붙여넣고 세션을 이어가세요',
     copyPathTitle: '전체 경로 복사', copyResumeTitle: '세션 이어가기 명령 복사',
     vscodeOpened: 'VSCode가 열렸습니다 — 터미널(Ctrl+`)에서 Ctrl+V로 붙여넣으세요',
@@ -1002,14 +1079,16 @@ const I18N = {
     copied: '복사되었습니다',
     secAgo: '초 전', minAgo: '분 전', hrAgo: '시간 전', dayAgo: '일 전',
     statsTooltip: '대화 수 · 도구 호출 수',
-    agentPanelTitle: 'Agents',
-    agentBack: 'Back', agentTasks: '개 작업', agentSuccess: '성공', agentFailed: '실패',
-    agentPromptLabel: 'Prompt', agentResultLabel: 'Result', agentToolsLabel: 'Tools',
-    agentTurnsLabel: 'Turns', agentTokensLabel: 'Tokens',
-    noAgentsInTurn: '에이전트 없음', turnAgents: 'Turn Agents',
-    showMore: 'Show more', showLess: 'Collapse',
-    sessionTimeline: 'Session Timeline', noTimelineData: '타임라인 데이터가 없습니다',
-    memo: 'Memo', plan: 'Plan', bgTasks: 'Background Tasks', connect: 'Connect', connecting: 'Connecting...',
+    agentPanelTitle: '에이전트',
+    agentBack: '뒤로', agentTasks: '개 작업', agentSuccess: '성공', agentFailed: '실패',
+    agentPromptLabel: '프롬프트', agentResultLabel: '결과', agentToolsLabel: '도구',
+    agentTurnsLabel: '턴', agentTokensLabel: '토큰', calledAgents: '호출한 에이전트',
+    noAgentsInTurn: '에이전트 없음', turnAgents: '턴 에이전트',
+    showMore: '더 보기', showLess: '접기',
+    sessionTimeline: '세션 타임라인', noTimelineData: '타임라인 데이터가 없습니다',
+    memo: '메모', plan: '플랜', bgTasks: '백그라운드 작업', connect: '연결', connecting: '연결 중...',
+    cancel: '취소', save: '저장',
+    toolInput: '입력', toolOutput: '출력', toolNoData: '도구 데이터가 없습니다', loading: '로딩 중...',
   },
   en: {
     working: 'Working', waiting: 'Asking', idle: 'Idle', completed: 'Ended', unknown: 'Unknown',
@@ -1022,6 +1101,7 @@ const I18N = {
     recentTurns: 'Recent Turns', timeline: 'Event Timeline', filesModified: 'Modified Files',
     emptySession: '(empty)', noValue: '(none)', showEmpty: 'Show empty sessions',
     total: 'Total', turns: 'turns', tools: 'tools',
+    colMemo: 'Memo', colTurns: 'Turns', colTokens: 'Tokens',
     copyPath: 'Path copied', copyResume: 'Copied — paste in VSCode terminal to resume',
     copyPathTitle: 'Copy full path', copyResumeTitle: 'Copy resume command',
     vscodeOpened: 'VSCode opened — paste with Ctrl+V in terminal (Ctrl+`)',
@@ -1032,23 +1112,26 @@ const I18N = {
     agentPanelTitle: 'Agents',
     agentBack: 'Back', agentTasks: 'tasks', agentSuccess: 'success', agentFailed: 'failed',
     agentPromptLabel: 'Prompt', agentResultLabel: 'Result', agentToolsLabel: 'Tools',
-    agentTurnsLabel: 'Turns', agentTokensLabel: 'Tokens',
+    agentTurnsLabel: 'Turns', agentTokensLabel: 'Tokens', calledAgents: 'Called Agents',
     noAgentsInTurn: 'No agents', turnAgents: 'Turn Agents',
     showMore: 'Show more', showLess: 'Collapse',
     sessionTimeline: 'Session Timeline', noTimelineData: 'No timeline data',
     memo: 'Memo', plan: 'Plan', bgTasks: 'Background Tasks', connect: 'Connect', connecting: 'Connecting...',
+    cancel: 'Cancel', save: 'Save',
+    toolInput: 'Input', toolOutput: 'Output', toolNoData: 'No tool data available', loading: 'Loading...',
   },
   ja: {
-    working: '実行中', waiting: '質問中', idle: '待機', completed: '終了', unknown: '不明',
+    working: '実行中',waiting: '質問中', idle: '待機', completed: '終了', unknown: '不明',
     stateWorking: '実行中', stateWaiting: '質問中', stateIdle: '待機', stateCompleted: '終了', stateUnknown: '不明',
     sessionDetail: 'セッション詳細', selectSession: 'セッションを選択してください', noSessions: 'セッションがありません',
     session: 'セッション', lastMsg: '最近の会話', stats: 'ターン · ツール · トークン', recent: '最近',
-    summary: 'Summary', path: 'Path', repo: 'Repository', branch: 'Branch',
-    sessionId: 'Session ID', created: 'Created', updated: 'Updated',
-    statsTitle: 'Statistics', toolUsage: 'Tool Usage', checkpoints: 'Checkpoints',
-    recentTurns: 'Recent Turns', timeline: 'Event Timeline', filesModified: 'Modified Files',
+    summary: '要約', path: 'パス', repo: 'リポジトリ', branch: 'ブランチ',
+    sessionId: 'セッションID', created: '作成日', updated: '更新日',
+    statsTitle: '統計', toolUsage: 'ツール使用', checkpoints: 'チェックポイント',
+    recentTurns: '最近のターン', timeline: 'イベントタイムライン', filesModified: '変更ファイル',
     emptySession: '(空)', noValue: '(なし)', showEmpty: '空セッション表示',
     total: '計', turns: 'ターン', tools: 'ツール',
+    colMemo: 'メモ', colTurns: 'ターン', colTokens: 'トークン',
     copyPath: 'パスをコピーしました', copyResume: 'コピー完了 — VSCodeターミナルに貼り付けてください',
     copyPathTitle: 'フルパスをコピー', copyResumeTitle: 'レジュームコマンドをコピー',
     vscodeOpened: 'VSCodeが開きました — ターミナル(Ctrl+`)でCtrl+Vで貼り付け',
@@ -1056,26 +1139,29 @@ const I18N = {
     copied: 'コピーしました',
     secAgo: '秒前', minAgo: '分前', hrAgo: '時間前', dayAgo: '日前',
     statsTooltip: '会話数 · ツール呼出数',
-    agentPanelTitle: 'Agents',
-    agentBack: 'Back', agentTasks: '件の作業', agentSuccess: '成功', agentFailed: '失敗',
-    agentPromptLabel: 'Prompt', agentResultLabel: 'Result', agentToolsLabel: 'Tools',
-    agentTurnsLabel: 'Turns', agentTokensLabel: 'Tokens',
-    noAgentsInTurn: 'エージェントなし', turnAgents: 'Turn Agents',
-    showMore: 'Show more', showLess: 'Collapse',
-    sessionTimeline: 'Session Timeline', noTimelineData: 'タイムラインデータなし',
-    memo: 'Memo', plan: 'Plan', bgTasks: 'Background Tasks', connect: 'Connect', connecting: 'Connecting...',
+    agentPanelTitle: 'エージェント',
+    agentBack: '戻る', agentTasks: '件の作業', agentSuccess: '成功', agentFailed: '失敗',
+    agentPromptLabel: 'プロンプト', agentResultLabel: '結果', agentToolsLabel: 'ツール',
+    agentTurnsLabel: 'ターン', agentTokensLabel: 'トークン', calledAgents: '呼び出したエージェント',
+    noAgentsInTurn: 'エージェントなし', turnAgents: 'ターンエージェント',
+    showMore: '続きを見る', showLess: '折りたたむ',
+    sessionTimeline: 'セッションタイムライン', noTimelineData: 'タイムラインデータなし',
+    memo: 'メモ', plan: 'プラン', bgTasks: 'バックグラウンド作業', connect: '接続', connecting: '接続中...',
+    cancel: 'キャンセル', save: '保存',
+    toolInput: '入力', toolOutput: '出力', toolNoData: 'ツールデータなし', loading: '読み込み中...',
   },
   zh: {
     working: '工作中', waiting: '提问中', idle: '空闲', completed: '结束', unknown: '未知',
     stateWorking: '工作中', stateWaiting: '提问中', stateIdle: '空闲', stateCompleted: '结束', stateUnknown: '未知',
     sessionDetail: '会话详情', selectSession: '请选择一个会话', noSessions: '没有会话',
     session: '会话', lastMsg: '最近对话', stats: '轮次 · 工具 · 令牌', recent: '最近',
-    summary: 'Summary', path: 'Path', repo: 'Repository', branch: 'Branch',
-    sessionId: 'Session ID', created: 'Created', updated: 'Updated',
-    statsTitle: 'Statistics', toolUsage: 'Tool Usage', checkpoints: 'Checkpoints',
-    recentTurns: 'Recent Turns', timeline: 'Event Timeline', filesModified: 'Modified Files',
+    summary: '摘要', path: '路径', repo: '仓库', branch: '分支',
+    sessionId: '会话ID', created: '创建时间', updated: '更新时间',
+    statsTitle: '统计', toolUsage: '工具使用', checkpoints: '检查点',
+    recentTurns: '最近轮次', timeline: '事件时间线', filesModified: '修改文件',
     emptySession: '(空会话)', noValue: '(无)', showEmpty: '显示空会话',
     total: '共', turns: '轮', tools: '工具',
+    colMemo: '备注', colTurns: '轮次', colTokens: '令牌',
     copyPath: '路径已复制', copyResume: '已复制 — 请在VSCode终端中粘贴',
     copyPathTitle: '复制完整路径', copyResumeTitle: '复制恢复命令',
     vscodeOpened: 'VSCode已打开 — 在终端(Ctrl+`)中用Ctrl+V粘贴',
@@ -1083,17 +1169,19 @@ const I18N = {
     copied: '已复制',
     secAgo: '秒前', minAgo: '分前', hrAgo: '小时前', dayAgo: '天前',
     statsTooltip: '对话数 · 工具调用数',
-    agentPanelTitle: 'Agents',
-    agentBack: 'Back', agentTasks: '个任务', agentSuccess: '成功', agentFailed: '失败',
-    agentPromptLabel: 'Prompt', agentResultLabel: 'Result', agentToolsLabel: 'Tools',
-    agentTurnsLabel: 'Turns', agentTokensLabel: 'Tokens',
-    noAgentsInTurn: '无代理', turnAgents: 'Turn Agents',
-    showMore: 'Show more', showLess: 'Collapse',
-    sessionTimeline: 'Session Timeline', noTimelineData: '无时间线数据',
-    memo: 'Memo', plan: 'Plan', bgTasks: 'Background Tasks', connect: 'Connect', connecting: 'Connecting...',
+    agentPanelTitle: '代理',
+    agentBack: '返回', agentTasks: '个任务', agentSuccess: '成功', agentFailed: '失败',
+    agentPromptLabel: '提示', agentResultLabel: '结果', agentToolsLabel: '工具',
+    agentTurnsLabel: '轮次', agentTokensLabel: '令牌', calledAgents: '调用的代理',
+    noAgentsInTurn: '无代理', turnAgents: '轮次代理',
+    showMore: '展开更多', showLess: '收起',
+    sessionTimeline: '会话时间线', noTimelineData: '无时间线数据',
+    memo: '备注', plan: '计划', bgTasks: '后台任务', connect: '连接', connecting: '连接中...',
+    cancel: '取消', save: '保存',
+    toolInput: '输入', toolOutput: '输出', toolNoData: '无工具数据', loading: '加载中...',
   }
 };
-let currentLang = localStorage.getItem('lang') || 'ko';
+let currentLang = localStorage.getItem('lang') || 'en';
 const t = (key) => (I18N[currentLang] || I18N.ko)[key] || (I18N.ko)[key] || key;
 const setLang = (lang) => {
   currentLang = lang;
@@ -1101,6 +1189,10 @@ const setLang = (lang) => {
   document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
   document.getElementById('detailTitle').textContent = t('sessionDetail');
   document.getElementById('detailBody').innerHTML = `<div style="padding:40px;text-align:center;color:var(--text-muted)">${t('selectSession')}</div>`;
+  const agentTitle = document.getElementById('agentPanelTitle');
+  if (agentTitle) agentTitle.textContent = t('agentPanelTitle');
+  const pathBtn = document.getElementById('pathModalBtn');
+  if (pathBtn && !pathBtn.disabled) pathBtn.textContent = t('connect');
   if (lastSessions) { renderStats(lastSessions); renderSessions(lastSessions); }
   if (selectedSessionId) openDetail(selectedSessionId);
 };
@@ -1168,10 +1260,10 @@ const renderStats = (sessions) => {
   const waiting = active.filter(s => s.state === 'waiting');
   const allExpanded = allGroupsExpanded;
   document.getElementById('stats-bar').innerHTML = `
-    <div class="stat"><span class="stat-badge blue">${working.length}</span> ${t('working')}</div>
-    <div class="stat"><span class="stat-badge yellow">${waiting.length}</span> ${t('waiting')}</div>
-    <div class="stat"><span class="stat-badge green">${active.length}</span> ${t('idle')}</div>
-    <div class="stat"><span class="stat-badge gray">${sessions.length}</span> ${t('total')}</div>
+    <div class="stat"><span class="stat-dot blue"></span><span class="stat-count">${working.length}</span> ${t('working')}</div>
+    <div class="stat"><span class="stat-dot yellow"></span><span class="stat-count">${waiting.length}</span> ${t('waiting')}</div>
+    <div class="stat"><span class="stat-dot green"></span><span class="stat-count">${active.length}</span> ${t('idle')}</div>
+    <div class="stat"><span class="stat-count">${sessions.length}</span> ${t('total')}</div>
     <div class="toggle-wrap" onclick="toggleAllGroups()">
       <div class="toggle-track ${allExpanded ? 'on' : ''}"><div class="toggle-knob"></div></div>
     </div>
@@ -1213,8 +1305,10 @@ const renderSessions = (sessions) => {
   html += `<div class="st-header" id="stHeader">
     <div class="st-col-status"></div>
     <div class="st-col-summary">${t('session')}<span class="col-resize-handle" data-col="summary"></span></div>
+    <div class="st-col-memo">${t('colMemo')}<span class="col-resize-handle" data-col="memo"></span></div>
     <div class="st-col-lastmsg">${t('lastMsg')}<span class="col-resize-handle" data-col="lastmsg"></span></div>
-    <div class="st-col-stats">${t('stats')}<span class="col-resize-handle" data-col="stats"></span></div>
+    <div class="st-col-turns">${t('colTurns')}</div>
+    <div class="st-col-tokens">${t('colTokens')}</div>
     <div class="st-col-time">${t('recent')}</div>
   </div>`;
 
@@ -1259,9 +1353,11 @@ const renderSessions = (sessions) => {
       const dimStyle = s.isActive ? '' : ' style="opacity:0.55"';
       html += `<div class="st-row${sel}"${dimStyle} onclick="openDetail('${s.id}')">`;
       html += `<div class="st-col-status"><span class="dot ${sc}"></span></div>`;
-      html += `<div class="st-col-summary"${s.isActive ? '' : ' style="color:var(--text-secondary)"'}>${escHtml(s.summary || t('emptySession'))}${s.intent ? '<span class="st-col-intent"> · ' + escHtml(s.intent) + '</span>' : (s.isActive && s.state === 'waiting' ? '<span class="st-col-intent"> · ' + escHtml((s.waitingContext || '').substring(0, 30)) + '</span>' : '')}</div>`;
-      html += `<div class="st-col-lastmsg">${escHtml(s.description || s.lastUserMessage || '')}</div>`;
-      html += `<div class="st-col-stats">${s.turnCount ?? 0} · ${s.toolCalls ?? 0} · ${formatTokens(s.outputTokens || 0)}</div>`;
+      html += `<div class="st-col-summary"${s.isActive ? '' : ' style="color:var(--text-secondary)"'}>${escHtml(s.summary || t('emptySession'))}</div>`;
+      html += `<div class="st-col-memo">${escHtml(s.description || s.intent || '')}</div>`;
+      html += `<div class="st-col-lastmsg">${escHtml(s.lastUserMessage || '')}</div>`;
+      html += `<div class="st-col-turns">${s.turnCount ?? 0}</div>`;
+      html += `<div class="st-col-tokens">${formatTokens(s.outputTokens || 0)}</div>`;
       html += `<div class="st-col-time">${timeAgo(s.updatedAt)}</div>`;
       html += `</div>`;
     });
@@ -1345,11 +1441,11 @@ const setTheme = (theme) => {
   });
 };
 // Restore saved theme
-const savedTheme = localStorage.getItem('theme') || 'light';
+const savedTheme = localStorage.getItem('theme') || 'dark';
 if (savedTheme !== 'light') setTheme(savedTheme);
 
 // Restore language
-const savedLang = localStorage.getItem('lang') || 'ko';
+const savedLang = localStorage.getItem('lang') || 'en';
 if (savedLang !== 'ko') {
   currentLang = savedLang;
   document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.dataset.lang === savedLang));
@@ -1417,7 +1513,7 @@ const fetchAll = () => {
 
       // Surgically update ALL visible turns — APPEND missing parts only, never remove/replace
       const allTurnEls = container.querySelectorAll('.tl-turn');
-      data.timeline.forEach(turnData => {
+      data.timeline.forEach((turnData, turnIdx) => {
         const ts = turnData.timestamp ? new Date(turnData.timestamp).toLocaleDateString('en-GB', { month: '2-digit', day: '2-digit' }) + ' ' + new Date(turnData.timestamp).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '';
         // Find matching DOM element by timestamp
         let turnEl = null;
@@ -1433,13 +1529,13 @@ const fetchAll = () => {
           const insertAfter = userEl || turnEl.querySelector('.tl-time');
           if (insertAfter) {
             insertAfter.insertAdjacentHTML('afterend',
-              `<div class="tl-assistant" onclick="this.classList.toggle('expanded')"><span style="margin-right:4px;font-size:10px;font-weight:600;color:var(--text-muted)">ASST</span><span class="tl-text">${escHtml(turnData.assistantMessage)}</span></div>`);
+              `<div class="tl-assistant" onclick="this.classList.toggle('expanded')"><span class="tl-text">${escHtml(turnData.assistantMessage)}</span></div>`);
           }
         }
         // Add direct tools if missing
         if (!turnEl.querySelector('.tl-direct-tools') && turnData.directToolCalls && turnData.directToolCalls.length > 0) {
           let toolsHtml = `<div class="tl-direct-tools"><span style="font-size:10px;color:var(--text-muted);margin-right:2px;font-weight:600">TOOLS</span>`;
-          turnData.directToolCalls.forEach(tc => { toolsHtml += `<span class="tl-tool-badge">${escHtml(tc.toolName)}×${tc.count}</span>`; });
+          turnData.directToolCalls.forEach(tc => { toolsHtml += `<span class="tl-tool-badge" onclick="showToolDetailModal('${escHtml(tc.toolName)}', 'interactionId', '${turnData.interactionId || ''}', '${selectedSessionId}')">${escHtml(tc.toolName)}${tc.count > 1 ? '\u00d7' + tc.count : ''}</span>`; });
           toolsHtml += `</div>`;
           const assistEl = turnEl.querySelector('.tl-assistant') || turnEl.querySelector('.tl-user') || turnEl.querySelector('.tl-time');
           if (assistEl) assistEl.insertAdjacentHTML('afterend', toolsHtml);
@@ -1727,19 +1823,14 @@ const toggleAgentDetail = (idx) => {
     if (tokens) html += `<span class="agent-stat-item"><span class="agent-stat-num">${formatTokens(tokens)}</span> ${t('agentTokensLabel')}</span>`;
     html += `</div>`;
 
-    // ── Tool breakdown chart ──
+    // ── Tool breakdown badges ──
     const breakdown = a.toolBreakdown;
     if (breakdown && typeof breakdown === 'object' && Object.keys(breakdown).length > 0) {
       const entries = Object.entries(breakdown).sort((a, b) => b[1] - a[1]);
-      const maxVal = entries[0][1];
-      html += `<div class="agent-tool-chart">`;
+      html += `<div class="tl-direct-tools" style="margin:4px 0">`;
+      html += `<span style="font-size:10px;color:var(--text-muted);margin-right:2px;font-weight:600">TOOLS</span>`;
       entries.forEach(([toolName, count]) => {
-        const pct = Math.round((count / maxVal) * 100);
-        html += `<div class="agent-tool-row">`;
-        html += `<span class="agent-tool-label">${escHtml(toolName)}</span>`;
-        html += `<div class="agent-tool-bar-bg"><div class="agent-tool-bar-fill" style="width:${pct}%"></div></div>`;
-        html += `<span class="agent-tool-count">${count}</span>`;
-        html += `</div>`;
+        html += `<span class="tl-tool-badge">${escHtml(toolName)}${count > 1 ? '\u00d7' + count : ''}</span>`;
       });
       html += `</div>`;
     }
@@ -1872,19 +1963,14 @@ const renderTurnAgentCard = (a, agentIdx, turnIdx) => {
   html += `<span class="ta-meta">${meta.join(' · ')}</span>`;
   html += `</div>`;
 
-  // Tool breakdown inline
+  // Tool breakdown inline badges
   const breakdown = a.toolBreakdown;
   if (breakdown && typeof breakdown === 'object' && Object.keys(breakdown).length > 0) {
     const entries = Object.entries(breakdown).sort((x, y) => y[1] - x[1]);
-    const maxVal = entries[0][1];
-    html += `<div class="agent-tool-chart" style="margin-top:4px">`;
+    html += `<div class="tl-direct-tools" style="margin-top:4px">`;
+    html += `<span style="font-size:10px;color:var(--text-muted);margin-right:2px;font-weight:600">TOOLS</span>`;
     entries.forEach(([toolName, count]) => {
-      const pct = Math.round((count / maxVal) * 100);
-      html += `<div class="agent-tool-row">`;
-      html += `<span class="agent-tool-label">${escHtml(toolName)}</span>`;
-      html += `<div class="agent-tool-bar-bg"><div class="agent-tool-bar-fill" style="width:${pct}%"></div></div>`;
-      html += `<span class="agent-tool-count">${count}</span>`;
-      html += `</div>`;
+      html += `<span class="tl-tool-badge">${escHtml(toolName)}${count > 1 ? '\u00d7' + count : ''}</span>`;
     });
     html += `</div>`;
   }
@@ -1906,6 +1992,47 @@ const renderTurnAgentCard = (a, agentIdx, turnIdx) => {
   }
   html += `</div></div>`;
   return html;
+};
+
+/* ─── Generic Modal ─── */
+const showModal = (title, contentHtml) => {
+  document.getElementById('modalTitle').textContent = title;
+  document.getElementById('modalBody').innerHTML = contentHtml;
+  document.getElementById('modalOverlay').classList.add('visible');
+};
+const hideModal = () => {
+  document.getElementById('modalOverlay').classList.remove('visible');
+};
+document.addEventListener('keydown', e => { if (e.key === 'Escape') hideModal(); });
+
+/* ─── Tool Detail Modal ─── */
+const showToolDetailModal = async (toolName, filterKey, filterValue, sessionId) => {
+  showModal(toolName, `<div style="text-align:center;padding:20px;color:var(--text-muted)">${t('loading')}</div>`);
+  try {
+    const res = await fetch(`${API_BASE}/api/sessions/${sessionId}/tool-calls?${filterKey}=${encodeURIComponent(filterValue)}&toolName=${toolName}`);
+    const data = await res.json();
+    if (!data.toolCalls || data.toolCalls.length === 0) {
+      document.getElementById('modalBody').innerHTML = `<div style="text-align:center;padding:20px;color:var(--text-muted)">${t('toolNoData')}</div>`;
+      return;
+    }
+    let html = '';
+    data.toolCalls.forEach((tc, i) => {
+      html += `<div class="tool-detail-item" style="margin-bottom:16px;${i > 0 ? 'border-top:1px solid var(--border);padding-top:12px;' : ''}">`;
+      html += `<div style="font-weight:600;font-size:12px;margin-bottom:8px;">${escHtml(tc.toolName)} <span style="color:var(--text-muted);font-weight:400">#${i+1}</span></div>`;
+      if (tc.input) {
+        html += `<div style="margin-bottom:8px"><div style="font-size:10px;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-muted);margin-bottom:4px">${t('toolInput')}</div>`;
+        html += `<pre style="background:var(--bg);border:1px solid var(--border);border-radius:3px;padding:8px;font-size:11px;overflow-x:auto;white-space:pre-wrap;word-break:break-all;max-height:200px;overflow-y:auto;margin:0">${escHtml(typeof tc.input === 'string' ? tc.input : JSON.stringify(tc.input, null, 2))}</pre></div>`;
+      }
+      if (tc.result) {
+        html += `<div><div style="font-size:10px;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-muted);margin-bottom:4px">${t('toolOutput')}</div>`;
+        html += `<pre style="background:var(--bg);border:1px solid var(--border);border-radius:3px;padding:8px;font-size:11px;overflow-x:auto;white-space:pre-wrap;word-break:break-all;max-height:300px;overflow-y:auto;margin:0">${escHtml(typeof tc.result === 'string' ? tc.result : JSON.stringify(tc.result, null, 2))}</pre></div>`;
+      }
+      html += `</div>`;
+    });
+    document.getElementById('modalBody').innerHTML = html;
+  } catch(e) {
+    document.getElementById('modalBody').innerHTML = `<div style="color:var(--danger)">${t('loadFail')}</div>`;
+  }
 };
 
 /* ─── Session Timeline ─── */
@@ -1992,7 +2119,6 @@ const renderTimelineTurn = (turn, idx) => {
   // Assistant response
   if (turn.assistantMessage) {
     html += `<div class="tl-assistant" onclick="this.classList.toggle('expanded')">`;
-    html += `<span style="margin-right:4px;font-size:10px;font-weight:600;color:var(--text-muted)">ASST</span>`;
     html += `<span class="tl-text">${escHtml(turn.assistantMessage)}</span>`;
     html += `</div>`;
   }
@@ -2002,7 +2128,7 @@ const renderTimelineTurn = (turn, idx) => {
     html += `<div class="tl-direct-tools">`;
     html += `<span style="font-size:10px;color:var(--text-muted);margin-right:2px;font-weight:600">TOOLS</span>`;
     turn.directToolCalls.forEach(tc => {
-      html += `<span class="tl-tool-badge">${escHtml(tc.toolName)}×${tc.count}</span>`;
+      html += `<span class="tl-tool-badge" onclick="showToolDetailModal('${escHtml(tc.toolName)}', 'interactionId', '${turn.interactionId || ''}', '${selectedSessionId}')">${escHtml(tc.toolName)}${tc.count > 1 ? '\u00d7' + tc.count : ''}</span>`;
     });
     html += `</div>`;
   }
@@ -2018,7 +2144,7 @@ const renderTimelineTurn = (turn, idx) => {
   return html;
 };
 
-const renderAgentNode = (agent, depth, turnIdx, agentIdx, parentPath) => {
+const renderAgentNode = (agent, depth, turnIdx, agentIdx, parentPath, parentName) => {
   const path = parentPath ? `${parentPath}-${agentIdx}` : `${turnIdx}-${agentIdx}`;
   const nodeId = `tl-agent-${path}`;
   const icon = getAgentIcon(agent.name || agent.type);
@@ -2038,6 +2164,9 @@ const renderAgentNode = (agent, depth, turnIdx, agentIdx, parentPath) => {
   html += `<div class="tl-agent-header" onclick="toggleTimelineAgent('${nodeId}')">`;
   html += `<span class="tl-agent-icon">${icon}</span>`;
   html += `<span class="tl-agent-name">${escHtml(agent.name || agent.type || 'Agent')}</span>`;
+  if (parentName) {
+    html += `<span class="tl-called-by">\u2190 ${escHtml(parentName)}</span>`;
+  }
   html += `<span class="tl-agent-status" style="font-size:10px;font-weight:600;color:${statusColor}">${statusText}</span>`;
   html += `<span class="tl-agent-meta">${metaParts.join(' · ')}</span>`;
   html += `</div>`;
@@ -2049,26 +2178,21 @@ const renderAgentNode = (agent, depth, turnIdx, agentIdx, parentPath) => {
   const promptText = agent.agentPrompt || '';
   if (promptText) {
     const promptId = `tl-prompt-${path}`;
-    html += `<div style="margin-bottom:4px">`;
-    html += `<div style="font-size:10px;color:var(--text-muted);margin-bottom:2px;font-weight:600;text-transform:uppercase">${t('agentPromptLabel')}</div>`;
+    html += `<div style="margin-bottom:6px">`;
+    html += `<div class="tl-section-label prompt">${t('agentPromptLabel')}</div>`;
     html += `<div class="tl-collapsible" id="${promptId}" onclick="toggleTimelineText('${promptId}')">${escHtml(promptText)}</div>`;
-    html += `<span class="tl-collapsible-label" onclick="toggleTimelineText('${promptId}')">${t('showMore')}</span>`;
+    html += `<span class="tl-collapsible-label" data-for="${promptId}" onclick="toggleTimelineText('${promptId}')">${t('showMore')}</span>`;
     html += `</div>`;
   }
 
-  // Tool breakdown chart
+  // Tool breakdown chart → badge style
   const breakdown = agent.toolBreakdown;
   if (breakdown && typeof breakdown === 'object' && Object.keys(breakdown).length > 0) {
     const entries = Object.entries(breakdown).sort((a, b) => b[1] - a[1]);
-    const maxVal = entries[0][1];
-    html += `<div class="tl-tool-chart">`;
+    html += `<div class="tl-direct-tools" style="margin:4px 0">`;
+    html += `<span style="font-size:10px;color:var(--text-muted);margin-right:2px;font-weight:600">TOOLS</span>`;
     entries.forEach(([toolName, count]) => {
-      const pct = Math.round((count / maxVal) * 100);
-      html += `<div class="tl-tool-row">`;
-      html += `<span class="tl-tool-label">${escHtml(toolName)}</span>`;
-      html += `<div class="tl-tool-bar-bg"><div class="tl-tool-bar-fill" style="width:${pct}%"></div></div>`;
-      html += `<span class="tl-tool-count">${count}</span>`;
-      html += `</div>`;
+      html += `<span class="tl-tool-badge" onclick="showToolDetailModal('${escHtml(toolName)}', 'parentToolCallId', '${agent.toolCallId || ''}', '${selectedSessionId}')">${escHtml(toolName)}${count > 1 ? '\u00d7' + count : ''}</span>`;
     });
     html += `</div>`;
   }
@@ -2089,18 +2213,19 @@ const renderAgentNode = (agent, depth, turnIdx, agentIdx, parentPath) => {
   const resultText = agent.finalResult || '';
   if (resultText) {
     const resultId = `tl-result-${path}`;
-    html += `<div style="margin-top:4px">`;
-    html += `<div style="font-size:10px;color:var(--text-muted);margin-bottom:2px;font-weight:600;text-transform:uppercase">${t('agentResultLabel')}</div>`;
+    html += `<div style="margin-top:6px">`;
+    html += `<div class="tl-section-label result">${t('agentResultLabel')}</div>`;
     html += `<div class="tl-collapsible" id="${resultId}" onclick="toggleTimelineText('${resultId}')">${escHtml(resultText)}</div>`;
-    html += `<span class="tl-collapsible-label" onclick="toggleTimelineText('${resultId}')">${t('showMore')}</span>`;
+    html += `<span class="tl-collapsible-label" data-for="${resultId}" onclick="toggleTimelineText('${resultId}')">${t('showMore')}</span>`;
     html += `</div>`;
   }
 
-  // Children (recursive)
+  // Children (recursive call chain)
   if (agent.children && agent.children.length > 0) {
-    html += `<div class="tl-children">`;
+    html += `<div class="tl-call-label">${t('calledAgents')}</div>`;
+    html += `<div class="tl-sub-agents">`;
     agent.children.forEach((child, ci) => {
-      html += renderAgentNode(child, depth + 1, turnIdx, ci, path);
+      html += renderAgentNode(child, depth + 1, turnIdx, ci, path, agent.name || agent.type || 'Agent');
     });
     html += `</div>`;
   }
@@ -2123,6 +2248,19 @@ const toggleTimelineText = (id) => {
   if (label && label.classList.contains('tl-collapsible-label')) {
     label.textContent = isExpanded ? t('showLess') : t('showMore');
   }
+};
+
+// Show "Show more" only when content actually overflows
+const checkCollapsibleOverflow = () => {
+  document.querySelectorAll('.tl-collapsible').forEach(el => {
+    const label = el.nextElementSibling;
+    if (!label || !label.classList.contains('tl-collapsible-label')) return;
+    if (el.scrollHeight > el.clientHeight + 2) {
+      label.classList.add('visible');
+    } else {
+      label.classList.remove('visible');
+    }
+  });
 };
 
 const formatDuration = (ms) => {
@@ -2190,7 +2328,7 @@ function applyColWidths() {
   })();
   let css = '';
   if (colWidths.summary) css += `.st-col-summary { width: ${colWidths.summary}px !important; flex: none !important; }\n`;
-  if (colWidths.stats) css += `.st-col-stats { width: ${colWidths.stats}px !important; }\n`;
+  if (colWidths.memo) css += `.st-col-memo { width: ${colWidths.memo}px !important; }\n`;
   if (colWidths.time) css += `.st-col-time { width: ${colWidths.time}px !important; }\n`;
   style.textContent = css;
 }
@@ -2255,12 +2393,12 @@ const renderDetail = (d) => {
   // ── Section: State & Info ──
   html += `<div class="dp-section">`;
 
-  if (d.intent) html += `<div class="dp-intent">${escHtml(d.intent)}</div>`;
   if (d.state === 'waiting' && d.waitingContext) html += `<div class="dp-waiting-box">${escHtml(d.waitingContext)}</div>`;
 
   html += `<div style="margin-top:10px">`;
   html += `<div class="dp-field"><span class="dp-field-label">${t('summary')}</span><span class="dp-field-value">${escHtml(d.summary || t('noValue'))}</span></div>`;
-  html += `<div class="dp-field"><span class="dp-field-label">${t('memo')}</span><div class="dp-desc" id="descDisplay" onclick="startEditDesc()">${escHtml(d.description || '')}</div></div>`;
+  const memoText = d.description || d.intent || d.summary || '';
+  html += `<div class="dp-field"><span class="dp-field-label">${t('memo')}</span><span class="dp-field-value"><span class="dp-desc" id="descDisplay">${escHtml(memoText)}</span><button class="dp-desc-btn" onclick="startEditDesc()">&#9998;</button></span></div>`;
   html += `<div class="dp-field"><span class="dp-field-label">${t('path')}</span><span class="dp-field-value mono">${escHtml(shortenPath(d.cwd))} <button class="copy-icon-btn" onclick="copyText('${escHtml(d.cwd).replace(/\\/g,'\\\\')}',t('copyPath'))" title="${t('copyPathTitle')}"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="1"/><path d="M5 15H4a1 1 0 01-1-1V4a1 1 0 011-1h10a1 1 0 011 1v1"/></svg></button></span></div>`;
   const cwdEsc = (d.cwd || '').replace(/\\/g, '\\\\');
   html += `<div class="dp-vscode-row"><button class="vscode-btn" onclick="launchVSCode('${cwdEsc}',false,'${d.id}')"><svg width="14" height="14" viewBox="0 0 100 100"><path d="M95.2 8.1L74.5.3c-2.5-1-5.4-.2-7.1 1.9L26.6 45.8 11 34.2c-1.7-1.3-4.1-1.1-5.6.4L.7 39.5c-1 1-1 2.6 0 3.6L13.5 50 .7 56.9c-1 1-1 2.6 0 3.6l4.7 4.9c1.5 1.5 3.9 1.7 5.6.4l15.6-11.6 40.8 43.6c1.7 2.1 4.6 2.9 7.1 1.9l20.7-7.8c1.7-.7 2.8-2.3 2.8-4.1V12.2c0-1.8-1.1-3.4-2.8-4.1zM74.9 71.5L44.2 50l30.7-21.5v43z" fill="#007ACC"/></svg> Open in VSCode</button><button class="vscode-btn insiders" onclick="launchVSCode('${cwdEsc}',true,'${d.id}')"><svg width="14" height="14" viewBox="0 0 100 100"><path d="M95.2 8.1L74.5.3c-2.5-1-5.4-.2-7.1 1.9L26.6 45.8 11 34.2c-1.7-1.3-4.1-1.1-5.6.4L.7 39.5c-1 1-1 2.6 0 3.6L13.5 50 .7 56.9c-1 1-1 2.6 0 3.6l4.7 4.9c1.5 1.5 3.9 1.7 5.6.4l15.6-11.6 40.8 43.6c1.7 2.1 4.6 2.9 7.1 1.9l20.7-7.8c1.7-.7 2.8-2.3 2.8-4.1V12.2c0-1.8-1.1-3.4-2.8-4.1zM74.9 71.5L44.2 50l30.7-21.5v43z" fill="#24903e"/></svg> Open in Insiders</button></div>`;
@@ -2275,12 +2413,12 @@ const renderDetail = (d) => {
   html += `<div class="dp-section">`;
   html += `<div class="dp-section-title">${t('statsTitle')}</div>`;
   html += `<div class="dp-stats">`;
-  html += `<div class="dp-stat"><div class="stat-icon">TRN</div><div class="num accent">${d.turnCount ?? 0}</div>turns</div>`;
-  html += `<div class="dp-stat"><div class="stat-icon">TLS</div><div class="num">${d.toolCalls ?? 0}</div>tools</div>`;
-  html += `<div class="dp-stat"><div class="stat-icon">AGT</div><div class="num">${d.subagentRuns ?? 0}</div>agents</div>`;
-  html += `<div class="dp-stat"><div class="stat-icon">TOK</div><div class="num">${formatTokens(d.outputTokens || 0)}</div>tokens</div>`;
-  html += `<div class="dp-stat"><div class="stat-icon">CKP</div><div class="num">${Array.isArray(d.checkpoints) ? d.checkpoints.length : 0}</div>checkpoints</div>`;
-  html += `<div class="dp-stat"><div class="stat-icon">FIL</div><div class="num">${d.filesModified ? d.filesModified.length : 0}</div>files</div>`;
+  html += `<div class="dp-stat"><div class="num accent">${d.turnCount ?? 0}</div>turns</div>`;
+  html += `<div class="dp-stat"><div class="num">${d.toolCalls ?? 0}</div>tools</div>`;
+  html += `<div class="dp-stat"><div class="num">${d.subagentRuns ?? 0}</div>agents</div>`;
+  html += `<div class="dp-stat"><div class="num">${formatTokens(d.outputTokens || 0)}</div>tokens</div>`;
+  html += `<div class="dp-stat"><div class="num">${Array.isArray(d.checkpoints) ? d.checkpoints.length : 0}</div>checkpoints</div>`;
+  html += `<div class="dp-stat"><div class="num">${d.filesModified ? d.filesModified.length : 0}</div>files</div>`;
   html += `</div></div>`;
 
   // ── Section: Background Tasks ──
@@ -2377,13 +2515,12 @@ const startEditDesc = () => {
   const display = document.getElementById('descDisplay');
   if (!display) return;
   const current = display.textContent || '';
-  const field = display.closest('.dp-field');
-  field.querySelector('.dp-field-label').style.display = 'none';
-  display.outerHTML = `<div id="descEditWrap">
+  const valueWrap = display.closest('.dp-field-value') || display.parentElement;
+  valueWrap.innerHTML = `<div id="descEditWrap">
     <textarea class="dp-desc-edit" id="descInput" maxlength="500">${current}</textarea>
     <div class="dp-desc-actions">
-      <button class="cancel-btn" onclick="cancelEditDesc()">취소</button>
-      <button class="save-btn" onclick="saveDesc()">저장</button>
+      <button class="cancel-btn" onclick="cancelEditDesc()">${t('cancel') || '취소'}</button>
+      <button class="save-btn" onclick="saveDesc()">${t('save') || '저장'}</button>
     </div>
   </div>`;
   const input = document.getElementById('descInput');
@@ -2408,13 +2545,11 @@ const saveDesc = () => {
     body: JSON.stringify({ description: desc })
   }).then(r => r.json()).then(result => {
     if (result.ok) {
-      // Replace edit area with display
       const wrap = document.getElementById('descEditWrap');
       if (wrap) {
-        const field = wrap.closest('.dp-field');
-        const label = field.querySelector('.dp-field-label');
-        if (label) label.style.display = '';
-        wrap.outerHTML = `<div class="dp-desc" id="descDisplay" onclick="startEditDesc()">${desc ? desc.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') : ''}</div>`;
+        const valueWrap = wrap.parentElement;
+        const safeDesc = desc ? desc.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') : '';
+        valueWrap.innerHTML = `<span class="dp-desc" id="descDisplay">${safeDesc}</span><button class="dp-desc-btn" onclick="startEditDesc()">&#9998;</button>`;
       }
     }
   }).catch(() => alert('저장 실패'));
@@ -2427,16 +2562,6 @@ const updateDetailInPlace = (d) => {
   const titleEl = document.getElementById('detailTitle');
   const newTitle = `<span class="dot ${sc}"></span> ${escHtml(d.summary || t('sessionDetail'))} <span style="font-size:11px;color:var(--text-muted);font-weight:normal;margin-left:6px">${timeAgo(d.updated_at || d.updatedAt)}</span>`;
   if (titleEl && titleEl.innerHTML !== newTitle) titleEl.innerHTML = newTitle;
-  // Update intent — only if changed
-  const intentEl = document.querySelector('.dp-intent');
-  const newIntent = d.intent ? `${escHtml(d.intent)}` : '';
-  if (d.intent) {
-    if (intentEl) { if (intentEl.innerHTML !== newIntent) intentEl.innerHTML = newIntent; }
-    else {
-      const firstSection = document.querySelector('#detailBody .dp-section');
-      if (firstSection) firstSection.insertAdjacentHTML('afterbegin', `<div class="dp-intent">${newIntent}</div>`);
-    }
-  } else if (intentEl) { intentEl.remove(); }
   // Update waiting context
   const waitEl = document.querySelector('.dp-waiting-box');
   if (d.state === 'waiting' && d.waitingContext) {
@@ -2444,8 +2569,8 @@ const updateDetailInPlace = (d) => {
   } else if (waitEl) { waitEl.remove(); }
   // Update description (only if not in edit mode)
   const descDisplay = document.getElementById('descDisplay');
-  if (descDisplay && d.description !== undefined) {
-    const newDesc = d.description || '';
+  if (descDisplay && !document.getElementById('descEditWrap')) {
+    const newDesc = d.description || d.intent || d.summary || '';
     if (descDisplay.textContent !== newDesc) descDisplay.textContent = newDesc;
   }
   // Update stats — only individual numbers, not entire grid
@@ -2617,5 +2742,16 @@ const copyText = (text, msg) => {
   });
 };
 </script>
+
+<div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this)hideModal()">
+  <div class="modal-container">
+    <div class="modal-header">
+      <h3 class="modal-title" id="modalTitle"></h3>
+      <button class="modal-close" onclick="hideModal()">&times;</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
 </body>
 </html>
