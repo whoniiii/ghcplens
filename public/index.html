@@ -530,6 +530,11 @@ body {
   border-left: 3px solid var(--accent);
   cursor: pointer; overflow: hidden;
 }
+.tl-target-agent {
+  display: inline-block; background: var(--accent); color: #fff;
+  font-size: 10px; font-weight: 600; padding: 1px 6px; border-radius: 3px;
+  margin-right: 6px; vertical-align: middle;
+}
 .tl-user .tl-text, .tl-assistant .tl-text {
   overflow: hidden; text-overflow: ellipsis;
   white-space: nowrap; display: block;
@@ -1956,8 +1961,10 @@ const renderTimelineTurn = (turn, idx) => {
 
   // User message
   if (turn.userMessage) {
+    const agentBadge = turn.targetAgent ? `<span class="tl-target-agent">→ ${escHtml(turn.targetAgent)}</span>` : '';
     html += `<div class="tl-user" onclick="this.classList.toggle('expanded')">`;
     html += `<span style="margin-right:4px">💬</span>`;
+    html += agentBadge;
     html += `<span class="tl-text">${escHtml(turn.userMessage)}</span>`;
     html += `</div>`;
   }

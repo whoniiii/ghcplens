@@ -682,10 +682,18 @@ function parseAgentData(eventsFile) {
           const iid = d.interactionId || '';
           if (iid) {
             let msg = (d.content || '').replace(/<[^>]+>/g, '').trim().substring(0, 200);
+            // Detect /agent target from transformedContent
+            let targetAgent = null;
+            const tc = d.transformedContent || '';
+            if (tc.includes('<agent_instructions>')) {
+              const m = tc.match(/<agent_instructions>\s*#\s*(\S+)/);
+              if (m) targetAgent = m[1].toLowerCase();
+            }
             turnMap.set(iid, {
               interactionId: iid,
               userMessage: msg,
               timestamp: evt.timestamp || '',
+              targetAgent,
               agents: [],
             });
           }
@@ -734,12 +742,19 @@ function buildTimeline(eventsFile, limit, page) {
           const d = evt.data || {};
           const iid = d.interactionId || '';
           if (iid) {
+            let targetAgent = null;
+            const tc = d.transformedContent || '';
+            if (tc.includes('<agent_instructions>')) {
+              const m = tc.match(/<agent_instructions>\s*#\s*(\S+)/);
+              if (m) targetAgent = m[1].toLowerCase();
+            }
             turnMap.set(iid, {
               interactionId: iid,
               timestamp: evt.timestamp || '',
               userMessage: (d.content || '').replace(/<[^>]+>/g, '').trim().substring(0, 500),
               assistantMessage: '',
               directToolCalls: [],
+              targetAgent,
               agents: [],
             });
           }
