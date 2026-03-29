@@ -813,7 +813,7 @@ describe('API integration (live server)', () => {
       const { data } = await fetchRaw('/');
       expect(data).toContain('I18N');
       expect(data).toContain('lang-btn');
-      expect(data).toContain('GitHub Copilot Lens');
+      expect(data).toContain('Copilot Lens');
     } catch (e) { if (e.code === 'ECONNREFUSED') return; throw e; }
   });
 

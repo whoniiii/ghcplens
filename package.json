@@ -3,7 +3,8 @@
   "displayName": "GitHub Copilot Lens",
   "version": "1.0.0",
   "description": "GitHub Copilot Lens — Session Monitor Dashboard",
-  "publisher": "ghcp-lens",
+  "publisher": "JeonghoonLee",
+  "icon": "icon.png",
   "engines": {
     "vscode": "^1.85.0"
   },
@@ -51,6 +52,7 @@
   "type": "commonjs",
   "devDependencies": {
     "@vscode/vsce": "^3.7.1",
+    "sharp": "^0.34.5",
     "vitest": "^4.1.2"
   }
 }

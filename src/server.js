@@ -1193,9 +1193,9 @@ function handleRequest(req, res) {
           res.end(JSON.stringify({ error: 'Invalid folder' }));
           return;
         }
-        const cmd = insiders ? 'code-insiders' : 'code';
-        const { exec } = require('child_process');
-        exec(`${cmd} "${folder}"`, { windowsHide: true }, () => {});
+        const cmd = insiders === true ? 'code-insiders' : 'code';
+        const { execFile } = require('child_process');
+        execFile(cmd, [folder], { windowsHide: true }, () => {});
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ ok: true }));
       } catch (e) {
@@ -1430,8 +1430,16 @@ function handleRequest(req, res) {
   }
 
   // ── Static Files ──
+  const publicDir = path.resolve(__dirname, '..', 'public');
   let filePath = pathname === '/' ? '/index-v2.html' : pathname === '/v1' ? '/index.html' : pathname;
-  filePath = path.join(__dirname, '..', 'public', filePath);
+  filePath = path.resolve(publicDir, filePath.replace(/^\//, ''));
+
+  // Path traversal guard
+  if (!filePath.startsWith(publicDir)) {
+    res.writeHead(403, { 'Content-Type': 'text/plain' });
+    res.end('Forbidden');
+    return;
+  }
 
   if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
     const ext = path.extname(filePath);

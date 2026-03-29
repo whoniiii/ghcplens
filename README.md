@@ -1,123 +1,87 @@
-# 🔭 GitHub Copilot Lens
+# GitHub Copilot Lens
 
-> A lightweight web dashboard for real-time monitoring of GitHub Copilot CLI sessions.
+**Real-time session monitoring dashboard for GitHub Copilot CLI.**
 
-![Node.js](https://img.shields.io/badge/Node.js-18%2B-339933?logo=node.js&logoColor=white)
-![License](https://img.shields.io/badge/License-MIT-blue.svg)
-![Tests](https://img.shields.io/badge/Tests-92%20passed-brightgreen)
+See what Copilot is doing — every turn, tool call, agent chain, and token — live in your browser or VS Code.
 
-<!-- 📸 Screenshot placeholder — coming soon -->
-<!-- ![Dashboard Screenshot](docs/screenshots/dashboard.png) -->
+![Dashboard](https://raw.githubusercontent.com/whoniiii/ghcplens/master/docs/screenshots/dashboard.jpeg)
 
 ---
 
-## ✨ Features
+## Features
 
-| Feature | Description |
-|---------|-------------|
-| 📡 **Real-time Session Monitoring** | Track session states live — working, asking, idle, or terminated |
-| 📊 **Session Details** | View turn counts, tool usage, token consumption, checkpoints, and modified files |
-| 🤖 **Multi-Agent Analysis** | Inspect sub-agent lists, statuses, prompts, and results |
-| 🌍 **4 Languages** | Korean, English, Japanese, Chinese |
-| 🎨 **4 Themes** | Light, Gray, Dark, Black |
-| 🚀 **VSCode Integration** | Resume sessions in VSCode / Insiders with one click |
-| 📋 **Copy Session Info** | Copy session paths and IDs to clipboard |
-| 📁 **Folder Grouping** | Organize sessions by project folder |
+### Session Overview
+Browse all Copilot CLI sessions grouped by project folder. See status at a glance — working, asking, idle, or done — with turn counts, token usage, and last message preview.
+
+### Session Timeline
+Drill into any session to see the full conversation timeline: user messages, assistant responses, tool calls, and agent dispatches in chronological order.
+
+![Agent Hierarchy](https://raw.githubusercontent.com/whoniiii/ghcplens/master/docs/screenshots/agent-hierarchy.jpeg)
+
+### Multi-Agent Hierarchy
+When Copilot spawns sub-agents (PM, backend-developer, tester, etc.), Copilot Lens renders the full call tree with parent-child relationships, per-agent tool badges, and results.
+
+### Tool Call Inspector
+Click any tool badge to inspect the exact input and output — powershell commands, file edits, grep searches, API calls — everything Copilot did under the hood.
+
+![Tool Modal](https://raw.githubusercontent.com/whoniiii/ghcplens/master/docs/screenshots/tool-modal.jpeg)
+
+### Statistics
+Per-session stats: turns, tools, agents, tokens, checkpoints, and modified files — all in one panel with horizontal bar charts for tool usage distribution.
+
+### More
+- **4 Themes** — Light, Day, Medium, Dark
+- **4 Languages** — English, Korean (한), Japanese (日), Chinese (中)
+- **Configurable Polling** — 1s, 3s, 5s, 10s auto-refresh
+- **VS Code Integration** — Open project in VS Code / Insiders with one click
+- **Editable Memo** — Tag sessions with custom notes
+- **Copy** session ID and path to clipboard
 
 ---
 
-## 🛠️ Tech Stack
+## Installation
 
-- **Runtime**: Node.js (pure — no frameworks)
-- **Frontend**: Single HTML SPA (vanilla JS)
-- **Port**: `3002`
-- **Data Source**: `~/.copilot/session-state/` (`events.jsonl`, `workspace.yaml`, etc.)
-- **Test**: Vitest
+### VS Code Extension
 
----
+Install from the [Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=JeonghoonLee.ghcp-lens), or:
 
-## 🚀 Getting Started
+1. Download the `.vsix` file from [Releases](https://github.com/whoniiii/ghcplens/releases)
+2. In VS Code: `Ctrl+Shift+P` → `Extensions: Install from VSIX...`
+3. Open command palette → `Copilot Lens: Open Dashboard`
 
-### Prerequisites
-
-- [Node.js](https://nodejs.org/) v18 or higher
-
-### Installation
+### Standalone (Browser)
 
 ```bash
-git clone https://github.com/your-username/ghcpstudio.git
-cd ghcpstudio
+git clone https://github.com/whoniiii/ghcplens.git
+cd ghcplens
 npm install
-```
-
-### Run
-
-```bash
 node src/server.js
 ```
 
-Open your browser and navigate to **http://localhost:3002** 🎉
+Open **http://localhost:3002**
 
 ---
 
-## 📁 Project Structure
+## How It Works
 
-```
-ghcpstudio/
-├── public/                # Static files (HTML)
-│   ├── index.html         # Main dashboard SPA
-│   └── logs.html          # Log viewer
-├── src/                   # Server source
-│   └── server.js          # Node.js HTTP server
-├── __tests__/             # Tests
-│   └── server.test.js     # Server unit & integration tests
-├── package.json
-├── vitest.config.js
-└── README.md
-```
+Copilot Lens reads session data from `~/.copilot/session-state/` — the same directory where GitHub Copilot CLI stores its conversation logs (`events.jsonl`, `workspace.yaml`, checkpoints, etc.).
+
+No data is sent anywhere. Everything runs locally.
 
 ---
 
-## 🧪 Testing
+## Tech Stack
 
-Run the full test suite with [Vitest](https://vitest.dev/):
-
-```bash
-npm test
-```
-
-> ✅ **92 tests** covering server routes, session parsing, multi-agent analysis, and more.
-
----
-
-## 📸 Screenshots
-
-> 🖼️ *Screenshots will be added soon.*
-
-<!-- Uncomment and update paths when screenshots are ready:
-### Dashboard
-![Dashboard](docs/screenshots/dashboard.png)
-
-### Session Detail
-![Session Detail](docs/screenshots/session-detail.png)
-
-### Multi-Agent View
-![Multi-Agent](docs/screenshots/multi-agent.png)
--->
+| Component | Technology |
+|-----------|------------|
+| Server | Node.js (pure `http` module, no frameworks) |
+| Frontend | Single HTML file, vanilla JavaScript, inline CSS |
+| Tests | Vitest (92 tests) |
+| Port | 3002 (default) |
 
 ---
 
-## 🤝 Contributing
-
-Contributions are welcome! Here's how to get started:
-
-1. **Fork** the repository
-2. **Create** a feature branch (`git checkout -b feature/awesome-feature`)
-3. **Commit** your changes (`git commit -m 'Add awesome feature'`)
-4. **Push** to the branch (`git push origin feature/awesome-feature`)
-5. **Open** a Pull Request
-
-Please make sure all tests pass before submitting:
+## Testing
 
 ```bash
 npm test
@@ -125,36 +89,12 @@ npm test
 
 ---
 
-## 📄 License
+## License
 
-This project is licensed under the **MIT License**.
-
-```
-MIT License
-
-Copyright (c) 2025 GitHub Copilot Lens Contributors
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-```
+MIT
 
 ---
 
 <p align="center">
-  Made with ❤️ for the GitHub Copilot community
+  Built for the GitHub Copilot community
 </p>
