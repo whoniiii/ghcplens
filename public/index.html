@@ -781,6 +781,47 @@ body {
   font-size: 11px; margin-bottom: 3px; display: flex; align-items: center; gap: 4px;
 }
 .dp-bgtask-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); animation: breathe 1.5s ease-in-out infinite; }
+
+/* ── Path Config Modal ── */
+.path-modal-overlay {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.6); backdrop-filter: blur(6px);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 9999; opacity: 0; transition: opacity 0.3s;
+}
+.path-modal-overlay.visible { opacity: 1; }
+.path-modal {
+  background: var(--surface); border-radius: 16px; padding: 48px 40px 36px;
+  width: 480px; max-width: 90vw; box-shadow: 0 24px 80px rgba(0,0,0,0.3);
+  text-align: center;
+}
+.path-modal-logo { font-size: 56px; margin-bottom: 8px; }
+.path-modal-title {
+  font-size: 22px; font-weight: 700; color: var(--text); margin-bottom: 4px;
+}
+.path-modal-subtitle {
+  font-size: 13px; color: var(--text-secondary); margin-bottom: 28px; line-height: 1.5;
+}
+.path-modal-input {
+  width: 100%; box-sizing: border-box; padding: 12px 14px; font-size: 14px;
+  border: 1.5px solid var(--border); border-radius: 8px; background: var(--bg);
+  color: var(--text); outline: none; font-family: 'Consolas', 'SF Mono', monospace;
+}
+.path-modal-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(9,105,218,0.15); }
+.path-modal-btn {
+  margin-top: 16px; width: 100%; padding: 12px; font-size: 15px; font-weight: 600;
+  border: none; border-radius: 8px; cursor: pointer;
+  background: var(--accent); color: #fff; transition: opacity 0.2s;
+}
+.path-modal-btn:hover { opacity: 0.9; }
+.path-modal-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.path-modal-error {
+  margin-top: 12px; font-size: 12px; color: var(--danger); min-height: 18px;
+}
+.path-modal-current {
+  margin-top: 20px; font-size: 11px; color: var(--text-muted);
+  padding-top: 16px; border-top: 1px solid var(--border);
+}
 </style>
 </head>
 <body>
@@ -838,6 +879,24 @@ body {
   </div>
 </div>
 
+<!-- Path Config Modal -->
+<div class="path-modal-overlay" id="pathModal">
+  <div class="path-modal">
+    <div class="path-modal-logo">🔍</div>
+    <div class="path-modal-title">GitHub Copilot Lens</div>
+    <div class="path-modal-subtitle" id="pathModalMsg">
+      세션 데이터 경로를 찾을 수 없습니다.<br>
+      <code>.copilot/session-state</code> 폴더의 경로를 입력해주세요.
+    </div>
+    <input class="path-modal-input" id="pathModalInput" 
+      placeholder="예: C:\Users\me\.copilot\session-state" 
+      spellcheck="false" autocomplete="off">
+    <button class="path-modal-btn" id="pathModalBtn" onclick="submitPathConfig()">연결하기</button>
+    <div class="path-modal-error" id="pathModalError"></div>
+    <div class="path-modal-current" id="pathModalCurrent"></div>
+  </div>
+</div>
+
 <script>
 /* ─── VS Code Extension Support ─── */
 const API_BASE = window.GHCP_LENS_PORT ? `http://localhost:${window.GHCP_LENS_PORT}` : '';
@@ -851,6 +910,57 @@ if (IS_VSCODE) {
       try { localStorage.setItem('theme', e.data.theme); } catch(ex) {}
     }
   });
+}
+
+/* ─── Path Config Modal ─── */
+function showPathModal(currentPath) {
+  const modal = document.getElementById('pathModal');
+  const input = document.getElementById('pathModalInput');
+  const current = document.getElementById('pathModalCurrent');
+  input.value = currentPath || '';
+  current.textContent = currentPath ? `현재 경로: ${currentPath}` : '';
+  modal.style.display = 'flex';
+  requestAnimationFrame(() => modal.classList.add('visible'));
+  input.focus();
+  input.addEventListener('keydown', e => { if (e.key === 'Enter') submitPathConfig(); });
+}
+
+function hidePathModal() {
+  const modal = document.getElementById('pathModal');
+  modal.classList.remove('visible');
+  setTimeout(() => { modal.style.display = 'none'; }, 300);
+}
+
+async function submitPathConfig() {
+  const input = document.getElementById('pathModalInput');
+  const btn = document.getElementById('pathModalBtn');
+  const errEl = document.getElementById('pathModalError');
+  const val = input.value.trim();
+  if (!val) { errEl.textContent = '경로를 입력해주세요'; return; }
+  btn.disabled = true; btn.textContent = '연결 중...'; errEl.textContent = '';
+  try {
+    const res = await fetch(API_BASE + '/api/config', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sessionStatePath: val })
+    });
+    const data = await res.json();
+    if (!res.ok) { errEl.textContent = data.error || '경로를 확인해주세요'; return; }
+    hidePathModal();
+    fetchAll();
+  } catch (e) {
+    errEl.textContent = '서버 연결 실패';
+  } finally {
+    btn.disabled = false; btn.textContent = '연결하기';
+  }
+}
+
+async function checkPathConfig() {
+  try {
+    const res = await fetch(API_BASE + '/api/config');
+    const data = await res.json();
+    if (!data.exists) { showPathModal(data.sessionStatePath); }
+  } catch (e) { /* server not ready yet */ }
 }
 
 /* ─── i18n ─── */
@@ -1335,6 +1445,7 @@ const setPollInterval = (sec) => {
 };
 
 fetchAll();
+checkPathConfig();
 pollTimerId = setInterval(fetchAll, 3000);
 
 /* ─── Session Detail Panel ─── */

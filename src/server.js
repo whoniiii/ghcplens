@@ -14,7 +14,7 @@ const { URL } = require('url');
 
 const PORT = 3002;
 const COPILOT_DIR = process.env.COPILOT_DIR || path.join(os.homedir(), '.copilot');
-const SESSION_STATE_DIR = process.env.COPILOT_SESSION_DIR || path.join(COPILOT_DIR, 'session-state');
+let SESSION_STATE_DIR = process.env.COPILOT_SESSION_DIR || path.join(COPILOT_DIR, 'session-state');
 
 // Event types that indicate "waiting for user input"
 const WAITING_TOOLS = new Set(['ask_user', 'ask_permission']);
@@ -976,6 +976,45 @@ function handleRequest(req, res) {
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, OPTIONS');
 
   // ── API Routes ──
+
+  // GET /api/config — Return current session path and status
+  if (pathname === '/api/config' && req.method === 'GET') {
+    const exists = fs.existsSync(SESSION_STATE_DIR);
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ sessionStatePath: SESSION_STATE_DIR, exists }));
+    return;
+  }
+
+  // PUT /api/config — Update session state path
+  if (pathname === '/api/config' && req.method === 'PUT') {
+    let body = '';
+    req.on('data', c => body += c);
+    req.on('end', () => {
+      try {
+        const { sessionStatePath } = JSON.parse(body);
+        if (!sessionStatePath) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'sessionStatePath is required' }));
+          return;
+        }
+        if (!fs.existsSync(sessionStatePath)) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Path does not exist' }));
+          return;
+        }
+        SESSION_STATE_DIR = sessionStatePath;
+        // Clear all caches
+        statsCache.clear(); intentCache.clear(); msgCache.clear(); turnsCache.clear();
+        scanResultCache.data = null; scanResultCache.ts = 0;
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, sessionStatePath: SESSION_STATE_DIR }));
+      } catch (e) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: e.message }));
+      }
+    });
+    return;
+  }
 
   // POST /api/launch-vscode — Open folder in VSCode or VSCode Insiders
   if (pathname === '/api/launch-vscode' && req.method === 'POST') {
