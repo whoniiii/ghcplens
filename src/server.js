@@ -30,6 +30,7 @@ const intentCache = new Map();   // sessionId → { fileSize, intent }
 const msgCache = new Map();      // sessionId → { fileSize, summary, lastUserMessage }
 const scanResultCache = { data: null, ts: 0 };
 const SCAN_CACHE_TTL = 1500;   // 1.5 seconds
+const turnsCache = new Map();   // sessionId → { fileSize, turns[] }
 
 // ── Session State Reader ───────────────────────────────────────────────────
 
@@ -380,6 +381,10 @@ function scanSessions() {
       }
     }
 
+    // Read lens-meta.json (our custom metadata, not touched by Copilot)
+    let lensMeta = {};
+    try { lensMeta = JSON.parse(fs.readFileSync(path.join(sessionDir, 'lens-meta.json'), 'utf-8')); } catch {}
+
     sessions.push({
       id: entry,
       cwd: workspace.cwd || '',
@@ -401,6 +406,7 @@ function scanSessions() {
       subagentRuns: stats.subagentRuns,
       outputTokens: stats.outputTokens,
       checkpoints,
+      description: lensMeta.description || '',
     });
   }
 
@@ -513,6 +519,10 @@ function getSessionDetail(sessionId) {
     .slice(0, 15)
     .map(([name, count]) => ({ name, count }));
 
+  // Read lens-meta.json (our custom metadata, not touched by Copilot)
+  let lensMeta = {};
+  try { lensMeta = JSON.parse(fs.readFileSync(path.join(sessionDir, 'lens-meta.json'), 'utf-8')); } catch {}
+
   return {
     id: sessionId,
     ...(workspace || {}),
@@ -523,12 +533,14 @@ function getSessionDetail(sessionId) {
     bgTaskList: bgTaskList.length ? bgTaskList : (state.bgTaskList || []),
     intent,
     ...stats,
-    recentTurns: turns.slice(-15),
+    recentTurns: [],
+    totalTurns: turns.length,
     checkpoints,
     planContent,
     topTools,
     recentEvents: recentEvents.slice(-20),
     filesModified: [...filesModified].slice(-30),
+    description: lensMeta.description || '',
   };
 }
 
@@ -541,6 +553,410 @@ function timeAgo(isoStr) {
   if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
   if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
   return `${Math.floor(diff / 86400)}d ago`;
+}
+
+// ── Agent Data Parser ───────────────────────────────────────────────────────
+// Single-pass events.jsonl parser for both /agents and /turn-agents endpoints.
+
+function parseAgentData(eventsFile) {
+  const agents = [];
+  const agentMap = new Map();    // toolCallId → agent object
+  const turnMap = new Map();     // interactionId → turn object
+  const taskPrompts = new Map(); // toolCallId → prompt (from tool.execution_start where toolName=task)
+  const tcidToIid = new Map();   // toolCallId → interactionId (from assistant.message toolRequests)
+
+  try {
+    const content = fs.readFileSync(eventsFile, 'utf-8');
+    for (const line of content.split('\n')) {
+      if (!line) continue;
+
+      // ── subagent.started ──
+      if (line.includes('"subagent.started"')) {
+        try {
+          const evt = JSON.parse(line);
+          const d = evt.data || {};
+          const tcid = d.toolCallId || '';
+          const info = {
+            toolCallId: tcid,
+            name: d.agentDisplayName || d.agentName || 'Unknown',
+            type: d.agentName || '',
+            description: (d.agentDescription || '').substring(0, 200),
+            startedAt: evt.timestamp || '',
+            completedAt: null,
+            status: 'running',
+            result: '',
+            agentPrompt: '',
+            internalToolCalls: 0,
+            internalTurns: 0,
+            totalOutputTokens: 0,
+            toolBreakdown: {},
+            finalResult: '',
+            interactionId: '',
+          };
+          agentMap.set(tcid, info);
+          agents.push(info);
+        } catch {}
+        continue;
+      }
+
+      // ── subagent.completed / failed ──
+      if (line.includes('"subagent.completed"') || line.includes('"subagent.failed"')) {
+        try {
+          const evt = JSON.parse(line);
+          const d = evt.data || {};
+          const tcid = d.toolCallId || '';
+          const info = agentMap.get(tcid);
+          if (info) {
+            info.completedAt = evt.timestamp || '';
+            info.status = line.includes('failed') ? 'failed' : 'done';
+            info.result = (d.result || d.error || '').substring(0, 1000);
+          }
+        } catch {}
+        continue;
+      }
+
+      // ── tool.execution_start ──
+      if (line.includes('"tool.execution_start"')) {
+        try {
+          const evt = JSON.parse(line);
+          const d = evt.data || {};
+          const parentId = d.parentToolCallId || '';
+
+          if (parentId) {
+            // Internal tool call within an agent
+            const agent = agentMap.get(parentId);
+            if (agent) {
+              agent.internalToolCalls++;
+              const toolName = d.toolName || 'unknown';
+              agent.toolBreakdown[toolName] = (agent.toolBreakdown[toolName] || 0) + 1;
+            }
+          } else {
+            // Main session — capture agentPrompt from task tool calls
+            const toolName = d.toolName || '';
+            if (toolName === 'task') {
+              const args = d.arguments || {};
+              const tcid = d.toolCallId || '';
+              if (tcid && args.prompt) {
+                taskPrompts.set(tcid, (args.prompt || '').substring(0, 2000));
+              }
+            }
+          }
+        } catch {}
+        continue;
+      }
+
+      // ── assistant.message ──
+      if (line.includes('"assistant.message"')) {
+        try {
+          const evt = JSON.parse(line);
+          const d = evt.data || {};
+          const parentId = d.parentToolCallId || '';
+
+          if (parentId) {
+            const agent = agentMap.get(parentId);
+            if (agent) {
+              agent.internalTurns++;
+              const tokens = d.outputTokens;
+              if (typeof tokens === 'number') agent.totalOutputTokens += tokens;
+              const c = d.content || '';
+              if (c) agent.finalResult = c.substring(0, 2000);
+            }
+          } else {
+            // Main session assistant.message — map toolCallIds to interactionId
+            const iid = d.interactionId || '';
+            if (iid && Array.isArray(d.toolRequests)) {
+              for (const tr of d.toolRequests) {
+                if (tr.toolCallId) tcidToIid.set(tr.toolCallId, iid);
+              }
+            }
+          }
+        } catch {}
+        continue;
+      }
+
+      // ── user.message ──
+      if (line.includes('"user.message"')) {
+        try {
+          const evt = JSON.parse(line);
+          const d = evt.data || {};
+          const iid = d.interactionId || '';
+          if (iid) {
+            let msg = (d.content || '').replace(/<[^>]+>/g, '').trim().substring(0, 200);
+            turnMap.set(iid, {
+              interactionId: iid,
+              userMessage: msg,
+              timestamp: evt.timestamp || '',
+              agents: [],
+            });
+          }
+        } catch {}
+        continue;
+      }
+    }
+  } catch {}
+
+  // Post-pass: apply taskPrompts and interactionIds to agents
+  for (const agent of agents) {
+    const prompt = taskPrompts.get(agent.toolCallId);
+    if (prompt) agent.agentPrompt = prompt;
+    // Link agent to interactionId via tcidToIid (assistant.message toolRequests)
+    if (!agent.interactionId) {
+      const iid = tcidToIid.get(agent.toolCallId);
+      if (iid) agent.interactionId = iid;
+    }
+  }
+
+  return { agents, agentMap, turnMap };
+}
+
+// Single-pass events.jsonl parser for hierarchical timeline view.
+
+function buildTimeline(eventsFile, limit, page) {
+  limit = Math.max(1, Math.min(limit || 50, 500));
+  page = Math.max(1, page || 1);
+
+  const turnMap = new Map();        // interactionId → turn object
+  const agentMap = new Map();       // toolCallId → agent object
+  const tcidToIid = new Map();      // toolCallId → interactionId (from assistant.message toolRequests)
+  const taskPrompts = new Map();    // toolCallId → prompt (from tool.execution_start where toolName=task)
+  const agentParent = new Map();    // childToolCallId → parentAgentToolCallId
+  const directToolMap = new Map();  // interactionId → Map(toolName → count)
+
+  try {
+    const content = fs.readFileSync(eventsFile, 'utf-8');
+    for (const line of content.split('\n')) {
+      if (!line) continue;
+
+      // ── user.message ──
+      if (line.includes('"user.message"')) {
+        try {
+          const evt = JSON.parse(line);
+          const d = evt.data || {};
+          const iid = d.interactionId || '';
+          if (iid) {
+            turnMap.set(iid, {
+              interactionId: iid,
+              timestamp: evt.timestamp || '',
+              userMessage: (d.content || '').replace(/<[^>]+>/g, '').trim().substring(0, 500),
+              assistantMessage: '',
+              directToolCalls: [],
+              agents: [],
+            });
+          }
+        } catch {}
+        continue;
+      }
+
+      // ── assistant.message ──
+      if (line.includes('"assistant.message"')) {
+        try {
+          const evt = JSON.parse(line);
+          const d = evt.data || {};
+          const parentId = d.parentToolCallId || '';
+
+          if (!parentId) {
+            // Main session assistant response
+            const iid = d.interactionId || '';
+            if (iid) {
+              const turn = turnMap.get(iid);
+              if (turn) {
+                const c = d.content || '';
+                if (c) turn.assistantMessage = c.substring(0, 500);
+              }
+              // Map toolRequests toolCallIds → interactionId
+              if (Array.isArray(d.toolRequests)) {
+                for (const tr of d.toolRequests) {
+                  if (tr.toolCallId) tcidToIid.set(tr.toolCallId, iid);
+                }
+              }
+            }
+          } else {
+            // Agent internal message — count turns/tokens
+            const agent = agentMap.get(parentId);
+            if (agent) {
+              agent.internalTurns++;
+              const tokens = d.outputTokens;
+              if (typeof tokens === 'number') agent.totalOutputTokens += tokens;
+              const c = d.content || '';
+              if (c) agent.finalResult = c.substring(0, 1000);
+            }
+            // Track sub-agent creation from agent's toolRequests
+            if (Array.isArray(d.toolRequests)) {
+              for (const tr of d.toolRequests) {
+                if (tr.toolCallId && tr.toolName === 'task') {
+                  agentParent.set(tr.toolCallId, parentId);
+                }
+              }
+            }
+          }
+        } catch {}
+        continue;
+      }
+
+      // ── subagent.started ──
+      if (line.includes('"subagent.started"')) {
+        try {
+          const evt = JSON.parse(line);
+          const d = evt.data || {};
+          const tcid = d.toolCallId || '';
+          if (tcid) {
+            agentMap.set(tcid, {
+              toolCallId: tcid,
+              name: d.agentDisplayName || d.agentName || 'Unknown',
+              type: d.agentName || '',
+              status: 'running',
+              startedAt: evt.timestamp || '',
+              completedAt: null,
+              duration: 0,
+              agentPrompt: '',
+              finalResult: '',
+              internalToolCalls: 0,
+              internalTurns: 0,
+              totalOutputTokens: 0,
+              toolBreakdown: {},
+              children: [],
+              _isChild: false,
+              interactionId: '',
+            });
+          }
+        } catch {}
+        continue;
+      }
+
+      // ── subagent.completed / failed ──
+      if (line.includes('"subagent.completed"') || line.includes('"subagent.failed"')) {
+        try {
+          const evt = JSON.parse(line);
+          const d = evt.data || {};
+          const tcid = d.toolCallId || '';
+          const agent = agentMap.get(tcid);
+          if (agent) {
+            agent.completedAt = evt.timestamp || '';
+            agent.status = line.includes('failed') ? 'failed' : 'done';
+            if (agent.startedAt && agent.completedAt) {
+              agent.duration = Math.round((new Date(agent.completedAt) - new Date(agent.startedAt)) / 1000);
+            }
+          }
+        } catch {}
+        continue;
+      }
+
+      // ── tool.execution_start ──
+      if (line.includes('"tool.execution_start"')) {
+        try {
+          const evt = JSON.parse(line);
+          const d = evt.data || {};
+          const parentId = d.parentToolCallId || '';
+          const toolName = d.toolName || '';
+          const tcid = d.toolCallId || '';
+
+          if (parentId) {
+            // Internal tool call within an agent
+            const agent = agentMap.get(parentId);
+            if (agent) {
+              agent.internalToolCalls++;
+              if (toolName) agent.toolBreakdown[toolName] = (agent.toolBreakdown[toolName] || 0) + 1;
+            }
+            // Sub-agent creation: this agent spawns a child via task tool
+            if (toolName === 'task' && tcid) {
+              agentParent.set(tcid, parentId);
+            }
+          } else {
+            if (toolName === 'task') {
+              // Main session task call → save prompt
+              const args = d.arguments || {};
+              if (tcid && args.prompt) {
+                taskPrompts.set(tcid, (args.prompt || '').substring(0, 1000));
+              }
+            } else if (toolName && tcid) {
+              // Direct tool call (not task, not inside agent)
+              const iid = tcidToIid.get(tcid);
+              if (iid) {
+                if (!directToolMap.has(iid)) directToolMap.set(iid, new Map());
+                const counts = directToolMap.get(iid);
+                counts.set(toolName, (counts.get(toolName) || 0) + 1);
+              }
+            }
+          }
+        } catch {}
+        continue;
+      }
+    }
+  } catch {}
+
+  // ── Post-pass ────────────────────────────────────────────────────────────
+
+  // 1. Apply taskPrompts and interactionIds to agents
+  for (const [tcid, agent] of agentMap) {
+    const prompt = taskPrompts.get(tcid);
+    if (prompt) agent.agentPrompt = prompt;
+    if (!agent.interactionId) {
+      const iid = tcidToIid.get(tcid);
+      if (iid) agent.interactionId = iid;
+    }
+  }
+
+  // 2. Build agent tree via agentParent
+  for (const [childTcid, parentTcid] of agentParent) {
+    const parent = agentMap.get(parentTcid);
+    const child = agentMap.get(childTcid);
+    if (parent && child) {
+      parent.children.push(child);
+      child._isChild = true;
+    }
+  }
+
+  // 3. Connect top-level agents to turns (skip children)
+  for (const agent of agentMap.values()) {
+    if (agent._isChild) continue;
+    const iid = tcidToIid.get(agent.toolCallId) || agent.interactionId;
+    const turn = turnMap.get(iid);
+    if (turn) turn.agents.push(agent);
+  }
+
+  // 4. Apply directToolCalls to turns
+  for (const [iid, toolCounts] of directToolMap) {
+    const turn = turnMap.get(iid);
+    if (turn) {
+      for (const [tn, cnt] of toolCounts) {
+        turn.directToolCalls.push({ toolName: tn, count: cnt });
+      }
+    }
+  }
+
+  // 5. Sort by timestamp, paginate (page 1 = most recent)
+  const sorted = Array.from(turnMap.values())
+    .sort((a, b) => (a.timestamp || '').localeCompare(b.timestamp || ''));
+  const totalTurns = sorted.length;
+  const totalPages = Math.ceil(totalTurns / limit) || 1;
+  const safePage = Math.min(page, totalPages);
+  const endIdx = totalTurns - ((safePage - 1) * limit);
+  const startIdx = Math.max(0, endIdx - limit);
+  const result = sorted.slice(startIdx, endIdx);
+
+  // 6. Clean internal fields from agent objects
+  const cleanAgent = (a) => ({
+    toolCallId: a.toolCallId,
+    name: a.name,
+    type: a.type,
+    status: a.status,
+    startedAt: a.startedAt,
+    completedAt: a.completedAt,
+    duration: a.duration,
+    agentPrompt: (a.agentPrompt || '').substring(0, 1000),
+    finalResult: (a.finalResult || '').substring(0, 1000),
+    internalToolCalls: a.internalToolCalls,
+    internalTurns: a.internalTurns,
+    totalOutputTokens: a.totalOutputTokens,
+    toolBreakdown: a.toolBreakdown,
+    children: (a.children || []).map(cleanAgent),
+  });
+
+  for (const turn of result) {
+    turn.agents = turn.agents.map(cleanAgent);
+  }
+
+  return { timeline: result, page: safePage, totalTurns, totalPages };
 }
 
 // ── HTTP Server ─────────────────────────────────────────────────────────────
@@ -557,7 +973,7 @@ const server = http.createServer((req, res) => {
 
   // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, OPTIONS');
 
   // ── API Routes ──
 
@@ -586,6 +1002,35 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  // PUT /api/sessions/:id/description — Update session description
+  if (pathname.match(/^\/api\/sessions\/[^/]+\/description$/) && req.method === 'PUT') {
+    const id = pathname.split('/')[3];
+    const sessionDir = path.join(SESSION_STATE_DIR, id);
+    if (!fs.existsSync(sessionDir)) {
+      res.writeHead(404, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Session not found' }));
+      return;
+    }
+    let body = '';
+    req.on('data', chunk => body += chunk);
+    req.on('end', () => {
+      try {
+        const { description } = JSON.parse(body);
+        const metaPath = path.join(sessionDir, 'lens-meta.json');
+        let meta = {};
+        try { meta = JSON.parse(fs.readFileSync(metaPath, 'utf-8')); } catch {}
+        meta.description = (description || '').substring(0, 500);
+        fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2));
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true }));
+      } catch (e) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Invalid request' }));
+      }
+    });
+    return;
+  }
+
   // GET /api/sessions — List all sessions
   if (pathname === '/api/sessions' && req.method === 'GET') {
     try {
@@ -599,8 +1044,7 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // GET /api/sessions/:id — Session detail
-  // GET /api/sessions/:id/agents — Subagent detail list
+  // GET /api/sessions/:id/agents — Enhanced subagent detail list
   if (pathname.match(/^\/api\/sessions\/[^/]+\/agents$/) && req.method === 'GET') {
     const id = pathname.split('/')[3];
     const sessionDir = path.join(SESSION_STATE_DIR, id);
@@ -610,53 +1054,140 @@ const server = http.createServer((req, res) => {
       res.end(JSON.stringify({ error: 'Session not found' }));
       return;
     }
-    const agents = [];
-    const agentMap = new Map(); // toolCallId → agent info
-    try {
-      const content = fs.readFileSync(eventsFile, 'utf-8');
-      for (const line of content.split('\n')) {
-        if (!line) continue;
-        if (line.includes('"subagent.started"')) {
-          try {
-            const evt = JSON.parse(line);
-            const d = evt.data || {};
-            const tcid = d.toolCallId || '';
-            const info = {
-              toolCallId: tcid,
-              name: d.agentDisplayName || d.agentName || 'Unknown',
-              type: d.agentName || '',
-              description: (d.agentDescription || '').substring(0, 200),
-              prompt: (d.prompt || '').substring(0, 500),
-              startedAt: evt.timestamp || '',
-              completedAt: null,
-              status: 'running',
-              result: '',
-            };
-            agentMap.set(tcid, info);
-            agents.push(info);
-          } catch {}
-        } else if (line.includes('"subagent.completed"') || line.includes('"subagent.failed"')) {
-          try {
-            const evt = JSON.parse(line);
-            const d = evt.data || {};
-            const tcid = d.toolCallId || '';
-            const info = agentMap.get(tcid);
-            if (info) {
-              info.completedAt = evt.timestamp || '';
-              info.status = line.includes('failed') ? 'failed' : 'done';
-              info.result = (d.result || d.error || '').substring(0, 1000);
-            }
-          } catch {}
-        }
-      }
-    } catch {}
-    // Summary: count by agent type
+    const { agents } = parseAgentData(eventsFile);
+    // Build response — strip internal fields
+    const agentList = agents.map(a => ({
+      toolCallId: a.toolCallId,
+      name: a.name,
+      type: a.type,
+      description: a.description,
+      startedAt: a.startedAt,
+      completedAt: a.completedAt,
+      status: a.status,
+      result: a.result,
+      agentPrompt: a.agentPrompt.substring(0, 2000),
+      internalToolCalls: a.internalToolCalls,
+      internalTurns: a.internalTurns,
+      totalOutputTokens: a.totalOutputTokens,
+      toolBreakdown: a.toolBreakdown,
+      finalResult: a.finalResult.substring(0, 2000),
+    }));
     const summary = {};
-    for (const a of agents) {
+    for (const a of agentList) {
       summary[a.name] = (summary[a.name] || 0) + 1;
     }
     res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ agents, summary, total: agents.length }));
+    res.end(JSON.stringify({ agents: agentList, summary, total: agentList.length }));
+    return;
+  }
+
+  // GET /api/sessions/:id/turns — Paginated conversation turns
+  if (pathname.match(/^\/api\/sessions\/[^/]+\/turns$/) && req.method === 'GET') {
+    const id = pathname.split('/')[3];
+    const sessionDir = path.join(SESSION_STATE_DIR, id);
+    const eventsFile = path.join(sessionDir, 'events.jsonl');
+    if (!fs.existsSync(eventsFile)) {
+      res.writeHead(404, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Session not found' }));
+      return;
+    }
+    const page = Math.max(1, parseInt(url.searchParams.get('page')) || 1);
+    const pageSize = Math.min(50, Math.max(1, parseInt(url.searchParams.get('pageSize')) || 15));
+
+    // Use cache if file hasn't changed
+    const stat = fs.statSync(eventsFile);
+    const cached = turnsCache.get(id);
+    let allTurns;
+    if (cached && cached.fileSize === stat.size) {
+      allTurns = cached.turns;
+    } else {
+      allTurns = [];
+      try {
+        const content = fs.readFileSync(eventsFile, 'utf-8');
+        for (const line of content.split('\n')) {
+          if (!line.trim() || !line.includes('"user.message"')) continue;
+          try {
+            const evt = JSON.parse(line);
+            let msg = (evt.data || {}).content || '';
+            msg = msg.replace(/^(<[^>]+>.*?<\/[^>]+>\s*)+/s, '').trim();
+            if (msg) allTurns.push({ type: 'user', content: msg.substring(0, 500), timestamp: evt.timestamp });
+          } catch {}
+        }
+      } catch {}
+      turnsCache.set(id, { fileSize: stat.size, turns: allTurns });
+    }
+
+    const totalTurns = allTurns.length;
+    const totalPages = Math.ceil(totalTurns / pageSize) || 1;
+    const safePage = Math.min(page, totalPages);
+    // Page 1 = most recent, Page N = oldest
+    const endIdx = totalTurns - ((safePage - 1) * pageSize);
+    const startIdx = Math.max(0, endIdx - pageSize);
+    const pageTurns = allTurns.slice(startIdx, endIdx);
+
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ turns: pageTurns, page: safePage, pageSize, totalTurns, totalPages }));
+    return;
+  }
+
+  // GET /api/sessions/:id/timeline — Hierarchical timeline view
+  if (pathname.match(/^\/api\/sessions\/[^/]+\/timeline$/) && req.method === 'GET') {
+    const id = pathname.split('/')[3];
+    const sessionDir = path.join(SESSION_STATE_DIR, id);
+    const eventsFile = path.join(sessionDir, 'events.jsonl');
+    if (!fs.existsSync(eventsFile)) {
+      res.writeHead(404, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Session not found' }));
+      return;
+    }
+    const limit = parseInt(url.searchParams.get('limit')) || 50;
+    const page = parseInt(url.searchParams.get('page')) || 1;
+    const result = buildTimeline(eventsFile, limit, page);
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify(result));
+    return;
+  }
+
+  // GET /api/sessions/:id/turn-agents — Agents grouped by conversation turn
+  if (pathname.match(/^\/api\/sessions\/[^/]+\/turn-agents$/) && req.method === 'GET') {
+    const id = pathname.split('/')[3];
+    const sessionDir = path.join(SESSION_STATE_DIR, id);
+    const eventsFile = path.join(sessionDir, 'events.jsonl');
+    if (!fs.existsSync(eventsFile)) {
+      res.writeHead(404, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Session not found' }));
+      return;
+    }
+    const { agents, turnMap } = parseAgentData(eventsFile);
+    // Link agents to turns via interactionId
+    for (const agent of agents) {
+      if (!agent.interactionId) continue;
+      const turn = turnMap.get(agent.interactionId);
+      if (!turn) continue;
+      const duration = (agent.startedAt && agent.completedAt)
+        ? Math.round((new Date(agent.completedAt) - new Date(agent.startedAt)) / 1000)
+        : 0;
+      turn.agents.push({
+        toolCallId: agent.toolCallId,
+        name: agent.name,
+        type: agent.type,
+        status: agent.status,
+        duration,
+        internalToolCalls: agent.internalToolCalls,
+        internalTurns: agent.internalTurns,
+        totalOutputTokens: agent.totalOutputTokens,
+        toolBreakdown: agent.toolBreakdown,
+        agentPrompt: agent.agentPrompt.substring(0, 500),
+        finalResult: agent.finalResult.substring(0, 500),
+      });
+    }
+    // Only include turns that have at least one agent
+    const turns = [];
+    for (const [, turn] of turnMap) {
+      if (turn.agents.length > 0) turns.push(turn);
+    }
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ turns }));
     return;
   }
 
@@ -680,7 +1211,9 @@ const server = http.createServer((req, res) => {
   if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
     const ext = path.extname(filePath);
     const contentType = MIME[ext] || 'application/octet-stream';
-    res.writeHead(200, { 'Content-Type': contentType });
+    const headers = { 'Content-Type': contentType };
+    if (ext === '.html') headers['Cache-Control'] = 'no-cache, no-store, must-revalidate';
+    res.writeHead(200, headers);
     res.end(fs.readFileSync(filePath));
     return;
   }
