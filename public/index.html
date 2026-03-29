@@ -1397,34 +1397,61 @@ const fetchAll = () => {
         window._timelineTotalTurns = data.totalTurns;
       }
 
-      // Surgically update last turn — APPEND missing parts only, never remove/replace
-      if (lastTlEl && newLast) {
+      // Surgically update ALL visible turns — APPEND missing parts only, never remove/replace
+      const allTurnEls = container.querySelectorAll('.tl-turn');
+      data.timeline.forEach(turnData => {
+        const ts = turnData.timestamp ? new Date(turnData.timestamp).toLocaleDateString('en-GB', { month: '2-digit', day: '2-digit' }) + ' ' + new Date(turnData.timestamp).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '';
+        // Find matching DOM element by timestamp
+        let turnEl = null;
+        allTurnEls.forEach(el => {
+          const elTime = el.querySelector('.tl-time')?.textContent.trim();
+          if (elTime === ts) turnEl = el;
+        });
+        if (!turnEl) return;
+
         // Add assistant message if missing
-        if (!lastTlEl.querySelector('.tl-assistant') && (newLast.assistantMessage || '').trim()) {
-          const userEl = lastTlEl.querySelector('.tl-user');
-          const insertAfter = userEl || lastTlEl.querySelector('.tl-time');
+        if (!turnEl.querySelector('.tl-assistant') && (turnData.assistantMessage || '').trim()) {
+          const userEl = turnEl.querySelector('.tl-user');
+          const insertAfter = userEl || turnEl.querySelector('.tl-time');
           if (insertAfter) {
             insertAfter.insertAdjacentHTML('afterend',
-              `<div class="tl-assistant" onclick="this.classList.toggle('expanded')"><span style="margin-right:4px">🤖</span><span class="tl-text">${escHtml(newLast.assistantMessage)}</span></div>`);
+              `<div class="tl-assistant" onclick="this.classList.toggle('expanded')"><span style="margin-right:4px">🤖</span><span class="tl-text">${escHtml(turnData.assistantMessage)}</span></div>`);
           }
         }
         // Add direct tools if missing
-        if (!lastTlEl.querySelector('.tl-direct-tools') && newLast.directToolCalls && newLast.directToolCalls.length > 0) {
+        if (!turnEl.querySelector('.tl-direct-tools') && turnData.directToolCalls && turnData.directToolCalls.length > 0) {
           let toolsHtml = `<div class="tl-direct-tools"><span style="font-size:10px;color:var(--text-muted);margin-right:2px">🔧</span>`;
-          newLast.directToolCalls.forEach(tc => { toolsHtml += `<span class="tl-tool-badge">${escHtml(tc.toolName)}×${tc.count}</span>`; });
+          turnData.directToolCalls.forEach(tc => { toolsHtml += `<span class="tl-tool-badge">${escHtml(tc.toolName)}×${tc.count}</span>`; });
           toolsHtml += `</div>`;
-          const assistEl = lastTlEl.querySelector('.tl-assistant') || lastTlEl.querySelector('.tl-user') || lastTlEl.querySelector('.tl-time');
+          const assistEl = turnEl.querySelector('.tl-assistant') || turnEl.querySelector('.tl-user') || turnEl.querySelector('.tl-time');
           if (assistEl) assistEl.insertAdjacentHTML('afterend', toolsHtml);
         }
         // Add new agents (append ones that don't exist yet)
-        const existingAgentCount = lastTlEl.querySelectorAll(':scope > .tl-agent').length;
-        if (newLast.agents && newLast.agents.length > existingAgentCount) {
-          for (let i = existingAgentCount; i < newLast.agents.length; i++) {
-            const agentHtml = renderAgentNode(newLast.agents[i], 0, 'live', i, null);
-            lastTlEl.insertAdjacentHTML('beforeend', agentHtml);
+        const existingAgentCount = turnEl.querySelectorAll(':scope > .tl-agent').length;
+        if (turnData.agents && turnData.agents.length > existingAgentCount) {
+          for (let i = existingAgentCount; i < turnData.agents.length; i++) {
+            const agentHtml = renderAgentNode(turnData.agents[i], 0, 'live', i, null);
+            turnEl.insertAdjacentHTML('beforeend', agentHtml);
           }
         }
-      }
+        // Update agent status badges (running → done)
+        turnEl.querySelectorAll(':scope > .tl-agent').forEach((agentEl, idx) => {
+          if (!turnData.agents || !turnData.agents[idx]) return;
+          const agentData = turnData.agents[idx];
+          const statusEl = agentEl.querySelector('.tl-agent-status');
+          if (statusEl) {
+            const newStatus = agentData.status === 'done' ? '✅' : agentData.status === 'running' ? '⏳' : '❌';
+            if (statusEl.textContent !== newStatus) statusEl.textContent = newStatus;
+          }
+          const metaEl = agentEl.querySelector('.tl-agent-meta');
+          if (metaEl && agentData.duration) {
+            const dur = agentData.duration >= 60 ? `${Math.floor(agentData.duration/60)}m ${Math.round(agentData.duration%60)}s` : `${Math.round(agentData.duration)}s`;
+            const tok = agentData.totalOutputTokens ? (agentData.totalOutputTokens >= 1000 ? `${(agentData.totalOutputTokens/1000).toFixed(1)}K tok` : `${agentData.totalOutputTokens} tok`) : '';
+            const newMeta = tok ? `${dur} · ${tok}` : dur;
+            if (metaEl.textContent !== newMeta) metaEl.textContent = newMeta;
+          }
+        });
+      });
 
       // Auto-scroll if near bottom
       if (body.scrollHeight - body.scrollTop - body.clientHeight < 100) {
