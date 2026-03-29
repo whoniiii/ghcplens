@@ -4,7 +4,7 @@
 
 See what Copilot is doing — every turn, tool call, agent chain, and token — live in your browser or VS Code.
 
-![Dashboard](https://raw.githubusercontent.com/whoniiii/ghcplens/master/docs/screenshots/dashboard.jpeg)
+<img src="https://raw.githubusercontent.com/whoniiii/ghcplens/master/docs/screenshots/dashboard.jpeg" width="700" alt="Dashboard">
 
 ---
 
@@ -16,7 +16,7 @@ Browse all Copilot CLI sessions grouped by project folder. See status at a glanc
 ### Session Timeline
 Drill into any session to see the full conversation timeline: user messages, assistant responses, tool calls, and agent dispatches in chronological order.
 
-![Agent Hierarchy](https://raw.githubusercontent.com/whoniiii/ghcplens/master/docs/screenshots/agent-hierarchy.jpeg)
+<img src="https://raw.githubusercontent.com/whoniiii/ghcplens/master/docs/screenshots/agent-hierarchy.jpeg" width="700" alt="Agent Hierarchy">
 
 ### Multi-Agent Hierarchy
 When Copilot spawns sub-agents (PM, backend-developer, tester, etc.), Copilot Lens renders the full call tree with parent-child relationships, per-agent tool badges, and results.
@@ -24,7 +24,7 @@ When Copilot spawns sub-agents (PM, backend-developer, tester, etc.), Copilot Le
 ### Tool Call Inspector
 Click any tool badge to inspect the exact input and output — powershell commands, file edits, grep searches, API calls — everything Copilot did under the hood.
 
-![Tool Modal](https://raw.githubusercontent.com/whoniiii/ghcplens/master/docs/screenshots/tool-modal.jpeg)
+<img src="https://raw.githubusercontent.com/whoniiii/ghcplens/master/docs/screenshots/tool-modal.jpeg" width="700" alt="Tool Modal">
 
 ### Statistics
 Per-session stats: turns, tools, agents, tokens, checkpoints, and modified files — all in one panel with horizontal bar charts for tool usage distribution.
@@ -96,5 +96,6 @@ MIT
 ---
 
 <p align="center">
-  Built for the GitHub Copilot community
+  Built for the GitHub Copilot community<br>
+  <a href="https://www.linkedin.com/in/jeonghlee8024">Jeonghoon Lee</a>
 </p>
