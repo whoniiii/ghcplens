@@ -967,7 +967,7 @@ const MIME = {
   '.ico': 'image/x-icon',
 };
 
-const server = http.createServer((req, res) => {
+function handleRequest(req, res) {
   const url = new URL(req.url, `http://localhost:${PORT}`);
   const pathname = url.pathname;
 
@@ -1220,10 +1220,25 @@ const server = http.createServer((req, res) => {
 
   res.writeHead(404, { 'Content-Type': 'text/plain' });
   res.end('Not Found');
-});
+}
 
-server.listen(PORT, () => {
-  console.log(`\n  🤖 GitHub Copilot Lens`);
-  console.log(`  http://localhost:${PORT}`);
-  console.log(`  Session state: ${SESSION_STATE_DIR}\n`);
-});
+// ── Server Startup ─────────────────────────────────────────────────────────
+
+function startServer(port) {
+  const srv = http.createServer(handleRequest);
+  return new Promise((resolve) => {
+    srv.listen(port || 0, () => {
+      const actualPort = srv.address().port;
+      console.log(`\n  🤖 GitHub Copilot Lens`);
+      console.log(`  http://localhost:${actualPort}`);
+      console.log(`  Session state: ${SESSION_STATE_DIR}\n`);
+      resolve({ server: srv, port: actualPort });
+    });
+  });
+}
+
+if (require.main === module) {
+  startServer(PORT);
+}
+
+module.exports = { startServer };

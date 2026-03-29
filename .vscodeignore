@@ -1,0 +1,9 @@
+.git
+.github
+__tests__
+node_modules
+*.test.js
+vitest.config.js
+.vscode
+*.md
+!README.md

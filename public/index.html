@@ -839,6 +839,20 @@ body {
 </div>
 
 <script>
+/* ─── VS Code Extension Support ─── */
+const API_BASE = window.GHCP_LENS_PORT ? `http://localhost:${window.GHCP_LENS_PORT}` : '';
+const IS_VSCODE = !!window.GHCP_LENS_VSCODE;
+
+// Listen for VS Code theme sync
+if (IS_VSCODE) {
+  window.addEventListener('message', e => {
+    if (e.data && e.data.type === 'theme-sync') {
+      document.documentElement.setAttribute('data-theme', e.data.theme);
+      try { localStorage.setItem('theme', e.data.theme); } catch(ex) {}
+    }
+  });
+}
+
 /* ─── i18n ─── */
 const I18N = {
   ko: {
@@ -1173,7 +1187,7 @@ const toggleAllGroups = () => {
 };
 
 const launchVSCode = (folder, insiders, sessionId) => {
-  fetch('/api/launch-vscode', {
+  fetch(API_BASE + '/api/launch-vscode', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ folder, insiders })
@@ -1217,7 +1231,7 @@ let isTimelineView = false;
 // Initial load
 let firstLoadDone = false;
 const fetchAll = () => {
-  fetch('/api/sessions').then(r => r.json()).then(s => {
+  fetch(API_BASE + '/api/sessions').then(r => r.json()).then(s => {
     lastSessions = s;
     renderSessions(s);
     if (!firstLoadDone && s.length > 0) {
@@ -1229,8 +1243,8 @@ const fetchAll = () => {
   // Also refresh detail panel if open
   if (selectedSessionId && detailOpen) {
     const sid = selectedSessionId;
-    const dp = fetch(`/api/sessions/${sid}`).then(r => r.json());
-    const tap = fetch(`/api/sessions/${sid}/turn-agents`).then(r => r.json()).catch(() => null);
+    const dp = fetch(`${API_BASE}/api/sessions/${sid}`).then(r => r.json());
+    const tap = fetch(`${API_BASE}/api/sessions/${sid}/turn-agents`).then(r => r.json()).catch(() => null);
     Promise.all([dp, tap]).then(([detail, turnAgents]) => {
       if (turnAgents && turnAgents.turns) window.turnAgentData = turnAgents.turns;
       // Selective update — only change dynamic parts, preserve user state
@@ -1241,7 +1255,7 @@ const fetchAll = () => {
   }
   // Also refresh timeline panel if open — append new turns + surgically update last turn
   if (isTimelineView && agentPanelOpen && selectedSessionId) {
-    fetch(`/api/sessions/${selectedSessionId}/timeline?limit=50&page=1`).then(r => r.json()).then(data => {
+    fetch(`${API_BASE}/api/sessions/${selectedSessionId}/timeline?limit=50&page=1`).then(r => r.json()).then(data => {
       if (!data || !data.timeline || !data.timeline.length) return;
       const body = document.getElementById('agentPanelBody');
       const container = body.querySelector('.tl-container');
@@ -1335,8 +1349,8 @@ const openDetail = (sessionId) => {
   window.turnAgentData = null;
   currentTurnsPage = 1; // Reset to page 1 when opening new session
 
-  const detailPromise = fetch(`/api/sessions/${sessionId}`).then(r => r.json());
-  const turnAgentPromise = fetch(`/api/sessions/${sessionId}/turn-agents`).then(r => r.json()).catch(() => null);
+  const detailPromise = fetch(`${API_BASE}/api/sessions/${sessionId}`).then(r => r.json());
+  const turnAgentPromise = fetch(`${API_BASE}/api/sessions/${sessionId}/turn-agents`).then(r => r.json()).catch(() => null);
 
   Promise.all([detailPromise, turnAgentPromise])
     .then(([detail, turnAgents]) => {
@@ -1368,7 +1382,7 @@ let agentData = null;
 
 const openAgentPanel = async (sessionId) => {
   try {
-    const res = await fetch(`/api/sessions/${sessionId}/timeline?limit=50&page=1`);
+    const res = await fetch(`${API_BASE}/api/sessions/${sessionId}/timeline?limit=50&page=1`);
     const data = await res.json();
     window._timelinePage = data.page;
     window._timelineTotalPages = data.totalPages;
@@ -1777,7 +1791,7 @@ const loadOlderTimeline = async () => {
   window._timelineLoading = true;
   const nextPage = window._timelinePage + 1;
   try {
-    const res = await fetch(`/api/sessions/${selectedSessionId}/timeline?limit=50&page=${nextPage}`);
+    const res = await fetch(`${API_BASE}/api/sessions/${selectedSessionId}/timeline?limit=50&page=${nextPage}`);
     const data = await res.json();
     window._timelinePage = data.page;
     window._timelineTotalPages = data.totalPages;
@@ -2209,7 +2223,7 @@ const startEditDesc = () => {
 const cancelEditDesc = () => {
   // Re-render to restore original state
   if (selectedSessionId) {
-    fetch(`/api/sessions/${selectedSessionId}`).then(r => r.json()).then(renderDetail);
+    fetch(`${API_BASE}/api/sessions/${selectedSessionId}`).then(r => r.json()).then(renderDetail);
   }
 };
 
@@ -2217,7 +2231,7 @@ const saveDesc = () => {
   const input = document.getElementById('descInput');
   if (!input || !selectedSessionId) return;
   const desc = input.value.trim();
-  fetch(`/api/sessions/${selectedSessionId}/description`, {
+  fetch(`${API_BASE}/api/sessions/${selectedSessionId}/description`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ description: desc })
@@ -2290,7 +2304,7 @@ const loadTurnsPage = (page, showLoading = true) => {
   const container = document.getElementById('turnsList');
   if (!container || !selectedSessionId) { console.warn('loadTurnsPage: no container or session'); return; }
   if (showLoading) container.innerHTML = '<div class="dp-turns-loading">⏳</div>';
-  const url = `/api/sessions/${selectedSessionId}/turns?page=${page}&pageSize=15`;
+  const url = `${API_BASE}/api/sessions/${selectedSessionId}/turns?page=${page}&pageSize=15`;
   fetch(url)
     .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
     .then(data => {
@@ -2309,7 +2323,7 @@ const loadTurnsPage = (page, showLoading = true) => {
 const pollRefreshTurns = () => {
   const container = document.getElementById('turnsList');
   if (!container || !selectedSessionId) return;
-  fetch(`/api/sessions/${selectedSessionId}/turns?page=${currentTurnsPage}&pageSize=15`)
+  fetch(`${API_BASE}/api/sessions/${selectedSessionId}/turns?page=${currentTurnsPage}&pageSize=15`)
     .then(r => r.json())
     .then(data => {
       // Skip if data identical and content exists

@@ -1,17 +1,46 @@
 {
   "name": "ghcp-lens",
+  "displayName": "GitHub Copilot Lens",
   "version": "1.0.0",
   "description": "GitHub Copilot Lens — Session Monitor Dashboard",
-  "main": "src/server.js",
-  "scripts": {
-    "test": "vitest run --reporter=verbose",
-    "start": "node src/server.js"
+  "publisher": "ghcp-lens",
+  "engines": {
+    "vscode": "^1.85.0"
   },
-  "keywords": [],
+  "categories": [
+    "Visualization",
+    "Other"
+  ],
+  "main": "./src/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "ghcpLens.open",
+        "title": "Open Copilot Lens",
+        "category": "Copilot Lens"
+      }
+    ]
+  },
+  "scripts": {
+    "start": "node src/server.js",
+    "test": "vitest run --reporter=verbose",
+    "package": "vsce package --no-dependencies"
+  },
+  "keywords": [
+    "copilot",
+    "dashboard",
+    "monitor",
+    "session"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/user/ghcp-lens"
+  },
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "devDependencies": {
+    "@vscode/vsce": "^3.7.1",
     "vitest": "^4.1.2"
   }
 }
