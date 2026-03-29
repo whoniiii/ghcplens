@@ -19,7 +19,17 @@
         "title": "Open Copilot Lens",
         "category": "Copilot Lens"
       }
-    ]
+    ],
+    "configuration": {
+      "title": "Copilot Lens",
+      "properties": {
+        "ghcpLens.sessionStatePath": {
+          "type": "string",
+          "default": "",
+          "description": "Path to .copilot/session-state directory. Leave empty for default (~/.copilot/session-state)"
+        }
+      }
+    }
   },
   "scripts": {
     "start": "node src/server.js",

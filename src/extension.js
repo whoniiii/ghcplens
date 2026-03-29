@@ -16,6 +16,14 @@ let panel = null;
 
 async function ensureServer() {
   if (serverInstance) return serverPort;
+
+  // Read user-configured session path
+  const config = vscode.workspace.getConfiguration('ghcpLens');
+  const customPath = config.get('sessionStatePath');
+  if (customPath) {
+    process.env.COPILOT_SESSION_DIR = customPath;
+  }
+
   const result = await startServer(0);
   serverInstance = result.server;
   serverPort = result.port;
