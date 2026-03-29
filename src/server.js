@@ -1259,7 +1259,7 @@ function handleRequest(req, res) {
   }
 
   // ── Static Files ──
-  let filePath = pathname === '/' ? '/index.html' : pathname;
+  let filePath = pathname === '/' ? '/index.html' : pathname === '/v2' ? '/index-v2.html' : pathname;
   filePath = path.join(__dirname, '..', 'public', filePath);
 
   if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {

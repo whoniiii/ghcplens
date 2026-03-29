@@ -3,33 +3,33 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🔍 GitHub Copilot Lens</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🤖</text></svg>">
+<title>Copilot Lens</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='40' fill='%23228be6'/><text x='50' y='62' text-anchor='middle' font-size='40' fill='white' font-family='sans-serif' font-weight='bold'>CL</text></svg>">
 <style>
 :root {
-  --bg: #f6f8fa; --surface: #ffffff; --surface-hover: #f3f4f6;
-  --border: #d0d7de; --text: #1f2328; --text-secondary: #656d76; --text-muted: #6e7781;
-  --accent: #0969da; --success: #1a7f37; --danger: #cf222e; --warning: #9a6700;
-  --purple: #8250df; --orange: #bc4c00;
-  --accent-bg: #ddf4ff;
+  --bg: #f8f9fa; --surface: #ffffff; --surface-hover: #f1f3f5;
+  --border: #dee2e6; --text: #212529; --text-secondary: #495057; --text-muted: #868e96;
+  --accent: #228be6; --success: #2b8a3e; --danger: #c92a2a; --warning: #e67700;
+  --purple: #7048e8; --orange: #d9480f;
+  --accent-bg: #e7f5ff;
 }
 
-/* VSCode Dark theme */
+/* Dark theme — enterprise slate */
 [data-theme="dark"] {
-  --bg: #1e1e1e; --surface: #252526; --surface-hover: #2a2d2e;
-  --border: #3c3c3c; --text: #e8e8e8; --text-secondary: #b5b5b5; --text-muted: #969696;
-  --accent: #6cb6ff; --success: #58d68d; --danger: #f87171; --warning: #fbbf24;
-  --purple: #d19aef; --orange: #e8a36d;
-  --accent-bg: #264f78;
+  --bg: #1a1b1e; --surface: #25262b; --surface-hover: #2c2e33;
+  --border: #373a40; --text: #c1c2c5; --text-secondary: #909296; --text-muted: #5c5f66;
+  --accent: #4dabf7; --success: #51cf66; --danger: #ff6b6b; --warning: #fcc419;
+  --purple: #b197fc; --orange: #ff922b;
+  --accent-bg: #1c3a5c;
 }
 
-/* VSCode Gray theme */
+/* Gray theme — enterprise charcoal */
 [data-theme="gray"] {
-  --bg: #2d2d2d; --surface: #383838; --surface-hover: #424242;
-  --border: #515151; --text: #e0e0e0; --text-secondary: #b0b0b0; --text-muted: #a0a0a0;
-  --accent: #75beff; --success: #89d185; --danger: #f48771; --warning: #cca700;
-  --purple: #d7a3e0; --orange: #e8a36d;
-  --accent-bg: #37475a;
+  --bg: #2b2c30; --surface: #35363a; --surface-hover: #3e3f44;
+  --border: #4a4b50; --text: #d4d4d8; --text-secondary: #a1a1aa; --text-muted: #71717a;
+  --accent: #60a5fa; --success: #6ee7b7; --danger: #fca5a5; --warning: #fcd34d;
+  --purple: #c4b5fd; --orange: #fdba74;
+  --accent-bg: #2d3a4f;
 }
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -39,24 +39,27 @@
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 0; }
 ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
 ::-webkit-scrollbar-corner { background: transparent; }
-[data-theme="dark"] ::-webkit-scrollbar-thumb { background: #555; }
-[data-theme="dark"] ::-webkit-scrollbar-thumb:hover { background: #888; }
-[data-theme="gray"] ::-webkit-scrollbar-thumb { background: #606060; }
-[data-theme="gray"] ::-webkit-scrollbar-thumb:hover { background: #909090; }
+[data-theme="dark"] ::-webkit-scrollbar-thumb { background: #4a4b50; }
+[data-theme="dark"] ::-webkit-scrollbar-thumb:hover { background: #6c6d73; }
+[data-theme="gray"] ::-webkit-scrollbar-thumb { background: #505055; }
+[data-theme="gray"] ::-webkit-scrollbar-thumb:hover { background: #707077; }
 
 body {
-  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif;
+  font-family: 'Inter', 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
   background: var(--bg); color: var(--text); line-height: 1.5; min-height: 100vh;
   font-size: 13px; scrollbar-color: var(--border) transparent; scrollbar-width: thin;
+  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
 }
 
 /* Header */
 .header {
   background: var(--surface); border-bottom: 1px solid var(--border);
-  padding: 8px 20px; display: flex; align-items: center; gap: 16px;
-  position: sticky; top: 0; z-index: 100;
+  padding: 0 20px; display: flex; align-items: center; gap: 16px;
+  position: sticky; top: 0; z-index: 100; height: 40px;
 }
-.header h1 { font-size: 14px; font-weight: 600; white-space: nowrap; }
+.header h1 { font-size: 13px; font-weight: 600; white-space: nowrap; letter-spacing: -0.3px; color: var(--text); }
+.header h1 .logo-mark { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; background: var(--accent); color: #fff; font-size: 9px; font-weight: 700; border-radius: 3px; margin-right: 8px; letter-spacing: 0; vertical-align: middle; }
 .header-right { margin-left: auto; display: flex; gap: 6px; align-items: center; }
 .btn {
   display: inline-flex; align-items: center; gap: 4px;
@@ -82,13 +85,13 @@ body {
 .lang-btn:hover { background: var(--surface-hover); }
 .lang-btn.active { background: var(--accent); color: #fff; }
 .theme-btn {
-  padding: 3px 8px; font-size: 13px; border: none; cursor: pointer;
-  background: var(--surface); color: var(--text); transition: all 0.1s;
-  border-right: 1px solid var(--border); line-height: 1;
+  padding: 3px 8px; font-size: 11px; border: none; cursor: pointer;
+  background: var(--surface); color: var(--text-secondary); transition: all 0.1s;
+  border-right: 1px solid var(--border); line-height: 1; font-weight: 500;
 }
 .theme-btn:last-child { border-right: none; }
 .theme-btn:hover { background: var(--surface-hover); }
-.theme-btn.active { background: var(--accent); filter: brightness(1.1); }
+.theme-btn.active { background: var(--accent); color: #fff; }
 
 /* Main */
 /* Main */
@@ -185,11 +188,11 @@ body {
 /* Session row */
 .st-row {
   display: flex; align-items: center; gap: 0;
-  padding: 4px 12px 4px 32px; border-top: 1px solid var(--border);
-  cursor: pointer; transition: background 0.1s; min-height: 30px;
+  padding: 2px 12px 2px 32px; border-top: 1px solid var(--border);
+  cursor: pointer; transition: background 0.1s; min-height: 32px;
 }
 .st-row:hover { background: var(--surface-hover); }
-.st-row.selected { background: var(--accent-bg); }
+.st-row.selected { background: var(--surface-hover); border-left: 2px solid var(--accent); padding-left: 30px; }
 
 .dot {
   width: 7px; height: 7px; border-radius: 50%; display: inline-block; flex-shrink: 0;
@@ -272,12 +275,12 @@ body {
 .empty-state {
   text-align: center; padding: 40px 20px; color: var(--text-muted); font-size: 13px;
 }
-.empty-state .empty-icon { font-size: 36px; margin-bottom: 8px; }
+.empty-state .empty-icon { font-size: 14px; margin-bottom: 8px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
 
 /* ─── Right Detail Panel ─── */
 /* Split pane container */
 .split-container {
-  display: flex; height: calc(100vh - 37px); overflow: hidden;
+  display: flex; height: calc(100vh - 41px); overflow: hidden;
 }
 .split-left {
   flex: 7; min-width: 300px; overflow-y: auto; padding: 12px 16px;
@@ -328,12 +331,12 @@ body {
 }
 .agent-type-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 12px; }
 .agent-type-card {
-  border: 1px solid var(--border); border-radius: 6px; padding: 12px;
+  border: 1px solid var(--border); border-radius: 4px; padding: 12px;
   cursor: pointer; transition: all 0.15s;
 }
 .agent-type-card:hover { background: var(--surface-hover); }
 .agent-type-card.selected { border-color: var(--accent); background: var(--accent-bg); }
-.agent-card-icon { font-size: 20px; margin-bottom: 4px; }
+.agent-card-icon { font-size: 12px; margin-bottom: 4px; display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; background: var(--bg); border: 1px solid var(--border); border-radius: 50%; font-weight: 700; color: var(--accent); }
 .agent-card-name { font-weight: 600; font-size: 13px; color: var(--text); }
 .agent-card-count { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
 .agent-card-desc { font-size: 11px; color: var(--text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 2px; }
@@ -616,12 +619,13 @@ body {
 
 /* Detail sections */
 .dp-section {
-  padding: 12px 16px; border-bottom: 1px solid var(--border);
+  padding: 10px 16px; border-bottom: 1px solid var(--border);
 }
 .dp-section:last-child { border-bottom: none; }
 .dp-section-title {
   font-size: 10px; font-weight: 600; text-transform: uppercase;
   letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 8px;
+  padding-bottom: 4px; border-bottom: 1px solid var(--border);
 }
 .dp-desc {
   font-size: 12px; color: var(--text); padding: 6px 8px;
@@ -664,32 +668,33 @@ body {
 .dp-field-value.mono { font-family: 'SFMono-Regular', Consolas, 'Courier New', monospace; font-size: 11px; }
 
 .dp-intent { 
-  padding: 6px 10px; background: var(--accent-bg); border-radius: 0;
+  padding: 5px 10px; background: var(--accent-bg); border-radius: 0;
   font-size: 12px; color: var(--accent); font-weight: 500;
-  margin-bottom: 8px; border-left: 3px solid var(--accent);
+  margin-bottom: 8px; border-left: 2px solid var(--accent);
 }
 .dp-waiting-box {
-  padding: 6px 10px; background: #fff8c5; border: 1px solid #d4a72c44;
+  padding: 5px 10px; background: #fff8c5; border: 1px solid #d4a72c44;
   border-radius: 0; font-size: 11px; color: var(--warning); margin-top: 6px;
-  border-left: 3px solid var(--warning);
+  border-left: 2px solid var(--warning);
 }
 
 /* Stat pills */
 .dp-stats {
-  display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;
 }
 .dp-stat {
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  padding: 10px 6px; border-radius: 6px; font-size: 10px;
+  padding: 8px 4px; border-radius: 2px; font-size: 10px;
   background: var(--bg); border: 1px solid var(--border);
   color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.3px;
+  font-weight: 500;
 }
 .dp-stat .num {
-  font-size: 20px; font-weight: 700; color: var(--text);
-  line-height: 1.2; margin-bottom: 2px;
+  font-size: 18px; font-weight: 700; color: var(--text);
+  line-height: 1.2; margin-bottom: 1px;
 }
 .dp-stat .num.accent { color: var(--accent); }
-.dp-stat .stat-icon { font-size: 14px; margin-bottom: 2px; opacity: 0.7; }
+.dp-stat .stat-icon { font-size: 10px; margin-bottom: 2px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; }
 
 /* Tool chart */
 .dp-tool-bar {
@@ -769,13 +774,13 @@ body {
 
 /* Toast notification */
 .toast-msg {
-  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px);
-  background: var(--surface); border: 1px solid var(--accent); color: var(--text);
-  padding: 10px 20px; font-size: 13px; z-index: 999;
+  position: fixed; bottom: 24px; right: 24px; transform: translateY(20px);
+  background: var(--surface); border: 1px solid var(--border); color: var(--text);
+  padding: 8px 16px; font-size: 12px; z-index: 999;
   opacity: 0; transition: opacity 0.3s, transform 0.3s;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-radius: 2px;
 }
-.toast-msg.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.toast-msg.show { opacity: 1; transform: translateY(0); }
 .dp-file {
   font-size: 11px; font-family: 'SFMono-Regular', Consolas, monospace;
   color: var(--text-secondary); padding: 2px 0; overflow: hidden;
@@ -799,29 +804,30 @@ body {
 }
 .path-modal-overlay.visible { opacity: 1; }
 .path-modal {
-  background: var(--surface); border-radius: 16px; padding: 48px 40px 36px;
-  width: 480px; max-width: 90vw; box-shadow: 0 24px 80px rgba(0,0,0,0.3);
-  text-align: center;
+  background: var(--surface); border-radius: 6px; padding: 40px 36px 32px;
+  width: 460px; max-width: 90vw; box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+  text-align: center; border: 1px solid var(--border);
 }
-.path-modal-logo { font-size: 56px; margin-bottom: 8px; }
+.path-modal-logo { font-size: 13px; font-weight: 700; color: var(--accent); margin-bottom: 4px; letter-spacing: -0.3px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.path-modal-logo .logo-mark { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; background: var(--accent); color: #fff; font-size: 13px; font-weight: 700; border-radius: 4px; }
 .path-modal-title {
-  font-size: 22px; font-weight: 700; color: var(--text); margin-bottom: 4px;
+  font-size: 18px; font-weight: 600; color: var(--text); margin-bottom: 4px; margin-top: 12px;
 }
 .path-modal-subtitle {
   font-size: 13px; color: var(--text-secondary); margin-bottom: 28px; line-height: 1.5;
 }
 .path-modal-input {
-  width: 100%; box-sizing: border-box; padding: 12px 14px; font-size: 14px;
-  border: 1.5px solid var(--border); border-radius: 8px; background: var(--bg);
+  width: 100%; box-sizing: border-box; padding: 10px 12px; font-size: 13px;
+  border: 1px solid var(--border); border-radius: 4px; background: var(--bg);
   color: var(--text); outline: none; font-family: 'Consolas', 'SF Mono', monospace;
 }
-.path-modal-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(9,105,218,0.15); }
+.path-modal-input:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(34,139,230,0.12); }
 .path-modal-btn {
-  margin-top: 16px; width: 100%; padding: 12px; font-size: 15px; font-weight: 600;
-  border: none; border-radius: 8px; cursor: pointer;
-  background: var(--accent); color: #fff; transition: opacity 0.2s;
+  margin-top: 12px; width: 100%; padding: 10px; font-size: 13px; font-weight: 600;
+  border: 1px solid var(--accent); border-radius: 4px; cursor: pointer;
+  background: transparent; color: var(--accent); transition: all 0.15s;
 }
-.path-modal-btn:hover { opacity: 0.9; }
+.path-modal-btn:hover { background: var(--accent); color: #fff; }
 .path-modal-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 .path-modal-error {
   margin-top: 12px; font-size: 12px; color: var(--danger); min-height: 18px;
@@ -835,21 +841,21 @@ body {
 <body>
 
 <div class="header">
-  <h1>🔍 GitHub Copilot Lens</h1>
+  <h1><span class="logo-mark">CL</span>Copilot Lens</h1>
   <div class="header-right">
     <div class="lang-selector">
-      <button class="lang-btn active" data-lang="ko" onclick="setLang('ko')">한</button>
-      <button class="lang-btn" data-lang="en" onclick="setLang('en')">EN</button>
-      <button class="lang-btn" data-lang="ja" onclick="setLang('ja')">日</button>
-      <button class="lang-btn" data-lang="zh" onclick="setLang('zh')">中</button>
+      <button class="lang-btn active" data-lang="ko" onclick="setLang('ko')">ko</button>
+      <button class="lang-btn" data-lang="en" onclick="setLang('en')">en</button>
+      <button class="lang-btn" data-lang="ja" onclick="setLang('ja')">ja</button>
+      <button class="lang-btn" data-lang="zh" onclick="setLang('zh')">zh</button>
     </div>
     <div class="theme-selector">
-      <button class="theme-btn light active" onclick="setTheme('light')" title="Light">☀️</button>
-      <button class="theme-btn gray" onclick="setTheme('gray')" title="Gray">🌗</button>
-      <button class="theme-btn dark" onclick="setTheme('dark')" title="Dark">🌙</button>
+      <button class="theme-btn light active" onclick="setTheme('light')">Light</button>
+      <button class="theme-btn gray" onclick="setTheme('gray')">Gray</button>
+      <button class="theme-btn dark" onclick="setTheme('dark')">Dark</button>
     </div>
     <div class="poll-ctrl" id="globalPollCtrl">
-      <span style="font-size:11px;color:var(--text-secondary);margin-right:2px;">⏱</span>
+      <span style="font-size:10px;color:var(--text-muted);margin-right:2px;font-weight:500">Poll</span>
       <button class="poll-btn active" onclick="setPollInterval(1)">1s</button>
       <button class="poll-btn" onclick="setPollInterval(3)">3s</button>
       <button class="poll-btn" onclick="setPollInterval(5)">5s</button>
@@ -880,7 +886,7 @@ body {
   </div>
   <div class="agent-panel" id="agentPanel">
     <div class="agent-panel-header">
-      <h2 id="agentPanelTitle">🤖 Agents</h2>
+      <h2 id="agentPanelTitle">Agents</h2>
       <button class="detail-close" onclick="closeAgentPanel()">✕</button>
     </div>
     <div class="agent-panel-body" id="agentPanelBody"></div>
@@ -890,8 +896,8 @@ body {
 <!-- Path Config Modal -->
 <div class="path-modal-overlay" id="pathModal">
   <div class="path-modal">
-    <div class="path-modal-logo">🔍</div>
-    <div class="path-modal-title">GitHub Copilot Lens</div>
+    <div class="path-modal-logo"><span class="logo-mark">CL</span></div>
+    <div class="path-modal-title">Copilot Lens</div>
     <div class="path-modal-subtitle" id="pathModalMsg">
       Copilot CLI 세션 데이터의 경로를 확인해주세요.<br>
       자동으로 감지된 경로가 맞다면 바로 시작하세요!
@@ -899,7 +905,7 @@ body {
     <input class="path-modal-input" id="pathModalInput" 
       placeholder="예: C:\Users\me\.copilot\session-state" 
       spellcheck="false" autocomplete="off">
-    <button class="path-modal-btn" id="pathModalBtn" onclick="submitPathConfig()">🚀 시작하기!</button>
+    <button class="path-modal-btn" id="pathModalBtn" onclick="submitPathConfig()">Connect</button>
     <div class="path-modal-error" id="pathModalError"></div>
     <div class="path-modal-current" id="pathModalCurrent"></div>
   </div>
@@ -945,7 +951,7 @@ async function submitPathConfig() {
   const errEl = document.getElementById('pathModalError');
   const val = input.value.trim();
   if (!val) { errEl.textContent = '경로를 입력해주세요'; return; }
-  btn.disabled = true; btn.textContent = '연결 중...'; errEl.textContent = '';
+    btn.disabled = true; btn.textContent = t('connecting'); errEl.textContent = '';
   try {
     const res = await fetch(API_BASE + '/api/config', {
       method: 'PUT',
@@ -960,7 +966,7 @@ async function submitPathConfig() {
   } catch (e) {
     errEl.textContent = '서버 연결 실패';
   } finally {
-    btn.disabled = false; btn.textContent = '🚀 시작하기!';
+    btn.disabled = false; btn.textContent = t('connect');
   }
 }
 
@@ -980,13 +986,13 @@ async function checkPathConfig() {
 const I18N = {
   ko: {
     working: '작업 중', waiting: '질문 중', idle: '대기', completed: '종료', unknown: '알 수 없음',
-    stateWorking: '🔵 작업 중', stateWaiting: '🟡 질문 중', stateIdle: '🟢 대기', stateCompleted: '⚪ 종료', stateUnknown: '⚪ 알 수 없음',
+    stateWorking: '작업 중', stateWaiting: '질문 중', stateIdle: '대기', stateCompleted: '종료', stateUnknown: '알 수 없음',
     sessionDetail: '세션 상세', selectSession: '세션을 선택하세요', noSessions: '세션이 없습니다',
     session: '세션', lastMsg: '최근 대화', stats: '턴 · 도구 · 토큰', recent: '최근',
-    summary: '📝 요약', path: '📁 경로', repo: '🏠 저장소', branch: '🌿 브랜치',
-    sessionId: '🆔 세션', created: '📅 생성', updated: '🕐 수정',
-    statsTitle: '📊 통계', toolUsage: '🔧 도구 사용량', checkpoints: '📋 체크포인트',
-    recentTurns: '💬 최근 대화', timeline: '🔔 이벤트 타임라인', filesModified: '📝 수정된 파일',
+    summary: 'Summary', path: 'Path', repo: 'Repository', branch: 'Branch',
+    sessionId: 'Session ID', created: 'Created', updated: 'Updated',
+    statsTitle: 'Statistics', toolUsage: 'Tool Usage', checkpoints: 'Checkpoints',
+    recentTurns: 'Recent Turns', timeline: 'Event Timeline', filesModified: 'Modified Files',
     emptySession: '(빈 세션)', noValue: '(없음)', showEmpty: '빈 세션 보기',
     total: '총', turns: '턴', tools: '도구',
     copyPath: '경로가 복사되었습니다', copyResume: '복사 완료 — VSCode 터미널에서 붙여넣고 세션을 이어가세요',
@@ -997,22 +1003,23 @@ const I18N = {
     secAgo: '초 전', minAgo: '분 전', hrAgo: '시간 전', dayAgo: '일 전',
     statsTooltip: '대화 수 · 도구 호출 수',
     agentPanelTitle: 'Agents',
-    agentBack: '← 돌아가기', agentTasks: '개 작업', agentSuccess: '성공', agentFailed: '실패',
-    agentPromptLabel: '프롬프트', agentResultLabel: '최종 결과', agentToolsLabel: '도구',
-    agentTurnsLabel: '턴', agentTokensLabel: '토큰',
-    noAgentsInTurn: '에이전트 없음', turnAgents: '대화별 에이전트',
-    showMore: '더보기', showLess: '접기',
-    sessionTimeline: '세션 타임라인', noTimelineData: '타임라인 데이터가 없습니다',
+    agentBack: 'Back', agentTasks: '개 작업', agentSuccess: '성공', agentFailed: '실패',
+    agentPromptLabel: 'Prompt', agentResultLabel: 'Result', agentToolsLabel: 'Tools',
+    agentTurnsLabel: 'Turns', agentTokensLabel: 'Tokens',
+    noAgentsInTurn: '에이전트 없음', turnAgents: 'Turn Agents',
+    showMore: 'Show more', showLess: 'Collapse',
+    sessionTimeline: 'Session Timeline', noTimelineData: '타임라인 데이터가 없습니다',
+    memo: 'Memo', plan: 'Plan', bgTasks: 'Background Tasks', connect: 'Connect', connecting: 'Connecting...',
   },
   en: {
     working: 'Working', waiting: 'Asking', idle: 'Idle', completed: 'Ended', unknown: 'Unknown',
-    stateWorking: '🔵 Working', stateWaiting: '🟡 Asking', stateIdle: '🟢 Idle', stateCompleted: '⚪ Ended', stateUnknown: '⚪ Unknown',
+    stateWorking: 'Working', stateWaiting: 'Asking', stateIdle: 'Idle', stateCompleted: 'Ended', stateUnknown: 'Unknown',
     sessionDetail: 'Session Detail', selectSession: 'Select a session', noSessions: 'No sessions found',
     session: 'Session', lastMsg: 'Last Message', stats: 'Turns · Tools · Tokens', recent: 'Recent',
-    summary: '📝 Summary', path: '📁 Path', repo: '🏠 Repository', branch: '🌿 Branch',
-    sessionId: '🆔 Session', created: '📅 Created', updated: '🕐 Updated',
-    statsTitle: '📊 Statistics', toolUsage: '🔧 Tool Usage', checkpoints: '📋 Checkpoints',
-    recentTurns: '💬 Recent Turns', timeline: '🔔 Event Timeline', filesModified: '📝 Modified Files',
+    summary: 'Summary', path: 'Path', repo: 'Repository', branch: 'Branch',
+    sessionId: 'Session ID', created: 'Created', updated: 'Updated',
+    statsTitle: 'Statistics', toolUsage: 'Tool Usage', checkpoints: 'Checkpoints',
+    recentTurns: 'Recent Turns', timeline: 'Event Timeline', filesModified: 'Modified Files',
     emptySession: '(empty)', noValue: '(none)', showEmpty: 'Show empty sessions',
     total: 'Total', turns: 'turns', tools: 'tools',
     copyPath: 'Path copied', copyResume: 'Copied — paste in VSCode terminal to resume',
@@ -1023,22 +1030,23 @@ const I18N = {
     secAgo: 's ago', minAgo: 'm ago', hrAgo: 'h ago', dayAgo: 'd ago',
     statsTooltip: 'Turns · Tool calls',
     agentPanelTitle: 'Agents',
-    agentBack: '← Back', agentTasks: 'tasks', agentSuccess: 'success', agentFailed: 'failed',
+    agentBack: 'Back', agentTasks: 'tasks', agentSuccess: 'success', agentFailed: 'failed',
     agentPromptLabel: 'Prompt', agentResultLabel: 'Result', agentToolsLabel: 'Tools',
     agentTurnsLabel: 'Turns', agentTokensLabel: 'Tokens',
     noAgentsInTurn: 'No agents', turnAgents: 'Turn Agents',
-    showMore: 'Show more', showLess: 'Show less',
+    showMore: 'Show more', showLess: 'Collapse',
     sessionTimeline: 'Session Timeline', noTimelineData: 'No timeline data',
+    memo: 'Memo', plan: 'Plan', bgTasks: 'Background Tasks', connect: 'Connect', connecting: 'Connecting...',
   },
   ja: {
     working: '実行中', waiting: '質問中', idle: '待機', completed: '終了', unknown: '不明',
-    stateWorking: '🔵 実行中', stateWaiting: '🟡 質問中', stateIdle: '🟢 待機', stateCompleted: '⚪ 終了', stateUnknown: '⚪ 不明',
+    stateWorking: '実行中', stateWaiting: '質問中', stateIdle: '待機', stateCompleted: '終了', stateUnknown: '不明',
     sessionDetail: 'セッション詳細', selectSession: 'セッションを選択してください', noSessions: 'セッションがありません',
     session: 'セッション', lastMsg: '最近の会話', stats: 'ターン · ツール · トークン', recent: '最近',
-    summary: '📝 概要', path: '📁 パス', repo: '🏠 リポジトリ', branch: '🌿 ブランチ',
-    sessionId: '🆔 セッション', created: '📅 作成', updated: '🕐 更新',
-    statsTitle: '📊 統計', toolUsage: '🔧 ツール使用量', checkpoints: '📋 チェックポイント',
-    recentTurns: '💬 最近の会話', timeline: '🔔 イベントタイムライン', filesModified: '📝 変更ファイル',
+    summary: 'Summary', path: 'Path', repo: 'Repository', branch: 'Branch',
+    sessionId: 'Session ID', created: 'Created', updated: 'Updated',
+    statsTitle: 'Statistics', toolUsage: 'Tool Usage', checkpoints: 'Checkpoints',
+    recentTurns: 'Recent Turns', timeline: 'Event Timeline', filesModified: 'Modified Files',
     emptySession: '(空)', noValue: '(なし)', showEmpty: '空セッション表示',
     total: '計', turns: 'ターン', tools: 'ツール',
     copyPath: 'パスをコピーしました', copyResume: 'コピー完了 — VSCodeターミナルに貼り付けてください',
@@ -1048,23 +1056,24 @@ const I18N = {
     copied: 'コピーしました',
     secAgo: '秒前', minAgo: '分前', hrAgo: '時間前', dayAgo: '日前',
     statsTooltip: '会話数 · ツール呼出数',
-    agentPanelTitle: 'エージェント',
-    agentBack: '← 戻る', agentTasks: '件の作業', agentSuccess: '成功', agentFailed: '失敗',
-    agentPromptLabel: 'プロンプト', agentResultLabel: '最終結果', agentToolsLabel: 'ツール',
-    agentTurnsLabel: 'ターン', agentTokensLabel: 'トークン',
-    noAgentsInTurn: 'エージェントなし', turnAgents: 'ターン別エージェント',
-    showMore: 'もっと見る', showLess: '折りたたむ',
-    sessionTimeline: 'セッションタイムライン', noTimelineData: 'タイムラインデータなし',
+    agentPanelTitle: 'Agents',
+    agentBack: 'Back', agentTasks: '件の作業', agentSuccess: '成功', agentFailed: '失敗',
+    agentPromptLabel: 'Prompt', agentResultLabel: 'Result', agentToolsLabel: 'Tools',
+    agentTurnsLabel: 'Turns', agentTokensLabel: 'Tokens',
+    noAgentsInTurn: 'エージェントなし', turnAgents: 'Turn Agents',
+    showMore: 'Show more', showLess: 'Collapse',
+    sessionTimeline: 'Session Timeline', noTimelineData: 'タイムラインデータなし',
+    memo: 'Memo', plan: 'Plan', bgTasks: 'Background Tasks', connect: 'Connect', connecting: 'Connecting...',
   },
   zh: {
     working: '工作中', waiting: '提问中', idle: '空闲', completed: '结束', unknown: '未知',
-    stateWorking: '🔵 工作中', stateWaiting: '🟡 提问中', stateIdle: '🟢 空闲', stateCompleted: '⚪ 结束', stateUnknown: '⚪ 未知',
+    stateWorking: '工作中', stateWaiting: '提问中', stateIdle: '空闲', stateCompleted: '结束', stateUnknown: '未知',
     sessionDetail: '会话详情', selectSession: '请选择一个会话', noSessions: '没有会话',
     session: '会话', lastMsg: '最近对话', stats: '轮次 · 工具 · 令牌', recent: '最近',
-    summary: '📝 摘要', path: '📁 路径', repo: '🏠 仓库', branch: '🌿 分支',
-    sessionId: '🆔 会话', created: '📅 创建', updated: '🕐 更新',
-    statsTitle: '📊 统计', toolUsage: '🔧 工具使用', checkpoints: '📋 检查点',
-    recentTurns: '💬 最近对话', timeline: '🔔 事件时间线', filesModified: '📝 修改文件',
+    summary: 'Summary', path: 'Path', repo: 'Repository', branch: 'Branch',
+    sessionId: 'Session ID', created: 'Created', updated: 'Updated',
+    statsTitle: 'Statistics', toolUsage: 'Tool Usage', checkpoints: 'Checkpoints',
+    recentTurns: 'Recent Turns', timeline: 'Event Timeline', filesModified: 'Modified Files',
     emptySession: '(空会话)', noValue: '(无)', showEmpty: '显示空会话',
     total: '共', turns: '轮', tools: '工具',
     copyPath: '路径已复制', copyResume: '已复制 — 请在VSCode终端中粘贴',
@@ -1074,13 +1083,14 @@ const I18N = {
     copied: '已复制',
     secAgo: '秒前', minAgo: '分前', hrAgo: '小时前', dayAgo: '天前',
     statsTooltip: '对话数 · 工具调用数',
-    agentPanelTitle: '代理',
-    agentBack: '← 返回', agentTasks: '个任务', agentSuccess: '成功', agentFailed: '失败',
-    agentPromptLabel: '提示词', agentResultLabel: '最终结果', agentToolsLabel: '工具',
-    agentTurnsLabel: '轮次', agentTokensLabel: '代币',
-    noAgentsInTurn: '无代理', turnAgents: '对话代理',
-    showMore: '展开更多', showLess: '收起',
-    sessionTimeline: '会话时间线', noTimelineData: '无时间线数据',
+    agentPanelTitle: 'Agents',
+    agentBack: 'Back', agentTasks: '个任务', agentSuccess: '成功', agentFailed: '失败',
+    agentPromptLabel: 'Prompt', agentResultLabel: 'Result', agentToolsLabel: 'Tools',
+    agentTurnsLabel: 'Turns', agentTokensLabel: 'Tokens',
+    noAgentsInTurn: '无代理', turnAgents: 'Turn Agents',
+    showMore: 'Show more', showLess: 'Collapse',
+    sessionTimeline: 'Session Timeline', noTimelineData: '无时间线数据',
+    memo: 'Memo', plan: 'Plan', bgTasks: 'Background Tasks', connect: 'Connect', connecting: 'Connecting...',
   }
 };
 let currentLang = localStorage.getItem('lang') || 'ko';
@@ -1193,7 +1203,7 @@ const renderSessions = (sessions) => {
   const container = document.getElementById('session-tree-container');
 
   if (visible.length === 0) {
-    container.innerHTML = `<div class="empty-state"><div class="empty-icon">📭</div>${t('noSessions')}</div>`;
+    container.innerHTML = `<div class="empty-state"><div class="empty-icon">No Sessions</div>${t('noSessions')}</div>`;
     return;
   }
 
@@ -1230,7 +1240,7 @@ const renderSessions = (sessions) => {
     html += `<div class="st-group ${isCollapsed ? 'collapsed' : ''}">`;
     html += `<div class="st-group-header" onclick="toggleGroup('${escHtml(project)}')">`;
     html += `<span class="st-group-toggle">▼</span>`;
-    html += `<span class="st-group-icon">${hasActive ? '📂' : '📁'}</span>`;
+    html += `<span class="st-group-icon" style="font-size:10px;color:var(--text-muted)">${hasActive ? '&#9662;' : '&#9656;'}</span>`;
     html += `<span class="st-group-name">${escHtml(folder)}</span>`;
     html += `<div class="st-group-badges">`;
     html += `<span class="st-group-badge count">${t('total')} ${items.length}</span>`;
@@ -1249,7 +1259,7 @@ const renderSessions = (sessions) => {
       const dimStyle = s.isActive ? '' : ' style="opacity:0.55"';
       html += `<div class="st-row${sel}"${dimStyle} onclick="openDetail('${s.id}')">`;
       html += `<div class="st-col-status"><span class="dot ${sc}"></span></div>`;
-      html += `<div class="st-col-summary"${s.isActive ? '' : ' style="color:var(--text-secondary)"'}>${escHtml(s.summary || t('emptySession'))}${s.intent ? '<span class="st-col-intent"> · ' + escHtml(s.intent) + '</span>' : (s.isActive && s.state === 'waiting' ? '<span class="st-col-intent"> · ⏳ ' + escHtml((s.waitingContext || '').substring(0, 30)) + '</span>' : '')}</div>`;
+      html += `<div class="st-col-summary"${s.isActive ? '' : ' style="color:var(--text-secondary)"'}>${escHtml(s.summary || t('emptySession'))}${s.intent ? '<span class="st-col-intent"> · ' + escHtml(s.intent) + '</span>' : (s.isActive && s.state === 'waiting' ? '<span class="st-col-intent"> · ' + escHtml((s.waitingContext || '').substring(0, 30)) + '</span>' : '')}</div>`;
       html += `<div class="st-col-lastmsg">${escHtml(s.description || s.lastUserMessage || '')}</div>`;
       html += `<div class="st-col-stats">${s.turnCount ?? 0} · ${s.toolCalls ?? 0} · ${formatTokens(s.outputTokens || 0)}</div>`;
       html += `<div class="st-col-time">${timeAgo(s.updatedAt)}</div>`;
@@ -1423,12 +1433,12 @@ const fetchAll = () => {
           const insertAfter = userEl || turnEl.querySelector('.tl-time');
           if (insertAfter) {
             insertAfter.insertAdjacentHTML('afterend',
-              `<div class="tl-assistant" onclick="this.classList.toggle('expanded')"><span style="margin-right:4px">🤖</span><span class="tl-text">${escHtml(turnData.assistantMessage)}</span></div>`);
+              `<div class="tl-assistant" onclick="this.classList.toggle('expanded')"><span style="margin-right:4px;font-size:10px;font-weight:600;color:var(--text-muted)">ASST</span><span class="tl-text">${escHtml(turnData.assistantMessage)}</span></div>`);
           }
         }
         // Add direct tools if missing
         if (!turnEl.querySelector('.tl-direct-tools') && turnData.directToolCalls && turnData.directToolCalls.length > 0) {
-          let toolsHtml = `<div class="tl-direct-tools"><span style="font-size:10px;color:var(--text-muted);margin-right:2px">🔧</span>`;
+          let toolsHtml = `<div class="tl-direct-tools"><span style="font-size:10px;color:var(--text-muted);margin-right:2px;font-weight:600">TOOLS</span>`;
           turnData.directToolCalls.forEach(tc => { toolsHtml += `<span class="tl-tool-badge">${escHtml(tc.toolName)}×${tc.count}</span>`; });
           toolsHtml += `</div>`;
           const assistEl = turnEl.querySelector('.tl-assistant') || turnEl.querySelector('.tl-user') || turnEl.querySelector('.tl-time');
@@ -1448,7 +1458,7 @@ const fetchAll = () => {
           const agentData = turnData.agents[idx];
           const statusEl = agentEl.querySelector('.tl-agent-status');
           if (statusEl) {
-            const newStatus = agentData.status === 'done' ? '✅' : agentData.status === 'running' ? '⏳' : '❌';
+            const newStatus = agentData.status === 'done' ? 'done' : agentData.status === 'running' ? 'running' : 'failed';
             if (statusEl.textContent !== newStatus) statusEl.textContent = newStatus;
           }
           const metaEl = agentEl.querySelector('.tl-agent-meta');
@@ -1556,24 +1566,28 @@ const closeAgentPanel = () => {
 };
 
 const AGENT_TYPE_META = {
-  'Explore Agent': { icon: '🔍' },
-  'ui-developer': { icon: '🎨' },
-  'tester': { icon: '🔬' },
-  'backend-developer': { icon: '🦾' },
-  'infra-engineer': { icon: '⚙️' },
-  'Code Review Agent': { icon: '📋' },
-  'pm': { icon: '📊' },
-  'general-purpose': { icon: '🤖' },
-  'task': { icon: '📦' },
+  'Explore Agent': { icon: 'Ex' },
+  'ui-developer': { icon: 'UI' },
+  'tester': { icon: 'Te' },
+  'backend-developer': { icon: 'BE' },
+  'infra-engineer': { icon: 'Ix' },
+  'Code Review Agent': { icon: 'CR' },
+  'pm': { icon: 'PM' },
+  'general-purpose': { icon: 'GP' },
+  'task': { icon: 'Tk' },
 };
-const getAgentIcon = (name) => (AGENT_TYPE_META[name] || {}).icon || '🤖';
+const getAgentIcon = (name) => {
+  const meta = AGENT_TYPE_META[name];
+  const initials = meta ? meta.icon : (name || '??').substring(0, 2).toUpperCase();
+  return `<span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:var(--accent-bg);color:var(--accent);font-size:9px;font-weight:700;flex-shrink:0;letter-spacing:-0.5px">${initials}</span>`;
+};
 let agentGroupKeys = [];
 let currentFilteredAgents = [];
 
 const renderAgentPanel = (data) => {
   const body = document.getElementById('agentPanelBody');
   const title = document.getElementById('agentPanelTitle');
-  title.textContent = `🤖 ${t('agentPanelTitle')} (${data.total})`;
+  title.textContent = `${t('agentPanelTitle')} (${data.total})`;
   currentFilteredAgents = [];
 
   // Group agents by name
@@ -1598,8 +1612,8 @@ const renderAgentPanel = (data) => {
       <div class="agent-card-count">${agents.length} ${t('agentTasks')}</div>
       <div class="agent-card-desc">${escHtml(desc)}</div>
       <div class="agent-card-stats">
-        <span class="agent-stat-success">✓${successCount} ${t('agentSuccess')}</span>
-        ${failedCount > 0 ? `<span class="agent-stat-failed">✗${failedCount} ${t('agentFailed')}</span>` : ''}
+        <span class="agent-stat-success">${successCount} ${t('agentSuccess')}</span>
+        ${failedCount > 0 ? `<span class="agent-stat-failed">${failedCount} ${t('agentFailed')}</span>` : ''}
       </div>
     </div>`;
     idx++;
@@ -1629,7 +1643,7 @@ const showAgentsByType = (groupIdx) => {
   html += '<div class="agent-list">';
   currentFilteredAgents.forEach((a, i) => {
     const statusCls = a.status === 'completed' ? 'done' : a.status === 'running' ? 'running' : 'failed';
-    const statusLabel = a.status === 'completed' ? '✓' : a.status === 'running' ? '⟳' : '✗';
+    const statusLabel = a.status === 'completed' ? 'done' : a.status === 'running' ? 'run' : 'fail';
     const duration = a.startedAt && a.completedAt
       ? formatDuration(new Date(a.completedAt) - new Date(a.startedAt))
       : a.startedAt ? '...' : '';
@@ -1673,9 +1687,9 @@ const toggleAgentDetail = (idx) => {
     : a.duration ? formatDuration(a.duration * 1000) : '';
 
   // Status badge
-  const statusMap = { done: '✅', completed: '✅', failed: '❌', running: '🔄' };
+  const statusMapD = { done: 'done', completed: 'done', failed: 'failed', running: 'running' };
   const statusCls = (a.status === 'done' || a.status === 'completed') ? 'done' : a.status === 'running' ? 'running' : 'failed';
-  const statusEmoji = statusMap[a.status] || '⚪';
+  const statusLabel2 = statusMapD[a.status] || 'unknown';
 
   const icon = getAgentIcon(a.name || a.type);
   const promptId = `agent-prompt-${idx}`;
@@ -1687,15 +1701,15 @@ const toggleAgentDetail = (idx) => {
   html += `<div class="agent-detail-header">`;
   html += `<span>${icon}</span>`;
   html += `<span>${escHtml(a.name || a.type || 'Agent')}</span>`;
-  html += `<span class="agent-status-badge ${statusCls}">${statusEmoji} ${escHtml(a.status || '')}</span>`;
-  if (duration) html += `<span class="agent-duration">⏱ ${duration}</span>`;
+  html += `<span class="agent-status-badge ${statusCls}">${escHtml(a.status || '')}</span>`;
+  if (duration) html += `<span class="agent-duration">${duration}</span>`;
   html += `</div>`;
 
   // ── Prompt section (collapsible, 3 lines) ──
   const promptText = a.agentPrompt || a.prompt || '';
   if (promptText) {
     html += `<div class="agent-detail-section">`;
-    html += `<div class="agent-detail-section-label">📋 ${t('agentPromptLabel')}</div>`;
+    html += `<div class="agent-detail-section-label">${t('agentPromptLabel')}</div>`;
     html += `<div class="agent-collapsible" id="${promptId}" onclick="toggleAgentCollapsible('${promptId}')">${escHtml(promptText)}</div>`;
     html += `<span class="agent-collapsible-toggle" onclick="toggleAgentCollapsible('${promptId}')">${t('showMore')}</span>`;
     html += `</div>`;
@@ -1708,9 +1722,9 @@ const toggleAgentDetail = (idx) => {
   if (turns || tools || tokens) {
     html += `<div class="agent-detail-section">`;
     html += `<div class="agent-stats-bar">`;
-    if (turns) html += `<span class="agent-stat-item">🔄 <span class="agent-stat-num">${turns}</span>${t('agentTurnsLabel')}</span>`;
-    if (tools) html += `<span class="agent-stat-item">🔧 <span class="agent-stat-num">${tools}</span>${t('agentToolsLabel')}</span>`;
-    if (tokens) html += `<span class="agent-stat-item">🔤 <span class="agent-stat-num">${formatTokens(tokens)}</span>${t('agentTokensLabel')}</span>`;
+    if (turns) html += `<span class="agent-stat-item"><span class="agent-stat-num">${turns}</span> ${t('agentTurnsLabel')}</span>`;
+    if (tools) html += `<span class="agent-stat-item"><span class="agent-stat-num">${tools}</span> ${t('agentToolsLabel')}</span>`;
+    if (tokens) html += `<span class="agent-stat-item"><span class="agent-stat-num">${formatTokens(tokens)}</span> ${t('agentTokensLabel')}</span>`;
     html += `</div>`;
 
     // ── Tool breakdown chart ──
@@ -1736,7 +1750,7 @@ const toggleAgentDetail = (idx) => {
   const resultText = a.finalResult || (typeof a.result === 'string' ? a.result : (a.result ? JSON.stringify(a.result, null, 2) : ''));
   if (resultText) {
     html += `<div class="agent-detail-section">`;
-    html += `<div class="agent-detail-section-label">📝 ${t('agentResultLabel')}</div>`;
+    html += `<div class="agent-detail-section-label">${t('agentResultLabel')}</div>`;
     html += `<div class="agent-collapsible tall" id="${resultId}" onclick="toggleAgentCollapsible('${resultId}')">${escHtml(resultText)}</div>`;
     html += `<span class="agent-collapsible-toggle" onclick="toggleAgentCollapsible('${resultId}')">${t('showMore')}</span>`;
     html += `</div>`;
@@ -1779,12 +1793,12 @@ const toggleTurnAgents = (liEl) => {
   const container = document.getElementById('splitContainer');
 
   if (!agents || agents.length === 0) {
-    title.textContent = `💬 ${t('turnAgents')}`;
+    title.textContent = `${t('turnAgents')}`;
     body.innerHTML = `<div style="padding:30px;text-align:center;color:var(--text-muted)">${t('noAgentsInTurn')}</div>`;
   } else {
-    title.textContent = `💬 ${t('turnAgents')} (${agents.length})`;
+    title.textContent = `${t('turnAgents')} (${agents.length})`;
     let html = `<div style="padding:8px 12px;font-size:12px;color:var(--text-muted);border-bottom:1px solid var(--border);background:var(--bg)">`;
-    html += `<span style="margin-right:4px">💬</span>${escHtml(userMsg)}${userMsg.length >= 80 ? '...' : ''}`;
+    html += `<span style="margin-right:4px;font-weight:600;font-size:10px;text-transform:uppercase">USER</span>${escHtml(userMsg)}${userMsg.length >= 80 ? '...' : ''}`;
     html += `</div>`;
     html += '<div class="turn-agents-container" style="padding:8px">';
     agents.forEach((a, ai) => {
@@ -1798,7 +1812,7 @@ const toggleTurnAgents = (liEl) => {
   const backBtn = document.createElement('button');
   backBtn.className = 'detail-close';
   backBtn.style.cssText = 'position:absolute;right:32px;top:8px;font-size:11px;padding:2px 8px;';
-  backBtn.textContent = `🤖 ${t('agentPanelTitle')}`;
+  backBtn.textContent = `${t('agentPanelTitle')}`;
   backBtn.title = 'Back to all agents';
   backBtn.onclick = () => {
     liEl.classList.remove('turn-expanded');
@@ -1835,8 +1849,9 @@ const matchTurnAgents = (ts) => {
 
 const renderTurnAgentCard = (a, agentIdx, turnIdx) => {
   const icon = getAgentIcon(a.name || a.type);
-  const statusMap = { done: '✅', completed: '✅', failed: '❌', running: '🔄' };
-  const statusEmoji = statusMap[a.status] || '⚪';
+  const statusMapT = { done: 'done', completed: 'done', failed: 'failed', running: 'running' };
+  const statusText2 = statusMapT[a.status] || 'unknown';
+  const statusColor2 = a.status === 'done' || a.status === 'completed' ? 'var(--success)' : a.status === 'running' ? 'var(--accent)' : a.status === 'failed' ? 'var(--danger)' : 'var(--text-muted)';
   const duration = a.duration ? formatDuration(a.duration * 1000) : '';
   const tools = a.internalToolCalls ?? 0;
   const tokens = a.totalOutputTokens ?? 0;
@@ -1853,7 +1868,7 @@ const renderTurnAgentCard = (a, agentIdx, turnIdx) => {
   html += `<div class="turn-agent-header">`;
   html += `<span class="ta-icon">${icon}</span>`;
   html += `<span class="ta-name">${escHtml(a.name || a.type || 'Agent')}</span>`;
-  html += `<span class="ta-status">${statusEmoji}</span>`;
+  html += `<span class="ta-status" style="font-weight:600;color:${statusColor2}">${statusText2}</span>`;
   html += `<span class="ta-meta">${meta.join(' · ')}</span>`;
   html += `</div>`;
 
@@ -1878,14 +1893,14 @@ const renderTurnAgentCard = (a, agentIdx, turnIdx) => {
   // Prompt line
   if (a.agentPrompt) {
     html += `<div class="turn-agent-line">`;
-    html += `<span class="turn-agent-line-label">📋</span>`;
+    html += `<span class="turn-agent-line-label" style="font-weight:600;font-size:9px;text-transform:uppercase">P</span>`;
     html += `<span class="turn-agent-line-value" id="${promptId}" onclick="event.stopPropagation();this.classList.toggle('expanded')" title="${escHtml(a.agentPrompt)}">${escHtml(a.agentPrompt)}</span>`;
     html += `</div>`;
   }
   // Result line
   if (a.finalResult) {
     html += `<div class="turn-agent-line">`;
-    html += `<span class="turn-agent-line-label">📝</span>`;
+    html += `<span class="turn-agent-line-label" style="font-weight:600;font-size:9px;text-transform:uppercase">R</span>`;
     html += `<span class="turn-agent-line-value" id="${resultId}" onclick="event.stopPropagation();this.classList.toggle('expanded')" title="${escHtml(a.finalResult)}">${escHtml(a.finalResult)}</span>`;
     html += `</div>`;
   }
@@ -1897,7 +1912,7 @@ const renderTurnAgentCard = (a, agentIdx, turnIdx) => {
 const renderTimeline = (data, prepend = false) => {
   const body = document.getElementById('agentPanelBody');
   const title = document.getElementById('agentPanelTitle');
-  title.textContent = `📅 ${t('sessionTimeline')} (${data.totalTurns || 0})`;
+  title.textContent = `${t('sessionTimeline')} (${data.totalTurns || 0})`;
 
   if (!data || !data.timeline || data.timeline.length === 0) {
     if (!prepend) body.innerHTML = `<div style="padding:30px;text-align:center;color:var(--text-muted)">${t('noTimelineData')}</div>`;
@@ -1977,7 +1992,7 @@ const renderTimelineTurn = (turn, idx) => {
   // Assistant response
   if (turn.assistantMessage) {
     html += `<div class="tl-assistant" onclick="this.classList.toggle('expanded')">`;
-    html += `<span style="margin-right:4px">🤖</span>`;
+    html += `<span style="margin-right:4px;font-size:10px;font-weight:600;color:var(--text-muted)">ASST</span>`;
     html += `<span class="tl-text">${escHtml(turn.assistantMessage)}</span>`;
     html += `</div>`;
   }
@@ -1985,7 +2000,7 @@ const renderTimelineTurn = (turn, idx) => {
   // Direct tool calls
   if (turn.directToolCalls && turn.directToolCalls.length > 0) {
     html += `<div class="tl-direct-tools">`;
-    html += `<span style="font-size:10px;color:var(--text-muted);margin-right:2px">🔧</span>`;
+    html += `<span style="font-size:10px;color:var(--text-muted);margin-right:2px;font-weight:600">TOOLS</span>`;
     turn.directToolCalls.forEach(tc => {
       html += `<span class="tl-tool-badge">${escHtml(tc.toolName)}×${tc.count}</span>`;
     });
@@ -2007,8 +2022,9 @@ const renderAgentNode = (agent, depth, turnIdx, agentIdx, parentPath) => {
   const path = parentPath ? `${parentPath}-${agentIdx}` : `${turnIdx}-${agentIdx}`;
   const nodeId = `tl-agent-${path}`;
   const icon = getAgentIcon(agent.name || agent.type);
-  const statusMap = { done: '✅', completed: '✅', failed: '❌', running: '🔄' };
-  const statusEmoji = statusMap[agent.status] || '⚪';
+  const statusMap = { done: 'done', completed: 'done', failed: 'failed', running: 'running' };
+  const statusText = statusMap[agent.status] || 'unknown';
+  const statusColor = agent.status === 'done' || agent.status === 'completed' ? 'var(--success)' : agent.status === 'running' ? 'var(--accent)' : agent.status === 'failed' ? 'var(--danger)' : 'var(--text-muted)';
   const duration = agent.duration ? formatDuration(agent.duration * 1000) : '';
   const tokens = agent.totalOutputTokens ? formatTokens(agent.totalOutputTokens) : '';
 
@@ -2022,7 +2038,7 @@ const renderAgentNode = (agent, depth, turnIdx, agentIdx, parentPath) => {
   html += `<div class="tl-agent-header" onclick="toggleTimelineAgent('${nodeId}')">`;
   html += `<span class="tl-agent-icon">${icon}</span>`;
   html += `<span class="tl-agent-name">${escHtml(agent.name || agent.type || 'Agent')}</span>`;
-  html += `<span class="tl-agent-status">${statusEmoji}</span>`;
+  html += `<span class="tl-agent-status" style="font-size:10px;font-weight:600;color:${statusColor}">${statusText}</span>`;
   html += `<span class="tl-agent-meta">${metaParts.join(' · ')}</span>`;
   html += `</div>`;
 
@@ -2034,7 +2050,7 @@ const renderAgentNode = (agent, depth, turnIdx, agentIdx, parentPath) => {
   if (promptText) {
     const promptId = `tl-prompt-${path}`;
     html += `<div style="margin-bottom:4px">`;
-    html += `<div style="font-size:10px;color:var(--text-muted);margin-bottom:2px">📋 ${t('agentPromptLabel')}</div>`;
+    html += `<div style="font-size:10px;color:var(--text-muted);margin-bottom:2px;font-weight:600;text-transform:uppercase">${t('agentPromptLabel')}</div>`;
     html += `<div class="tl-collapsible" id="${promptId}" onclick="toggleTimelineText('${promptId}')">${escHtml(promptText)}</div>`;
     html += `<span class="tl-collapsible-label" onclick="toggleTimelineText('${promptId}')">${t('showMore')}</span>`;
     html += `</div>`;
@@ -2063,9 +2079,9 @@ const renderAgentNode = (agent, depth, turnIdx, agentIdx, parentPath) => {
   const tokensVal = agent.totalOutputTokens ?? 0;
   if (turns || tools || tokensVal) {
     html += `<div style="display:flex;gap:8px;font-size:10px;color:var(--text-muted);margin:4px 0">`;
-    if (turns) html += `<span>🔄 ${turns} ${t('agentTurnsLabel')}</span>`;
-    if (tools) html += `<span>🔧 ${tools} ${t('agentToolsLabel')}</span>`;
-    if (tokensVal) html += `<span>🔤 ${formatTokens(tokensVal)} ${t('agentTokensLabel')}</span>`;
+    if (turns) html += `<span>${turns} ${t('agentTurnsLabel')}</span>`;
+    if (tools) html += `<span>${tools} ${t('agentToolsLabel')}</span>`;
+    if (tokensVal) html += `<span>${formatTokens(tokensVal)} ${t('agentTokensLabel')}</span>`;
     html += `</div>`;
   }
 
@@ -2074,7 +2090,7 @@ const renderAgentNode = (agent, depth, turnIdx, agentIdx, parentPath) => {
   if (resultText) {
     const resultId = `tl-result-${path}`;
     html += `<div style="margin-top:4px">`;
-    html += `<div style="font-size:10px;color:var(--text-muted);margin-bottom:2px">📝 ${t('agentResultLabel')}</div>`;
+    html += `<div style="font-size:10px;color:var(--text-muted);margin-bottom:2px;font-weight:600;text-transform:uppercase">${t('agentResultLabel')}</div>`;
     html += `<div class="tl-collapsible" id="${resultId}" onclick="toggleTimelineText('${resultId}')">${escHtml(resultText)}</div>`;
     html += `<span class="tl-collapsible-label" onclick="toggleTimelineText('${resultId}')">${t('showMore')}</span>`;
     html += `</div>`;
@@ -2239,12 +2255,12 @@ const renderDetail = (d) => {
   // ── Section: State & Info ──
   html += `<div class="dp-section">`;
 
-  if (d.intent) html += `<div class="dp-intent">🎯 ${escHtml(d.intent)}</div>`;
-  if (d.state === 'waiting' && d.waitingContext) html += `<div class="dp-waiting-box">⏳ ${escHtml(d.waitingContext)}</div>`;
+  if (d.intent) html += `<div class="dp-intent">${escHtml(d.intent)}</div>`;
+  if (d.state === 'waiting' && d.waitingContext) html += `<div class="dp-waiting-box">${escHtml(d.waitingContext)}</div>`;
 
   html += `<div style="margin-top:10px">`;
   html += `<div class="dp-field"><span class="dp-field-label">${t('summary')}</span><span class="dp-field-value">${escHtml(d.summary || t('noValue'))}</span></div>`;
-  html += `<div class="dp-field"><span class="dp-field-label">📝 메모</span><div class="dp-desc" id="descDisplay" onclick="startEditDesc()">${escHtml(d.description || '')}</div></div>`;
+  html += `<div class="dp-field"><span class="dp-field-label">${t('memo')}</span><div class="dp-desc" id="descDisplay" onclick="startEditDesc()">${escHtml(d.description || '')}</div></div>`;
   html += `<div class="dp-field"><span class="dp-field-label">${t('path')}</span><span class="dp-field-value mono">${escHtml(shortenPath(d.cwd))} <button class="copy-icon-btn" onclick="copyText('${escHtml(d.cwd).replace(/\\/g,'\\\\')}',t('copyPath'))" title="${t('copyPathTitle')}"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="1"/><path d="M5 15H4a1 1 0 01-1-1V4a1 1 0 011-1h10a1 1 0 011 1v1"/></svg></button></span></div>`;
   const cwdEsc = (d.cwd || '').replace(/\\/g, '\\\\');
   html += `<div class="dp-vscode-row"><button class="vscode-btn" onclick="launchVSCode('${cwdEsc}',false,'${d.id}')"><svg width="14" height="14" viewBox="0 0 100 100"><path d="M95.2 8.1L74.5.3c-2.5-1-5.4-.2-7.1 1.9L26.6 45.8 11 34.2c-1.7-1.3-4.1-1.1-5.6.4L.7 39.5c-1 1-1 2.6 0 3.6L13.5 50 .7 56.9c-1 1-1 2.6 0 3.6l4.7 4.9c1.5 1.5 3.9 1.7 5.6.4l15.6-11.6 40.8 43.6c1.7 2.1 4.6 2.9 7.1 1.9l20.7-7.8c1.7-.7 2.8-2.3 2.8-4.1V12.2c0-1.8-1.1-3.4-2.8-4.1zM74.9 71.5L44.2 50l30.7-21.5v43z" fill="#007ACC"/></svg> Open in VSCode</button><button class="vscode-btn insiders" onclick="launchVSCode('${cwdEsc}',true,'${d.id}')"><svg width="14" height="14" viewBox="0 0 100 100"><path d="M95.2 8.1L74.5.3c-2.5-1-5.4-.2-7.1 1.9L26.6 45.8 11 34.2c-1.7-1.3-4.1-1.1-5.6.4L.7 39.5c-1 1-1 2.6 0 3.6L13.5 50 .7 56.9c-1 1-1 2.6 0 3.6l4.7 4.9c1.5 1.5 3.9 1.7 5.6.4l15.6-11.6 40.8 43.6c1.7 2.1 4.6 2.9 7.1 1.9l20.7-7.8c1.7-.7 2.8-2.3 2.8-4.1V12.2c0-1.8-1.1-3.4-2.8-4.1zM74.9 71.5L44.2 50l30.7-21.5v43z" fill="#24903e"/></svg> Open in Insiders</button></div>`;
@@ -2259,18 +2275,18 @@ const renderDetail = (d) => {
   html += `<div class="dp-section">`;
   html += `<div class="dp-section-title">${t('statsTitle')}</div>`;
   html += `<div class="dp-stats">`;
-  html += `<div class="dp-stat"><div class="stat-icon">💬</div><div class="num accent">${d.turnCount ?? 0}</div>turns</div>`;
-  html += `<div class="dp-stat"><div class="stat-icon">🔧</div><div class="num">${d.toolCalls ?? 0}</div>tools</div>`;
-  html += `<div class="dp-stat"><div class="stat-icon">🤖</div><div class="num">${d.subagentRuns ?? 0}</div>agents</div>`;
-  html += `<div class="dp-stat"><div class="stat-icon">🔤</div><div class="num">${formatTokens(d.outputTokens || 0)}</div>tokens</div>`;
-  html += `<div class="dp-stat"><div class="stat-icon">📋</div><div class="num">${Array.isArray(d.checkpoints) ? d.checkpoints.length : 0}</div>checkpoints</div>`;
-  html += `<div class="dp-stat"><div class="stat-icon">📝</div><div class="num">${d.filesModified ? d.filesModified.length : 0}</div>files</div>`;
+  html += `<div class="dp-stat"><div class="stat-icon">TRN</div><div class="num accent">${d.turnCount ?? 0}</div>turns</div>`;
+  html += `<div class="dp-stat"><div class="stat-icon">TLS</div><div class="num">${d.toolCalls ?? 0}</div>tools</div>`;
+  html += `<div class="dp-stat"><div class="stat-icon">AGT</div><div class="num">${d.subagentRuns ?? 0}</div>agents</div>`;
+  html += `<div class="dp-stat"><div class="stat-icon">TOK</div><div class="num">${formatTokens(d.outputTokens || 0)}</div>tokens</div>`;
+  html += `<div class="dp-stat"><div class="stat-icon">CKP</div><div class="num">${Array.isArray(d.checkpoints) ? d.checkpoints.length : 0}</div>checkpoints</div>`;
+  html += `<div class="dp-stat"><div class="stat-icon">FIL</div><div class="num">${d.filesModified ? d.filesModified.length : 0}</div>files</div>`;
   html += `</div></div>`;
 
   // ── Section: Background Tasks ──
   if (d.bgTasks > 0 && d.bgTaskList && d.bgTaskList.length) {
     html += `<div class="dp-section">`;
-    html += `<div class="dp-section-title">🔄 백그라운드 태스크 (${d.bgTasks})</div>`;
+    html += `<div class="dp-section-title">${t('bgTasks')} (${d.bgTasks})</div>`;
     d.bgTaskList.forEach(t => {
       html += `<div class="dp-bgtask"><span class="dp-bgtask-dot"></span><span>${escHtml(t.name || t.desc || 'Task')}</span></div>`;
     });
@@ -2310,7 +2326,7 @@ const renderDetail = (d) => {
   // ── Section: Plan ──
   if (d.planContent) {
     html += `<div class="dp-section">`;
-    html += `<div class="dp-section-title">📄 계획 (plan.md)</div>`;
+    html += `<div class="dp-section-title">${t('plan')} (plan.md)</div>`;
     html += `<div class="dp-plan">${escHtml(d.planContent)}</div>`;
     html += `</div>`;
   }
@@ -2318,7 +2334,7 @@ const renderDetail = (d) => {
   // ── Section: Conversations (paginated) ──
   html += `<div class="dp-section" id="turnsSection">`;
   html += `<div class="dp-section-title">${t('recentTurns')}</div>`;
-  html += `<div id="turnsList"><div class="dp-turns-loading">⏳</div></div>`;
+  html += `<div id="turnsList"><div class="dp-turns-loading">Loading...</div></div>`;
   html += `</div>`;
 
   // ── Section: Recent Events ──
@@ -2327,7 +2343,7 @@ const renderDetail = (d) => {
     html += `<div class="dp-section-title">${t('timeline')}</div>`;
     html += `<ul class="dp-timeline">`;
     d.recentEvents.forEach(ev => {
-      const icon = ev.type.includes('task_complete') ? '✅' : ev.type.includes('subagent') ? '🤖' : ev.type.includes('compaction') ? '📦' : '⚡';
+      const icon = ev.type.includes('task_complete') ? '[done]' : ev.type.includes('subagent') ? '[agent]' : ev.type.includes('compaction') ? '[pack]' : '[evt]';
       html += `<li class="dp-timeline-item">`;
       html += `<span class="dp-timeline-time">${formatTs(ev.timestamp)}</span>`;
       html += `<div style="font-size:12px">${icon} ${escHtml(ev.type.split('.').pop())} ${ev.summary ? '— ' + escHtml(ev.summary) : ''}</div>`;
@@ -2413,7 +2429,7 @@ const updateDetailInPlace = (d) => {
   if (titleEl && titleEl.innerHTML !== newTitle) titleEl.innerHTML = newTitle;
   // Update intent — only if changed
   const intentEl = document.querySelector('.dp-intent');
-  const newIntent = d.intent ? `🎯 ${escHtml(d.intent)}` : '';
+  const newIntent = d.intent ? `${escHtml(d.intent)}` : '';
   if (d.intent) {
     if (intentEl) { if (intentEl.innerHTML !== newIntent) intentEl.innerHTML = newIntent; }
     else {
@@ -2424,7 +2440,7 @@ const updateDetailInPlace = (d) => {
   // Update waiting context
   const waitEl = document.querySelector('.dp-waiting-box');
   if (d.state === 'waiting' && d.waitingContext) {
-    if (waitEl) { waitEl.innerHTML = `⏳ ${escHtml(d.waitingContext)}`; }
+    if (waitEl) { waitEl.innerHTML = `${escHtml(d.waitingContext)}`; }
   } else if (waitEl) { waitEl.remove(); }
   // Update description (only if not in edit mode)
   const descDisplay = document.getElementById('descDisplay');
@@ -2458,7 +2474,7 @@ let lastTotalTurns = 0;
 const loadTurnsPage = (page, showLoading = true) => {
   const container = document.getElementById('turnsList');
   if (!container || !selectedSessionId) { console.warn('loadTurnsPage: no container or session'); return; }
-  if (showLoading) container.innerHTML = '<div class="dp-turns-loading">⏳</div>';
+  if (showLoading) container.innerHTML = '<div class="dp-turns-loading">Loading...</div>';
   const url = `${API_BASE}/api/sessions/${selectedSessionId}/turns?page=${page}&pageSize=15`;
   fetch(url)
     .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
@@ -2501,7 +2517,7 @@ const pollRefreshTurns = () => {
             const hasAgents = window.turnAgentData && matchTurnAgents(ts).length > 0;
             let li = `<li class="dp-timeline-item clickable" data-ts="${escHtml(ts)}" data-turn-idx="new-${i}">`;
             li += `<span class="dp-timeline-time">${formatTs(ts)}`;
-            if (hasAgents) li += `<button class="turn-detail-btn" onclick="event.stopPropagation();toggleTurnAgents(this.closest('.dp-timeline-item'))">🤖 ${matchTurnAgents(ts).length}</button>`;
+            if (hasAgents) li += `<button class="turn-detail-btn" onclick="event.stopPropagation();toggleTurnAgents(this.closest('.dp-timeline-item'))">AGT ${matchTurnAgents(ts).length}</button>`;
             li += `</span>`;
             li += `<div class="dp-timeline-msg" onclick="this.classList.toggle('expanded')">${escHtml(turn.content)}</div>`;
             li += `</li>`;
@@ -2550,7 +2566,7 @@ const renderTurnsList = (container, data) => {
     const hasAgents = window.turnAgentData && matchTurnAgents(ts).length > 0;
     html += `<li class="dp-timeline-item clickable" data-ts="${escHtml(ts)}" data-turn-idx="${ti}">`;
     html += `<span class="dp-timeline-time">${formatTs(ts)}`;
-    if (hasAgents) html += `<button class="turn-detail-btn" onclick="event.stopPropagation();toggleTurnAgents(this.closest('.dp-timeline-item'))">🤖 ${matchTurnAgents(ts).length}</button>`;
+    if (hasAgents) html += `<button class="turn-detail-btn" onclick="event.stopPropagation();toggleTurnAgents(this.closest('.dp-timeline-item'))">AGT ${matchTurnAgents(ts).length}</button>`;
     html += `</span>`;
     html += `<div class="dp-timeline-msg" onclick="this.classList.toggle('expanded')">${escHtml(turn.content)}</div>`;
     html += `</li>`;
@@ -2594,7 +2610,7 @@ const copyText = (text, msg) => {
   navigator.clipboard.writeText(text).then(() => {
     const toast = document.createElement('div');
     toast.className = 'toast-msg';
-    toast.textContent = '✅ ' + (msg || t('copied'));
+    toast.textContent = msg || t('copied');
     document.body.appendChild(toast);
     setTimeout(() => toast.classList.add('show'), 10);
     setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 300); }, 3000);
