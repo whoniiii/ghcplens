@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## [1.4.2] - 2026-03-30
+
+### Fixed
+- **Marketplace README packaging** — Marketplace README now correctly shows vsix-specific content instead of GitHub README
+
 ## [1.4.1] - 2026-03-30
 
 ### Added
