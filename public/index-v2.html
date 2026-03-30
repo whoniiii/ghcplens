@@ -667,6 +667,13 @@ body {
 .tl-agent[data-status="done"] { border-left-color: #28a745; }
 .tl-agent[data-status="failed"] { border-left-color: #dc3545; }
 .tl-agent[data-status="running"] { border-left-color: var(--accent); }
+.tl-agent[data-status="running"] .tl-agent-icon {
+  animation: agent-pulse 1.2s ease-in-out infinite;
+}
+@keyframes agent-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(0.2); opacity: 0.4; }
+}
 
 .detail-panel-body {
   flex: 1; overflow-y: auto; padding: 0;
@@ -1868,23 +1875,10 @@ const fetchAll = () => {
             turnEl.insertAdjacentHTML('beforeend', agentHtml);
           }
         }
-        // Update agent status badges (running → done)
+        // Recursively update agent nodes (status, meta, children)
         turnEl.querySelectorAll(':scope > .tl-agent').forEach((agentEl, idx) => {
           if (!turnData.agents || !turnData.agents[idx]) return;
-          const agentData = turnData.agents[idx];
-          const statusEl = agentEl.querySelector('.tl-agent-status');
-          if (statusEl) {
-            const newStatus = agentData.status === 'done' ? 'done' : agentData.status === 'running' ? 'running' : 'failed';
-            if (statusEl.textContent !== newStatus) statusEl.textContent = newStatus;
-          }
-          const metaEl = agentEl.querySelector('.tl-agent-meta');
-          if (metaEl && agentData.duration) {
-            const dur = agentData.duration >= 60 ? `${Math.floor(agentData.duration/60)}m ${Math.round(agentData.duration%60)}s` : `${Math.round(agentData.duration)}s`;
-            const tok = agentData.totalOutputTokens ? (agentData.totalOutputTokens >= 1000 ? `${(agentData.totalOutputTokens/1000).toFixed(1)}K tok` : `${agentData.totalOutputTokens} tok`) : '';
-            const newMeta = tok ? `${dur} · ${tok}` : dur;
-            if (metaEl.textContent !== newMeta) metaEl.textContent = newMeta;
-          }
-          // Update agent tool breakdown badges — not needed, agent tools are final once completed
+          updateAgentNodeInPlace(agentEl, turnData.agents[idx], 'live', idx, null);
         });
       });
 
@@ -2741,7 +2735,60 @@ const toggleTimelineText = (id) => {
   }
 };
 
-// Show "Show more" only when content actually overflows
+// Recursively update an agent node in-place (status, meta, and children)
+const updateAgentNodeInPlace = (agentEl, agentData, turnIdx, agentIdx, parentPath) => {
+  const path = parentPath ? `${parentPath}-${agentIdx}` : `${turnIdx}-${agentIdx}`;
+  // Update data-status attribute (controls border color + pulse animation)
+  const newDataStatus = agentData.status === 'done' || agentData.status === 'completed' ? 'done' : agentData.status === 'running' ? 'running' : 'failed';
+  if (agentEl.getAttribute('data-status') !== newDataStatus) agentEl.setAttribute('data-status', newDataStatus);
+  // Update status text and color
+  const headerEl = agentEl.querySelector(':scope > .tl-agent-header');
+  if (headerEl) {
+    const statusEl = headerEl.querySelector('.tl-agent-status');
+    if (statusEl) {
+      const newStatus = newDataStatus;
+      if (statusEl.textContent !== newStatus) statusEl.textContent = newStatus;
+      const statusColor = newStatus === 'done' ? 'var(--success)' : newStatus === 'running' ? 'var(--accent)' : 'var(--danger)';
+      statusEl.style.color = statusColor;
+    }
+    const metaEl = headerEl.querySelector('.tl-agent-meta');
+    if (metaEl && agentData.duration) {
+      const dur = agentData.duration >= 60 ? `${Math.floor(agentData.duration/60)}m ${Math.round(agentData.duration%60)}s` : `${Math.round(agentData.duration)}s`;
+      const tok = agentData.totalOutputTokens ? (agentData.totalOutputTokens >= 1000 ? `${(agentData.totalOutputTokens/1000).toFixed(1)}K tok` : `${agentData.totalOutputTokens} tok`) : '';
+      const newMeta = tok ? `${dur} · ${tok}` : dur;
+      if (metaEl.textContent !== newMeta) metaEl.textContent = newMeta;
+    }
+  }
+  // Handle children (sub-agents) — append new ones, recurse into existing
+  if (agentData.children && agentData.children.length > 0) {
+    const bodyEl = agentEl.querySelector(':scope > .tl-agent-body');
+    if (!bodyEl) return;
+    let subContainer = bodyEl.querySelector(':scope > .tl-sub-agents');
+    const existingChildCount = subContainer ? subContainer.querySelectorAll(':scope > .tl-agent').length : 0;
+    // Create sub-agents container if it doesn't exist yet
+    if (!subContainer) {
+      bodyEl.insertAdjacentHTML('beforeend', `<div class="tl-call-label">${t('calledAgents')}</div><div class="tl-sub-agents"></div>`);
+      subContainer = bodyEl.querySelector(':scope > .tl-sub-agents');
+    }
+    // Append new children that don't exist yet
+    if (subContainer && agentData.children.length > existingChildCount) {
+      const parentName = agentData.name || agentData.type || 'Agent';
+      for (let ci = existingChildCount; ci < agentData.children.length; ci++) {
+        const childHtml = renderAgentNode(agentData.children[ci], 0, turnIdx, ci, path, parentName);
+        subContainer.insertAdjacentHTML('beforeend', childHtml);
+      }
+    }
+    // Recursively update existing children
+    if (subContainer) {
+      const childEls = subContainer.querySelectorAll(':scope > .tl-agent');
+      childEls.forEach((childEl, ci) => {
+        if (agentData.children[ci]) {
+          updateAgentNodeInPlace(childEl, agentData.children[ci], turnIdx, ci, path);
+        }
+      });
+    }
+  }
+};
 const checkCollapsibleOverflow = () => {
   document.querySelectorAll('.tl-collapsible').forEach(el => {
     const label = el.nextElementSibling;
@@ -3154,21 +3201,21 @@ const pollRefreshTurns = () => {
 
       lastTotalTurns = data.totalTurns;
       totalTurnsPages = data.totalPages;
-      // Full re-render (page change or first load)
+      // Full re-render (page change or first load) — preserve expanded state by timestamp
       const expandedMsgs = new Set();
       container.querySelectorAll('.dp-timeline-msg.expanded').forEach(el => {
         const li = el.closest('.dp-timeline-item');
-        if (li) expandedMsgs.add(li.getAttribute('data-turn-idx'));
+        if (li) expandedMsgs.add(li.getAttribute('data-ts'));
       });
       const expandedTurn = container.querySelector('.dp-timeline-item.turn-expanded');
-      const expandedTurnIdx = expandedTurn ? expandedTurn.getAttribute('data-turn-idx') : null;
+      const expandedTurnTs = expandedTurn ? expandedTurn.getAttribute('data-ts') : null;
       renderTurnsList(container, data);
-      expandedMsgs.forEach(idx => {
-        const msg = container.querySelector(`.dp-timeline-item[data-turn-idx="${idx}"] .dp-timeline-msg`);
+      expandedMsgs.forEach(ts => {
+        const msg = container.querySelector(`.dp-timeline-item[data-ts="${ts}"] .dp-timeline-msg`);
         if (msg) msg.classList.add('expanded');
       });
-      if (expandedTurnIdx) {
-        const li = container.querySelector(`.dp-timeline-item[data-turn-idx="${expandedTurnIdx}"]`);
+      if (expandedTurnTs) {
+        const li = container.querySelector(`.dp-timeline-item[data-ts="${expandedTurnTs}"]`);
         if (li) li.classList.add('turn-expanded');
       }
     })
