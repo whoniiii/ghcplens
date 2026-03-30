@@ -537,6 +537,9 @@ body {
   width: 10px; height: 10px; border-radius: 50%;
   background: var(--accent); border: 2px solid var(--surface);
 }
+.tl-turn.tl-turn-active .tl-time::before {
+  animation: agent-pulse 1.2s ease-in-out infinite;
+}
 .tl-user {
   background: var(--accent-bg); border-radius: 4px;
   padding: 6px 10px; margin: 4px 0; font-size: 12px;
@@ -1845,6 +1848,10 @@ const fetchAll = () => {
         });
         if (!turnEl) return;
 
+        // Toggle tl-turn-active based on whether any agent is still running
+        const hasRunning = turnData.agents && turnData.agents.some(a => a.status === 'running');
+        turnEl.classList.toggle('tl-turn-active', hasRunning);
+
         // Add assistant message if missing
         if (!turnEl.querySelector('.tl-assistant') && (turnData.assistantMessage || '').trim()) {
           const userEl = turnEl.querySelector('.tl-user');
@@ -2581,7 +2588,8 @@ const loadOlderTimeline = async () => {
 };
 
 const renderTimelineTurn = (turn, idx) => {
-  let html = `<div class="tl-turn">`;
+  const hasRunningAgent = turn.agents && turn.agents.some(a => a.status === 'running');
+  let html = `<div class="tl-turn${hasRunningAgent ? ' tl-turn-active' : ''}">`;
 
   // Timestamp marker with date
   const timeStr = turn.timestamp
