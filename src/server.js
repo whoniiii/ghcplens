@@ -384,17 +384,28 @@ function isSessionActive(sessionDir) {
     const lockFiles = files.filter(f => f.startsWith('inuse.') && f.endsWith('.lock'));
     if (!lockFiles.length) return false;
 
-    // Verify at least one lock PID is actually alive
+    // Verify at least one lock PID is actually a copilot/node process
     for (const lf of lockFiles) {
       const match = lf.match(/^inuse\.(\d+)\.lock$/);
       if (!match) continue;
       const pid = parseInt(match[1], 10);
       try {
         process.kill(pid, 0); // signal 0 = check if alive, doesn't kill
+        // Verify it's actually a node/copilot process (not a recycled PID)
+        if (process.platform === 'win32') {
+          try {
+            const result = require('child_process').execSync(
+              `tasklist /FI "PID eq ${pid}" /FO CSV /NH`,
+              { encoding: 'utf-8', timeout: 3000 }
+            );
+            const lower = result.toLowerCase();
+            if (!lower.includes('node') && !lower.includes('copilot')) continue;
+          } catch { continue; }
+        }
         return true;
       } catch {}
     }
-    return false; // all lock PIDs are dead — stale locks
+    return false; // all lock PIDs are dead or not copilot
   } catch { return false; }
 }
 
@@ -1202,6 +1213,7 @@ function buildTimeline(eventsFile, limit, page) {
           if (agent) {
             agent.completedAt = evt.timestamp || '';
             agent.status = line.includes('failed') ? 'failed' : 'done';
+            if (d.model) agent.model = d.model;
             if (agent.startedAt && agent.completedAt) {
               agent.duration = Math.round((new Date(agent.completedAt) - new Date(agent.startedAt)) / 1000);
             }
@@ -1343,6 +1355,7 @@ function buildTimeline(eventsFile, limit, page) {
     name: a.name,
     type: a.type,
     status: a.status,
+    model: a.model || '',
     startedAt: a.startedAt,
     completedAt: a.completedAt,
     duration: a.duration,

@@ -2642,8 +2642,9 @@ const renderAgentNode = (agent, depth, turnIdx, agentIdx, parentPath, parentName
   let metaParts = [];
   if (duration) metaParts.push(duration);
   if (tokens) metaParts.push(`${tokens} tok`);
+  if (agent.model) metaParts.push(agent.model);
 
-  let html = `<div class="tl-agent" id="${nodeId}" data-status="${agent.status || ''}">`;
+  let html = `<div class="tl-agent" id="${nodeId}" data-status="${statusText}">`;
 
   // Header (always visible)
   html += `<div class="tl-agent-header" onclick="toggleTimelineAgent('${nodeId}')">`;
@@ -2752,10 +2753,18 @@ const updateAgentNodeInPlace = (agentEl, agentData, turnIdx, agentIdx, parentPat
       statusEl.style.color = statusColor;
     }
     const metaEl = headerEl.querySelector('.tl-agent-meta');
-    if (metaEl && agentData.duration) {
-      const dur = agentData.duration >= 60 ? `${Math.floor(agentData.duration/60)}m ${Math.round(agentData.duration%60)}s` : `${Math.round(agentData.duration)}s`;
-      const tok = agentData.totalOutputTokens ? (agentData.totalOutputTokens >= 1000 ? `${(agentData.totalOutputTokens/1000).toFixed(1)}K tok` : `${agentData.totalOutputTokens} tok`) : '';
-      const newMeta = tok ? `${dur} · ${tok}` : dur;
+    if (metaEl && (agentData.duration || agentData.model)) {
+      let parts = [];
+      if (agentData.duration) {
+        const dur = agentData.duration >= 60 ? `${Math.floor(agentData.duration/60)}m ${Math.round(agentData.duration%60)}s` : `${Math.round(agentData.duration)}s`;
+        parts.push(dur);
+      }
+      if (agentData.totalOutputTokens) {
+        const tok = agentData.totalOutputTokens >= 1000 ? `${(agentData.totalOutputTokens/1000).toFixed(1)}K tok` : `${agentData.totalOutputTokens} tok`;
+        parts.push(tok);
+      }
+      if (agentData.model) parts.push(agentData.model);
+      const newMeta = parts.join(' · ');
       if (metaEl.textContent !== newMeta) metaEl.textContent = newMeta;
     }
   }
@@ -2772,6 +2781,8 @@ const updateAgentNodeInPlace = (agentEl, agentData, turnIdx, agentIdx, parentPat
     }
     // Append new children that don't exist yet
     if (subContainer && agentData.children.length > existingChildCount) {
+      // Auto-expand parent agent when new children appear
+      if (!agentEl.classList.contains('expanded')) agentEl.classList.add('expanded');
       const parentName = agentData.name || agentData.type || 'Agent';
       for (let ci = existingChildCount; ci < agentData.children.length; ci++) {
         const childHtml = renderAgentNode(agentData.children[ci], 0, turnIdx, ci, path, parentName);
