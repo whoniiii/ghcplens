@@ -1363,7 +1363,7 @@ function buildTimeline(eventsFile, limit, page) {
     completedAt: a.completedAt,
     duration: a.duration,
     agentPrompt: (a.agentPrompt || '').substring(0, 1000),
-    finalResult: (a.finalResult || '').substring(0, 1000),
+    finalResult: (a.finalResult || '').trim().substring(0, 1000),
     internalToolCalls: a.internalToolCalls,
     internalTurns: a.internalTurns,
     totalOutputTokens: a.totalOutputTokens,

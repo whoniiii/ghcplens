@@ -2743,7 +2743,7 @@ const renderAgentNode = (agent, depth, turnIdx, agentIdx, parentPath, parentName
   }
 
   // Result (collapsible)
-  const resultText = agent.finalResult || '';
+  const resultText = (agent.finalResult || '').replace(/\n+/g, ' ').trim();
   if (resultText) {
     const resultId = `tl-result-${path}`;
     html += `<div style="margin-top:6px">`;
@@ -2833,9 +2833,10 @@ const updateAgentNodeInPlace = (agentEl, agentData, turnIdx, agentIdx, parentPat
     // Add result if missing
     if (!bodyEl.querySelector(':scope > div > .tl-section-label.result') && agentData.finalResult) {
       const resultId = `tl-result-${path}`;
+      const cleanResult = (agentData.finalResult || '').replace(/\n+/g, ' ').trim();
       let rHtml = `<div style="margin-top:6px">`;
       rHtml += `<div class="tl-section-label result">${t('agentResultLabel')}</div>`;
-      rHtml += `<div class="tl-collapsible" id="${resultId}" onclick="toggleTimelineText('${resultId}')">${escHtml(agentData.finalResult)}</div>`;
+      rHtml += `<div class="tl-collapsible" id="${resultId}" onclick="toggleTimelineText('${resultId}')">${escHtml(cleanResult)}</div>`;
       rHtml += `<span class="tl-collapsible-label" data-for="${resultId}" onclick="toggleTimelineText('${resultId}')">${t('showMore')}</span>`;
       rHtml += `</div>`;
       // Insert before children container or at end
