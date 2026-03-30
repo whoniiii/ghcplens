@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## [1.4.3] - 2026-03-30
+
+### Fixed
+- **Sidebar version display** — Sidebar version display now matches package version
+
 ## [1.4.2] - 2026-03-30
 
 ### Fixed
