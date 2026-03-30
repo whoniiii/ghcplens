@@ -1855,11 +1855,11 @@ const fetchAll = () => {
         });
         if (!turnEl) return;
 
-        // Toggle tl-turn-active — active if last turn in active session OR any agent running
+        // Toggle tl-turn-active — active if any agent running OR still waiting for response
         const hasRunningDeep = (agents) => agents && agents.some(a => a.status === 'running' || hasRunningDeep(a.children));
-        const isSessionRunning = lastSessions && lastSessions.some(s => s.id === selectedSessionId && s.isActive);
         const isLastTurn = turnIdx === data.timeline.length - 1;
-        const isActive = hasRunningDeep(turnData.agents) || (isLastTurn && isSessionRunning);
+        const stillProcessing = isLastTurn && !turnData.assistantMessage && !(turnData.agents && turnData.agents.length > 0);
+        const isActive = hasRunningDeep(turnData.agents) || stillProcessing;
         turnEl.classList.toggle('tl-turn-active', isActive);
 
         // Update total tokens badge
