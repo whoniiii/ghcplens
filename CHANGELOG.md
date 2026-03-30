@@ -1,5 +1,68 @@
 # Changelog
 
+## [Unreleased]
+
+## [1.3.0] - 2026-03-30
+
+### Added
+- **Sub-agent real-time updates** — Child agents (PM → ui-developer, backend-developer, tester) appear live in timeline as they spawn, with recursive status tracking
+- **Auto-expand parent agent** — Parent agent body automatically opens when sub-agents start
+- **Agent model display** — Each agent shows which AI model was used (e.g. `claude-opus-4.6`, `claude-haiku-4.5`)
+- **Per-turn total tokens** — Timestamp shows aggregated output tokens (direct + all sub-agents recursively)
+- **Turn activity indicator** — Timeline dot pulses blue while processing, turns green on completion
+- **Live agent results** — RESULT section and TOOLS badges appear in real-time when agents complete
+- **Timeline loading state** — "View Full Timeline" button shows spinner while fetching data
+- **Auto-scroll on sub-agent** — Timeline panel scrolls to bottom when new sub-agents appear
+
+### Fixed
+- **Polling collapse bug** — Expanded items no longer collapse on poll refresh (uses stable `data-ts` instead of shifting `data-turn-idx`)
+- **Turn dot stuck pulsing** — Dot correctly stops when all agents complete (removed always-true session check)
+- **Agent result blank display** — Strip leading newlines from result text to prevent empty appearance
+- **Agent `data-status` normalization** — `completed` → `done` mapped consistently for CSS selectors
+
+## [1.2.2] - 2026-03-30
+
+### Added
+- **Agent pulse animation** — Running agents' icon pulses (scale 20%↔100%) for visual activity indicator
+
+### Fixed
+- **Session status false positive** — PID recycling caused completed sessions to show as active (green); now verifies the lock PID is actually a Node.js process
+
+## [1.2.1] - 2026-03-30
+
+### Added
+- **Project Config modal** — View agents, skills, and copilot-instructions per session (tabs with expand/collapse cards)
+- **Show Connect Screen** command — `Ctrl+Shift+P` → "GitHub Copilot Lens: Show Connect Screen" to re-open initial setup
+- **Connect screen error guide** — Structured solution list with per-OS install commands (npm, Homebrew, WinGet) and copy buttons
+- **Skill detail view** — Click to expand full README body content for each skill
+
+### Changed
+- Project Config modal width increased to 960px for better readability
+- Connect screen modal width increased to 560px
+- Professional design — removed emoji overuse, replaced with text initials (PM, BE, UI, TE, IN, RM)
+- Install command corrected: `@github/copilot` (was incorrect legacy package name)
+
+### Fixed
+- `renderTimeline is not defined` error — unclosed comment block in keydown listener
+- Modal height stabilized — fixed at 75vh to prevent resize on tab switch
+- Tool badge duplication in polling updates — removed redundant agent tool breakdown
+
+## [1.2.0] - 2026-03-30
+
+### Added
+- **VS Code Sidebar** — Activity bar icon with version info, quick "Open Dashboard" button
+- **Timeline turn matching** — Timestamp-based override for interleaved messages (fixes wrong turn attribution)
+- **VS Code Insiders detection** — Correctly opens matching VS Code variant
+
+### Changed
+- Unified naming to "GitHub Copilot Lens" across all UI surfaces
+- README rewritten for VS Code Marketplace
+
+### Fixed
+- "Open in VSCode" button on Windows — added `shell: true` for `.cmd` executables
+- NUL file causing Marketplace validation failure — added to `.vscodeignore`
+- Timeline tools/responses attaching to wrong turn when messages are sent mid-response
+
 ## [1.1.0] - 2026-03-30
 
 ### Added

@@ -12,7 +12,7 @@ Ever wondered what's happening behind the scenes when GitHub Copilot CLI is work
 
 🔍 **Full Transparency** — Watch Copilot think, plan, and execute in real time
 
-🤖 **Multi-Agent Visibility** — See the full agent hierarchy: PM calls backend-developer, backend-developer calls tester — every chain visualized
+🤖 **Multi-Agent Visibility** — See the full agent hierarchy live: PM calls backend-developer, backend-developer calls tester — every chain visualized in real-time with model names and token usage
 
 🛠️ **Tool Call Inspector** — Click any tool badge to see exactly what command was run, what file was edited, what was searched
 
@@ -48,7 +48,8 @@ Or: `Ctrl+Shift+P` → `GitHub Copilot Lens: Open Dashboard`
 |---------|--|
 | **Live Monitoring** | Real-time session status — working, asking, idle, done |
 | **Session Timeline** | Full conversation with user/assistant messages and tool calls |
-| **Agent Hierarchy** | Visual tree of multi-agent chains with results |
+| **Agent Hierarchy** | Visual tree of multi-agent chains with live results, model names, tokens |
+| **Turn Tokens** | Per-turn total output tokens (direct + all sub-agents) |
 | **Tool Inspector** | Click-to-inspect input/output for every tool call |
 | **4 Themes** | Light, Day, Medium, Dark |
 | **4 Languages** | English, 한국어, 日本語, 中文 |

@@ -19,7 +19,7 @@ Drill into any session to see the full conversation timeline: user messages, ass
 <img src="https://raw.githubusercontent.com/whoniiii/ghcplens/master/docs/screenshots/agent-hierarchy.jpeg" width="700" alt="Agent Hierarchy">
 
 ### Multi-Agent Hierarchy
-When Copilot spawns sub-agents (PM, backend-developer, tester, etc.), Copilot Lens renders the full call tree with parent-child relationships, per-agent tool badges, and results.
+When Copilot spawns sub-agents (PM, backend-developer, tester, etc.), Copilot Lens renders the full call tree with parent-child relationships, per-agent tool badges, model name, token usage, and results — all updating live as agents run.
 
 ### Tool Call Inspector
 Click any tool badge to inspect the exact input and output — powershell commands, file edits, grep searches, API calls — everything Copilot did under the hood.
