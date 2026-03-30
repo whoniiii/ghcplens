@@ -1854,15 +1854,16 @@ const fetchAll = () => {
         });
         if (!turnEl) return;
 
-        // Toggle tl-turn-active based on whether any agent is still running
-        const hasRunning = turnData.agents && turnData.agents.some(a => a.status === 'running');
-        turnEl.classList.toggle('tl-turn-active', hasRunning);
+        // Toggle tl-turn-active — active if any agent (including nested children) is running
+        const hasRunningDeep = (agents) => agents && agents.some(a => a.status === 'running' || hasRunningDeep(a.children));
+        const isActive = hasRunningDeep(turnData.agents);
+        turnEl.classList.toggle('tl-turn-active', isActive);
 
         // Update total tokens badge
         if (turnData.totalTokens) {
           const timeEl = turnEl.querySelector('.tl-time');
           let tokEl = timeEl?.querySelector('.tl-turn-tokens');
-          const tokText = `${formatTokens(turnData.totalTokens)} tok`;
+          const tokText = `${formatTokens(turnData.totalTokens)} output tokens`;
           if (tokEl) {
             if (tokEl.textContent !== tokText) tokEl.textContent = tokText;
           } else if (timeEl) {
@@ -2606,7 +2607,8 @@ const loadOlderTimeline = async () => {
 };
 
 const renderTimelineTurn = (turn, idx) => {
-  const hasRunningAgent = turn.agents && turn.agents.some(a => a.status === 'running');
+  const hasRunningDeep = (agents) => agents && agents.some(a => a.status === 'running' || hasRunningDeep(a.children));
+  const hasRunningAgent = hasRunningDeep(turn.agents);
   let html = `<div class="tl-turn${hasRunningAgent ? ' tl-turn-active' : ''}">`;
 
   // Timestamp marker with date
@@ -2615,7 +2617,7 @@ const renderTimelineTurn = (turn, idx) => {
     : '';
   html += `<div class="tl-time"><span class="tl-time-text">${timeStr}</span>`;
   if (turn.totalTokens) {
-    html += `<span class="tl-turn-tokens">${formatTokens(turn.totalTokens)} tok</span>`;
+    html += `<span class="tl-turn-tokens">${formatTokens(turn.totalTokens)} output tokens</span>`;
   }
   html += `</div>`;
 
@@ -2671,7 +2673,7 @@ const renderAgentNode = (agent, depth, turnIdx, agentIdx, parentPath, parentName
 
   let metaParts = [];
   if (duration) metaParts.push(duration);
-  if (tokens) metaParts.push(`${tokens} tok`);
+  if (tokens) metaParts.push(`${tokens} output tokens`);
   if (agent.model) metaParts.push(agent.model);
 
   let html = `<div class="tl-agent" id="${nodeId}" data-status="${statusText}">`;
@@ -2790,7 +2792,7 @@ const updateAgentNodeInPlace = (agentEl, agentData, turnIdx, agentIdx, parentPat
         parts.push(dur);
       }
       if (agentData.totalOutputTokens) {
-        const tok = agentData.totalOutputTokens >= 1000 ? `${(agentData.totalOutputTokens/1000).toFixed(1)}K tok` : `${agentData.totalOutputTokens} tok`;
+        const tok = agentData.totalOutputTokens >= 1000 ? `${(agentData.totalOutputTokens/1000).toFixed(1)}K output tokens` : `${agentData.totalOutputTokens} output tokens`;
         parts.push(tok);
       }
       if (agentData.model) parts.push(agentData.model);
