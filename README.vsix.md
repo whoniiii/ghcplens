@@ -1,13 +1,13 @@
 <div align="center">
 
-# <img src="icon.png" width="32" alt="Logo"> GitHub Copilot Lens
+# <img src="https://raw.githubusercontent.com/whoniiii/ghcplens/master/icon.png" width="32" alt="Logo"> GitHub Copilot Lens
 
 **See everything Copilot does — in real time.**
 
 A live monitoring dashboard for GitHub Copilot CLI sessions — right inside VS Code.<br>
 Watch every turn, tool call, agent chain, and token as they happen.
 
-<img src="docs/screenshots/ghcplens_video.gif" width="720" alt="Copilot Lens — Multi-Agent Chain Demo">
+<img src="https://raw.githubusercontent.com/whoniiii/ghcplens/master/docs/screenshots/ghcplens_video.gif" width="720" alt="Copilot Lens — Multi-Agent Chain Demo">
 
 </div>
 
@@ -28,15 +28,15 @@ Watch every turn, tool call, agent chain, and token as they happen.
 
 ## 📸 Highlights
 
-<img src="docs/screenshots/dashboard.jpeg" width="700" alt="Dashboard">
+<img src="https://raw.githubusercontent.com/whoniiii/ghcplens/master/docs/screenshots/dashboard.jpeg" width="700" alt="Dashboard">
 
 **Session Dashboard** — Browse all sessions grouped by project. Status at a glance — working, asking, idle, done.
 
-<img src="docs/screenshots/agent-hierarchy.jpeg" width="700" alt="Agent Hierarchy">
+<img src="https://raw.githubusercontent.com/whoniiii/ghcplens/master/docs/screenshots/agent-hierarchy.jpeg" width="700" alt="Agent Hierarchy">
 
 **Agent Call Trees** — Full parent→child tree with tool badges, model names, token counts, and timing.
 
-<img src="docs/screenshots/tool-modal.jpeg" width="700" alt="Tool Inspector">
+<img src="https://raw.githubusercontent.com/whoniiii/ghcplens/master/docs/screenshots/tool-modal.jpeg" width="700" alt="Tool Inspector">
 
 **Tool Inspector** — Click any badge to drill into exact input/output. Nothing is hidden.
 
@@ -47,7 +47,7 @@ Watch every turn, tool call, agent chain, and token as they happen.
 1. Click the **GitHub Copilot Lens** icon in the **left sidebar** (Activity Bar)
 2. Click **Open Dashboard** — that's it!
 
-<img src="docs/screenshots/sidebar.png" width="360" alt="Sidebar — Open Dashboard">
+<img src="https://raw.githubusercontent.com/whoniiii/ghcplens/master/docs/screenshots/sidebar.png" width="360" alt="Sidebar — Open Dashboard">
 
 Or: `Ctrl+Shift+P` → `GitHub Copilot Lens: Open Dashboard`
 
