@@ -1261,6 +1261,12 @@ if (IS_VSCODE) {
 }
 
 /* ─── Path Config Modal ─── */
+function rebuildPathModal() {
+  const modal = document.getElementById('pathModal');
+  const mc = modal.querySelector('.path-modal');
+  mc.innerHTML = `<div class="path-modal-logo"><span class="logo-mark"><svg viewBox="0 0 128 128" width="32" height="32"><rect width="128" height="128" rx="24" fill="#2d333b"/><g transform="translate(16,12) scale(6)"><path fill="#e6edf3" fill-rule="evenodd" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82A7.65 7.65 0 0 1 8 4.84c.68.003 1.36.092 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.19 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></g><g transform="translate(82,82)"><line x1="13" y1="13" x2="29" y2="29" stroke="#58a6ff" stroke-width="6" stroke-linecap="round"/><circle cx="0" cy="0" r="22" fill="none" stroke="#58a6ff" stroke-width="4"/><circle cx="0" cy="0" r="19" fill="rgba(88,166,255,0.12)"/></g></svg></span></div><div class="path-modal-title">GitHub Copilot Lens</div><div class="path-modal-subtitle" id="pathModalMsg">Please verify the path to your Copilot CLI session data.</div><input class="path-modal-input" id="pathModalInput" placeholder="e.g. C:\\Users\\me\\.copilot\\session-state" spellcheck="false" autocomplete="off"><button class="path-modal-btn" id="pathModalBtn" onclick="submitPathConfig()">Connect</button><div class="path-modal-error" id="pathModalError"></div><div class="path-modal-current" id="pathModalCurrent"></div>`;
+}
+
 function showPathModal(currentPath) {
   const modal = document.getElementById('pathModal');
   const input = document.getElementById('pathModalInput');
@@ -1342,22 +1348,33 @@ async function checkPathConfig() {
     } catch (e) { showPathModal(''); }
     return;
   }
-  // Force show "no path" error screen with ?nopath
-  if (window.location.search.includes('nopath')) {
-    showPathModal('');
-    const errEl = document.getElementById('pathModalError');
-    if (errEl) errEl.innerHTML = buildPathErrorHTML('Path not found');
-    return;
-  }
+  // Show loading overlay while checking
+  const modal = document.getElementById('pathModal');
+  const modalContent = modal.querySelector('.path-modal');
+  modalContent.innerHTML = `<div class="path-modal-logo"><span class="logo-mark"><svg viewBox="0 0 128 128" width="32" height="32"><rect width="128" height="128" rx="24" fill="#2d333b"/><g transform="translate(16,12) scale(6)"><path fill="#e6edf3" fill-rule="evenodd" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82A7.65 7.65 0 0 1 8 4.84c.68.003 1.36.092 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.19 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></g><g transform="translate(82,82)"><line x1="13" y1="13" x2="29" y2="29" stroke="#58a6ff" stroke-width="6" stroke-linecap="round"/><circle cx="0" cy="0" r="22" fill="none" stroke="#58a6ff" stroke-width="4"/><circle cx="0" cy="0" r="19" fill="rgba(88,166,255,0.12)"/></g></svg></span></div><div class="path-modal-title">GitHub Copilot Lens</div><div style="color:var(--text-muted);font-size:13px;margin-top:12px"><span style="animation:agent-pulse 1.2s ease-in-out infinite;display:inline-block;margin-right:6px">●</span>Loading...</div>`;
+  modal.style.display = 'flex';
+  requestAnimationFrame(() => modal.classList.add('visible'));
   try {
     const res = await fetch(API_BASE + '/api/config');
     const data = await res.json();
-    // Always show modal on first visit — let user confirm the path
-    const confirmed = localStorage.getItem('ghcpLensPathConfirmed');
-    if (!confirmed || !data.exists) {
+    if (data.exists) {
+      // Path exists — skip connect screen, go straight to dashboard
+      localStorage.setItem('ghcpLensPathConfirmed', data.sessionStatePath);
+      hidePathModal();
+      fetchAll();
+    } else {
+      // Path not found — show error
+      rebuildPathModal();
       showPathModal(data.sessionStatePath);
+      const errEl = document.getElementById('pathModalError');
+      if (errEl) errEl.innerHTML = buildPathErrorHTML('Session data path not found');
     }
-  } catch (e) { showPathModal(''); }
+  } catch (e) {
+    rebuildPathModal();
+    showPathModal('');
+    const errEl = document.getElementById('pathModalError');
+    if (errEl) errEl.textContent = t('serverFail') + (API_BASE ? ` (${API_BASE})` : ' (no server)');
+  }
 }
 
 /* ─── i18n ─── */
