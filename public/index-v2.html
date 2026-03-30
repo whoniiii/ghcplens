@@ -1311,6 +1311,11 @@ async function submitPathConfig() {
 }
 
 async function checkPathConfig() {
+  // Reset flag from extension command
+  if (window.GHCP_LENS_RESET) {
+    localStorage.removeItem('ghcpLensPathConfirmed');
+    window.GHCP_LENS_RESET = false;
+  }
   // Force show connect screen with ?connect query param
   if (window.location.search.includes('connect')) {
     try {

@@ -188,6 +188,24 @@ function activate(context) {
   });
 
   context.subscriptions.push(disposable);
+
+  // Reset command — reopens dashboard showing the connect screen
+  context.subscriptions.push(
+    vscode.commands.registerCommand('ghcpLens.resetConnect', async () => {
+      if (panel) { panel.dispose(); panel = null; }
+      const port = await ensureServer();
+      panel = vscode.window.createWebviewPanel(
+        'ghcpLens', 'GitHub Copilot Lens', vscode.ViewColumn.One,
+        { enableScripts: true, retainContextWhenHidden: true,
+          localResourceRoots: [vscode.Uri.file(path.join(context.extensionPath, 'public'))],
+          portMapping: [{ webviewPort: port, extensionHostPort: port }] }
+      );
+      let html = await getWebviewContent(context.extensionPath, port);
+      html = html.replace('window.GHCP_LENS_VSCODE=true;', 'window.GHCP_LENS_VSCODE=true;window.GHCP_LENS_RESET=true;');
+      panel.webview.html = html;
+      panel.onDidDispose(() => { panel = null; }, undefined, context.subscriptions);
+    })
+  );
 }
 
 function deactivate() {

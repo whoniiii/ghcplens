@@ -23,6 +23,11 @@
           "light": "resources/icon-activitybar.svg",
           "dark": "resources/icon-activitybar.svg"
         }
+      },
+      {
+        "command": "ghcpLens.resetConnect",
+        "title": "Show Connect Screen",
+        "category": "GitHub Copilot Lens"
       }
     ],
     "viewsContainers": {
