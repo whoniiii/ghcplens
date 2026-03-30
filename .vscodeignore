@@ -7,3 +7,4 @@ vitest.config.js
 .vscode
 *.md
 !README.md
+NUL

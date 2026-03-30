@@ -43,11 +43,11 @@ Per-session stats: turns, tools, agents, tokens, checkpoints, and modified files
 
 ### VS Code Extension
 
-Install from the [Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=JeonghoonLee.ghcp-lens), or:
+Install from the [Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=JeonghoonLee.github-copilot-lens), or:
 
 1. Download the `.vsix` file from [Releases](https://github.com/whoniiii/ghcplens/releases)
 2. In VS Code: `Ctrl+Shift+P` → `Extensions: Install from VSIX...`
-3. Open command palette → `Copilot Lens: Open Dashboard`
+3. Open command palette → `GitHub Copilot Lens: Open Dashboard`
 
 ### Standalone (Browser)
 

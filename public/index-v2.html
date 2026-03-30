@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Copilot Lens</title>
+<title>GitHub Copilot Lens</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 128 128'><rect width='128' height='128' rx='24' fill='%232d333b'/><g transform='translate(16,12) scale(6)'><path fill='%23e6edf3' fill-rule='evenodd' d='M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82A7.65 7.65 0 0 1 8 4.84c.68.003 1.36.092 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.19 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z'/></g><g transform='translate(82,82)'><line x1='13' y1='13' x2='29' y2='29' stroke='%2358a6ff' stroke-width='6' stroke-linecap='round'/><circle cx='0' cy='0' r='22' fill='none' stroke='%2358a6ff' stroke-width='4'/><circle cx='0' cy='0' r='19' fill='rgba(88,166,255,0.12)'/></g></svg>">
 <style>
 :root {
@@ -509,12 +509,12 @@ body {
 }
 .detail-close:hover { background: var(--surface-hover); color: var(--text); }
 .agent-header-btn {
-  display: inline-flex; align-items: center;
-  font-size: 12px; padding: 4px 10px; border: 1px solid var(--border);
-  border-radius: 4px; background: var(--surface); color: var(--text-secondary);
-  cursor: pointer; transition: all 0.15s; font-weight: 500;
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 12px; padding: 5px 14px; border: 1px solid var(--accent);
+  border-radius: 4px; background: transparent; color: var(--accent);
+  cursor: pointer; transition: all 0.15s; font-weight: 600;
 }
-.agent-header-btn:hover { border-color: var(--text-secondary); color: var(--text); }
+.agent-header-btn:hover { background: var(--accent); color: #fff; }
 
 /* ─── Session Timeline ─── */
 .tl-container { padding: 12px 8px; }
@@ -571,6 +571,10 @@ body {
   font-size: 10px; padding: 1px 6px;
   background: var(--surface); border: 1px solid var(--border);
   border-radius: 2px; color: var(--text-muted);
+}
+.tl-tool-badge--complete {
+  border-left: 2px solid var(--accent);
+  color: var(--text);
 }
 .tl-agent {
   position: relative; margin: 6px 0; padding-left: 16px;
@@ -917,7 +921,7 @@ body {
 <body>
 
 <div class="header">
-  <h1><span class="logo-mark"><svg viewBox="0 0 128 128" width="22" height="22"><rect width="128" height="128" rx="24" fill="#2d333b"/><g transform="translate(16,12) scale(6)"><path fill="#e6edf3" fill-rule="evenodd" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82A7.65 7.65 0 0 1 8 4.84c.68.003 1.36.092 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.19 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></g><g transform="translate(82,82)"><line x1="13" y1="13" x2="29" y2="29" stroke="#58a6ff" stroke-width="6" stroke-linecap="round"/><circle cx="0" cy="0" r="22" fill="none" stroke="#58a6ff" stroke-width="4"/><circle cx="0" cy="0" r="19" fill="rgba(88,166,255,0.12)"/></g></svg></span>Copilot Lens</h1>
+  <h1><span class="logo-mark"><svg viewBox="0 0 128 128" width="22" height="22"><rect width="128" height="128" rx="24" fill="#2d333b"/><g transform="translate(16,12) scale(6)"><path fill="#e6edf3" fill-rule="evenodd" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82A7.65 7.65 0 0 1 8 4.84c.68.003 1.36.092 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.19 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></g><g transform="translate(82,82)"><line x1="13" y1="13" x2="29" y2="29" stroke="#58a6ff" stroke-width="6" stroke-linecap="round"/><circle cx="0" cy="0" r="22" fill="none" stroke="#58a6ff" stroke-width="4"/><circle cx="0" cy="0" r="19" fill="rgba(88,166,255,0.12)"/></g></svg></span>GitHub Copilot Lens</h1>
   <div class="header-right">
     <div class="lang-selector">
       <button class="lang-btn" data-lang="ko" onclick="setLang('ko')">한</button>
@@ -952,7 +956,7 @@ body {
     <div class="detail-panel-header">
       <h2 id="detailTitle">세션 상세</h2>
       <div style="display:flex;align-items:center;gap:4px">
-        <button class="agent-header-btn" id="agentHeaderBtn" style="display:none" onclick="openAgentPanel(selectedSessionId)">Timeline</button>
+        <button class="agent-header-btn" id="agentHeaderBtn" style="display:none" onclick="openAgentPanel(selectedSessionId)">▶ View Full Timeline</button>
         <button class="detail-close" onclick="closeDetail()">✕</button>
       </div>
     </div>
@@ -973,7 +977,7 @@ body {
 <div class="path-modal-overlay" id="pathModal">
   <div class="path-modal">
     <div class="path-modal-logo"><span class="logo-mark"><svg viewBox="0 0 128 128" width="32" height="32"><rect width="128" height="128" rx="24" fill="#2d333b"/><g transform="translate(16,12) scale(6)"><path fill="#e6edf3" fill-rule="evenodd" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82A7.65 7.65 0 0 1 8 4.84c.68.003 1.36.092 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.19 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></g><g transform="translate(82,82)"><line x1="13" y1="13" x2="29" y2="29" stroke="#58a6ff" stroke-width="6" stroke-linecap="round"/><circle cx="0" cy="0" r="22" fill="none" stroke="#58a6ff" stroke-width="4"/><circle cx="0" cy="0" r="19" fill="rgba(88,166,255,0.12)"/></g></svg></span></div>
-    <div class="path-modal-title">Copilot Lens</div>
+    <div class="path-modal-title">GitHub Copilot Lens</div>
     <div class="path-modal-subtitle" id="pathModalMsg">
       Copilot CLI 세션 데이터의 경로를 확인해주세요.<br>
       자동으로 감지된 경로가 맞다면 바로 시작하세요!
@@ -989,7 +993,7 @@ body {
 
 <script>
 /* ─── VS Code Extension Support ─── */
-const API_BASE = window.GHCP_LENS_PORT ? `http://localhost:${window.GHCP_LENS_PORT}` : '';
+const API_BASE = window.GHCP_LENS_API_BASE || (window.GHCP_LENS_PORT ? `http://localhost:${window.GHCP_LENS_PORT}` : '');
 const IS_VSCODE = !!window.GHCP_LENS_VSCODE;
 
 // Listen for VS Code theme sync
@@ -1026,7 +1030,7 @@ async function submitPathConfig() {
   const btn = document.getElementById('pathModalBtn');
   const errEl = document.getElementById('pathModalError');
   const val = input.value.trim();
-  if (!val) { errEl.textContent = '경로를 입력해주세요'; return; }
+  if (!val) { errEl.textContent = t('pathRequired') || 'Please enter a path'; return; }
     btn.disabled = true; btn.textContent = t('connecting'); errEl.textContent = '';
   try {
     const res = await fetch(API_BASE + '/api/config', {
@@ -1035,12 +1039,12 @@ async function submitPathConfig() {
       body: JSON.stringify({ sessionStatePath: val })
     });
     const data = await res.json();
-    if (!res.ok) { errEl.textContent = data.error || '경로를 확인해주세요'; return; }
+    if (!res.ok) { errEl.textContent = data.error || t('pathCheck') || 'Check the path'; return; }
     localStorage.setItem('ghcpLensPathConfirmed', val);
     hidePathModal();
     fetchAll();
   } catch (e) {
-    errEl.textContent = '서버 연결 실패';
+    errEl.textContent = t('serverFail') + (API_BASE ? ` (${API_BASE})` : ' (no server)');
   } finally {
     btn.disabled = false; btn.textContent = t('connect');
   }
@@ -1085,7 +1089,7 @@ const I18N = {
     agentTurnsLabel: '턴', agentTokensLabel: '토큰', calledAgents: '호출한 에이전트',
     noAgentsInTurn: '에이전트 없음', turnAgents: '턴 에이전트',
     showMore: '더 보기', showLess: '접기',
-    sessionTimeline: '세션 타임라인', noTimelineData: '타임라인 데이터가 없습니다',
+    sessionTimeline: '세션 타임라인', noTimelineData: '타임라인 데이터가 없습니다', viewTimeline: '타임라인 자세히 보기',
     memo: '메모', plan: '플랜', bgTasks: '백그라운드 작업', connect: '연결', connecting: '연결 중...',
     cancel: '취소', save: '저장',
     toolInput: '입력', toolOutput: '출력', toolNoData: '도구 데이터가 없습니다', loading: '로딩 중...',
@@ -1115,7 +1119,7 @@ const I18N = {
     agentTurnsLabel: 'Turns', agentTokensLabel: 'Tokens', calledAgents: 'Called Agents',
     noAgentsInTurn: 'No agents', turnAgents: 'Turn Agents',
     showMore: 'Show more', showLess: 'Collapse',
-    sessionTimeline: 'Session Timeline', noTimelineData: 'No timeline data',
+    sessionTimeline: 'Session Timeline', noTimelineData: 'No timeline data', viewTimeline: 'View Full Timeline',
     memo: 'Memo', plan: 'Plan', bgTasks: 'Background Tasks', connect: 'Connect', connecting: 'Connecting...',
     cancel: 'Cancel', save: 'Save',
     toolInput: 'Input', toolOutput: 'Output', toolNoData: 'No tool data available', loading: 'Loading...',
@@ -1145,7 +1149,7 @@ const I18N = {
     agentTurnsLabel: 'ターン', agentTokensLabel: 'トークン', calledAgents: '呼び出したエージェント',
     noAgentsInTurn: 'エージェントなし', turnAgents: 'ターンエージェント',
     showMore: '続きを見る', showLess: '折りたたむ',
-    sessionTimeline: 'セッションタイムライン', noTimelineData: 'タイムラインデータなし',
+    sessionTimeline: 'セッションタイムライン', noTimelineData: 'タイムラインデータなし', viewTimeline: 'タイムライン詳細',
     memo: 'メモ', plan: 'プラン', bgTasks: 'バックグラウンド作業', connect: '接続', connecting: '接続中...',
     cancel: 'キャンセル', save: '保存',
     toolInput: '入力', toolOutput: '出力', toolNoData: 'ツールデータなし', loading: '読み込み中...',
@@ -1175,7 +1179,7 @@ const I18N = {
     agentTurnsLabel: '轮次', agentTokensLabel: '令牌', calledAgents: '调用的代理',
     noAgentsInTurn: '无代理', turnAgents: '轮次代理',
     showMore: '展开更多', showLess: '收起',
-    sessionTimeline: '会话时间线', noTimelineData: '无时间线数据',
+    sessionTimeline: '会话时间线', noTimelineData: '无时间线数据', viewTimeline: '查看完整时间线',
     memo: '备注', plan: '计划', bgTasks: '后台任务', connect: '连接', connecting: '连接中...',
     cancel: '取消', save: '保存',
     toolInput: '输入', toolOutput: '输出', toolNoData: '无工具数据', loading: '加载中...',
@@ -1416,6 +1420,16 @@ const toggleAllGroups = () => {
 };
 
 const launchVSCode = (folder, insiders, sessionId) => {
+  if (IS_VSCODE) {
+    // In VS Code webview — use postMessage to open folder natively
+    const vscodeApi = window._vscodeApi || (window._vscodeApi = acquireVsCodeApi());
+    vscodeApi.postMessage({ command: 'open-folder', folder, insiders });
+    if (sessionId) {
+      const cmd = `copilot --resume=${sessionId}`;
+      navigator.clipboard.writeText(cmd).catch(() => {});
+    }
+    return;
+  }
   fetch(API_BASE + '/api/launch-vscode', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -1532,13 +1546,18 @@ const fetchAll = () => {
               `<div class="tl-assistant" onclick="this.classList.toggle('expanded')"><span class="tl-text">${escHtml(turnData.assistantMessage)}</span></div>`);
           }
         }
-        // Add direct tools if missing
-        if (!turnEl.querySelector('.tl-direct-tools') && turnData.directToolCalls && turnData.directToolCalls.length > 0) {
+        // Update or add direct tools (always refresh badges to reflect latest counts)
+        if (turnData.directToolCalls && turnData.directToolCalls.length > 0) {
           let toolsHtml = `<div class="tl-direct-tools"><span style="font-size:10px;color:var(--text-muted);margin-right:2px;font-weight:600">TOOLS</span>`;
-          turnData.directToolCalls.forEach(tc => { toolsHtml += `<span class="tl-tool-badge" onclick="showToolDetailModal('${escHtml(tc.toolName)}', 'interactionId', '${turnData.interactionId || ''}', '${selectedSessionId}')">${escHtml(tc.toolName)}${tc.count > 1 ? '\u00d7' + tc.count : ''}</span>`; });
+          turnData.directToolCalls.forEach(tc => { toolsHtml += `<span class="tl-tool-badge${tc.toolName === 'task_complete' ? ' tl-tool-badge--complete' : ''}" onclick="showToolDetailModal('${escHtml(tc.toolName)}', 'interactionId', '${turnData.interactionId || ''}', '${selectedSessionId}')">${escHtml(tc.toolName)}${tc.count > 1 ? '\u00d7' + tc.count : ''}</span>`; });
           toolsHtml += `</div>`;
-          const assistEl = turnEl.querySelector('.tl-assistant') || turnEl.querySelector('.tl-user') || turnEl.querySelector('.tl-time');
-          if (assistEl) assistEl.insertAdjacentHTML('afterend', toolsHtml);
+          const existingToolsEl = turnEl.querySelector(':scope > .tl-direct-tools');
+          if (existingToolsEl) {
+            existingToolsEl.outerHTML = toolsHtml;
+          } else {
+            const assistEl = turnEl.querySelector('.tl-assistant') || turnEl.querySelector('.tl-user') || turnEl.querySelector('.tl-time');
+            if (assistEl) assistEl.insertAdjacentHTML('afterend', toolsHtml);
+          }
         }
         // Add new agents (append ones that don't exist yet)
         const existingAgentCount = turnEl.querySelectorAll(':scope > .tl-agent').length;
@@ -1564,6 +1583,7 @@ const fetchAll = () => {
             const newMeta = tok ? `${dur} · ${tok}` : dur;
             if (metaEl.textContent !== newMeta) metaEl.textContent = newMeta;
           }
+          // Update agent tool breakdown badges — not needed, agent tools are final once completed
         });
       });
 
@@ -1830,7 +1850,7 @@ const toggleAgentDetail = (idx) => {
       html += `<div class="tl-direct-tools" style="margin:4px 0">`;
       html += `<span style="font-size:10px;color:var(--text-muted);margin-right:2px;font-weight:600">TOOLS</span>`;
       entries.forEach(([toolName, count]) => {
-        html += `<span class="tl-tool-badge">${escHtml(toolName)}${count > 1 ? '\u00d7' + count : ''}</span>`;
+        html += `<span class="tl-tool-badge${toolName === 'task_complete' ? ' tl-tool-badge--complete' : ''}">${escHtml(toolName)}${count > 1 ? '\u00d7' + count : ''}</span>`;
       });
       html += `</div>`;
     }
@@ -1970,7 +1990,7 @@ const renderTurnAgentCard = (a, agentIdx, turnIdx) => {
     html += `<div class="tl-direct-tools" style="margin-top:4px">`;
     html += `<span style="font-size:10px;color:var(--text-muted);margin-right:2px;font-weight:600">TOOLS</span>`;
     entries.forEach(([toolName, count]) => {
-      html += `<span class="tl-tool-badge">${escHtml(toolName)}${count > 1 ? '\u00d7' + count : ''}</span>`;
+      html += `<span class="tl-tool-badge${toolName === 'task_complete' ? ' tl-tool-badge--complete' : ''}">${escHtml(toolName)}${count > 1 ? '\u00d7' + count : ''}</span>`;
     });
     html += `</div>`;
   }
@@ -2128,7 +2148,7 @@ const renderTimelineTurn = (turn, idx) => {
     html += `<div class="tl-direct-tools">`;
     html += `<span style="font-size:10px;color:var(--text-muted);margin-right:2px;font-weight:600">TOOLS</span>`;
     turn.directToolCalls.forEach(tc => {
-      html += `<span class="tl-tool-badge" onclick="showToolDetailModal('${escHtml(tc.toolName)}', 'interactionId', '${turn.interactionId || ''}', '${selectedSessionId}')">${escHtml(tc.toolName)}${tc.count > 1 ? '\u00d7' + tc.count : ''}</span>`;
+      html += `<span class="tl-tool-badge${tc.toolName === 'task_complete' ? ' tl-tool-badge--complete' : ''}" onclick="showToolDetailModal('${escHtml(tc.toolName)}', 'interactionId', '${turn.interactionId || ''}', '${selectedSessionId}')">${escHtml(tc.toolName)}${tc.count > 1 ? '\u00d7' + tc.count : ''}</span>`;
     });
     html += `</div>`;
   }
@@ -2192,7 +2212,7 @@ const renderAgentNode = (agent, depth, turnIdx, agentIdx, parentPath, parentName
     html += `<div class="tl-direct-tools" style="margin:4px 0">`;
     html += `<span style="font-size:10px;color:var(--text-muted);margin-right:2px;font-weight:600">TOOLS</span>`;
     entries.forEach(([toolName, count]) => {
-      html += `<span class="tl-tool-badge" onclick="showToolDetailModal('${escHtml(toolName)}', 'parentToolCallId', '${agent.toolCallId || ''}', '${selectedSessionId}')">${escHtml(toolName)}${count > 1 ? '\u00d7' + count : ''}</span>`;
+      html += `<span class="tl-tool-badge${toolName === 'task_complete' ? ' tl-tool-badge--complete' : ''}" onclick="showToolDetailModal('${escHtml(toolName)}', 'parentToolCallId', '${agent.toolCallId || ''}', '${selectedSessionId}')">${escHtml(toolName)}${count > 1 ? '\u00d7' + count : ''}</span>`;
     });
     html += `</div>`;
   }
@@ -2500,11 +2520,10 @@ const renderDetail = (d) => {
     html += `</div>`;
   }
 
-  document.getElementById('detailTitle').innerHTML = `<span class="dot ${sc}"></span> ${escHtml(d.summary || t('sessionDetail'))} <span style="font-size:11px;color:var(--text-muted);font-weight:normal;margin-left:6px">${timeAgo(d.updated_at || d.updatedAt)}</span>`;
+  document.getElementById('detailTitle').innerHTML = `<span class="dot ${sc}"></span> ${escHtml(d.summary || t('sessionDetail'))}`;
   document.getElementById('detailBody').innerHTML = html;
   const agentBtn = document.getElementById('agentHeaderBtn');
-  if (agentBtn) agentBtn.style.display = 'inline-flex';
-  // Load turns — preserve current page during polling
+  if (agentBtn) { agentBtn.style.display = 'inline-flex'; agentBtn.textContent = '▶ ' + t('viewTimeline'); }
   if (selectedSessionId) {
     setTimeout(() => loadTurnsPage(currentTurnsPage || 1, true), 0);
   }
@@ -2588,7 +2607,7 @@ const updateDetailInPlace = (d) => {
   }
   // Agent button
   const agentBtn = document.getElementById('agentHeaderBtn');
-  if (agentBtn) agentBtn.style.display = 'inline-flex';
+  if (agentBtn) { agentBtn.style.display = 'inline-flex'; agentBtn.textContent = '▶ ' + t('viewTimeline'); }
 };
 
 // ── Paginated Turns Loader ──

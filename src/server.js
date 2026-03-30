@@ -730,6 +730,8 @@ function getToolCalls(eventsFile, turnIndexFilter, toolNameFilter, iidFilter, pa
   const tcidToIid = new Map();
   const toolEntries = new Map();
   const toolResults = new Map();
+  const userMsgOrder = [];          // [{iid, ts}] for timestamp-based override
+  const iidToTs = new Map();        // interactionId → timestamp (for override comparison)
 
   try {
     const content = fs.readFileSync(eventsFile, 'utf-8');
@@ -743,6 +745,9 @@ function getToolCalls(eventsFile, turnIndexFilter, toolNameFilter, iidFilter, pa
           const iid = (evt.data || {}).interactionId || '';
           if (iid && !iidToIndex.has(iid)) {
             iidToIndex.set(iid, turnCounter++);
+            const ts = evt.timestamp || '';
+            userMsgOrder.push({ iid, ts });
+            iidToTs.set(iid, ts);
           }
         } catch {}
         continue;
@@ -813,10 +818,40 @@ function getToolCalls(eventsFile, turnIndexFilter, toolNameFilter, iidFilter, pa
     }
   } catch {}
 
+  // ── Timestamp override helper (same as buildTimeline) ──
+  const findTurnByTs = (ts) => {
+    if (!ts || userMsgOrder.length === 0) return null;
+    let best = null;
+    for (const um of userMsgOrder) {
+      if (um.ts <= ts) best = um;
+      else break;
+    }
+    return best;
+  };
+
   // ── Build output list with filters ──
   const output = [];
   for (const [tcid, entry] of toolEntries) {
-    const iid = tcidToIid.get(tcid) || '';
+    let iid = tcidToIid.get(tcid) || '';
+
+    // Timestamp override: attribute tool to correct turn (same logic as buildTimeline)
+    if (!parentFilter) {
+      const evtTs = entry.timestamp || '';
+      if (evtTs) {
+        const tsTurn = findTurnByTs(evtTs);
+        if (tsTurn) {
+          const origTurnTs = iid ? (iidToTs.get(iid) || '') : '';
+          if (!iid || tsTurn.ts > origTurnTs) {
+            iid = tsTurn.iid;
+          }
+        }
+      }
+      if (!iid && entry.timestamp) {
+        const tsTurn = findTurnByTs(entry.timestamp);
+        if (tsTurn) iid = tsTurn.iid;
+      }
+    }
+
     const turnIndex = iid ? (iidToIndex.get(iid) ?? -1) : -1;
 
     // Apply filters
@@ -877,6 +912,19 @@ function buildTimeline(eventsFile, limit, page) {
   const taskPrompts = new Map();    // toolCallId → prompt (from tool.execution_start where toolName=task)
   const agentParent = new Map();    // childToolCallId → parentAgentToolCallId
   const directToolMap = new Map();  // interactionId → Map(toolName → count)
+  const userMsgOrder = [];          // [{iid, ts}] ordered by time — for timestamp-based fallback
+  const toolTimestamps = new Map(); // toolCallId → timestamp
+
+  // Helper: find the correct turn by timestamp (most recent user.message before ts)
+  const findTurnByTs = (ts) => {
+    if (!ts || userMsgOrder.length === 0) return null;
+    let best = null;
+    for (const um of userMsgOrder) {
+      if (um.ts <= ts) best = um;
+      else break;
+    }
+    return best ? turnMap.get(best.iid) : null;
+  };
 
   try {
     const content = fs.readFileSync(eventsFile, 'utf-8');
@@ -905,6 +953,7 @@ function buildTimeline(eventsFile, limit, page) {
               targetAgent,
               agents: [],
             });
+            userMsgOrder.push({ iid, ts: evt.timestamp || '' });
           }
         } catch {}
         continue;
@@ -920,19 +969,37 @@ function buildTimeline(eventsFile, limit, page) {
           if (!parentId) {
             // Main session assistant response
             const iid = d.interactionId || '';
+            const evtTs = evt.timestamp || '';
+            let turn = null;
             if (iid) {
-              const turn = turnMap.get(iid);
-              if (turn) {
-                const c = d.content || '';
-                if (c && c.length > (turn.assistantMessage || '').length) {
-                  turn.assistantMessage = c.substring(0, 500);
-                }
+              turn = turnMap.get(iid);
+            }
+            // Timestamp override: if a newer user message exists and this assistant.message
+            // is after it, attribute to the newer turn instead
+            if (evtTs) {
+              const tsTurn = findTurnByTs(evtTs);
+              if (tsTurn && (!turn || tsTurn.timestamp > turn.timestamp)) {
+                turn = tsTurn;
               }
-              // Map toolRequests toolCallIds → interactionId
-              if (Array.isArray(d.toolRequests)) {
-                for (const tr of d.toolRequests) {
-                  if (tr.toolCallId) tcidToIid.set(tr.toolCallId, iid);
-                }
+            }
+            // Last resort: most recent turn without an assistant response
+            if (!turn && turnMap.size > 0) {
+              const turns = Array.from(turnMap.values());
+              for (let i = turns.length - 1; i >= 0; i--) {
+                if (!turns[i].assistantMessage) { turn = turns[i]; break; }
+              }
+              if (!turn) turn = turns[turns.length - 1];
+            }
+            if (turn) {
+              const c = d.content || '';
+              if (c && c.length > (turn.assistantMessage || '').length) {
+                turn.assistantMessage = c.substring(0, 500);
+              }
+            }
+            // Map toolRequests toolCallIds → interactionId
+            if (iid && Array.isArray(d.toolRequests)) {
+              for (const tr of d.toolRequests) {
+                if (tr.toolCallId) tcidToIid.set(tr.toolCallId, iid);
               }
             }
           } else {
@@ -1033,9 +1100,28 @@ function buildTimeline(eventsFile, limit, page) {
               if (tcid && args.prompt) {
                 taskPrompts.set(tcid, (args.prompt || '').substring(0, 1000));
               }
-            } else if (toolName && tcid) {
+            }
+            if (toolName && tcid) {
+              // Direct tool call — track timestamp for fallback matching
+              const evtTs = evt.timestamp || '';
+              if (evtTs) toolTimestamps.set(tcid, evtTs);
+            }
+            if (toolName && toolName !== 'task' && tcid) {
               // Direct tool call (not task, not inside agent)
-              const iid = tcidToIid.get(tcid);
+              let iid = tcidToIid.get(tcid);
+              const evtTs = evt.timestamp || toolTimestamps.get(tcid) || '';
+              // Timestamp override: if a newer user message exists, attribute tool to it
+              if (evtTs) {
+                const tsTurn = findTurnByTs(evtTs);
+                const iidTurn = iid ? turnMap.get(iid) : null;
+                if (tsTurn && (!iidTurn || tsTurn.timestamp > iidTurn.timestamp)) {
+                  iid = tsTurn.interactionId;
+                }
+              }
+              if (!iid) {
+                const turn = findTurnByTs(evtTs);
+                if (turn) iid = turn.interactionId;
+              }
               if (iid) {
                 if (!directToolMap.has(iid)) directToolMap.set(iid, new Map());
                 const counts = directToolMap.get(iid);
@@ -1059,6 +1145,11 @@ function buildTimeline(eventsFile, limit, page) {
       const iid = tcidToIid.get(tcid);
       if (iid) agent.interactionId = iid;
     }
+    // Timestamp-based fallback for agent interactionId
+    if (!agent.interactionId && agent.startedAt) {
+      const turn = findTurnByTs(agent.startedAt);
+      if (turn) agent.interactionId = turn.interactionId;
+    }
   }
 
   // 2. Build agent tree via agentParent
@@ -1075,7 +1166,17 @@ function buildTimeline(eventsFile, limit, page) {
   for (const agent of agentMap.values()) {
     if (agent._isChild) continue;
     const iid = tcidToIid.get(agent.toolCallId) || agent.interactionId;
-    const turn = turnMap.get(iid);
+    let turn = turnMap.get(iid);
+    // Timestamp override: if a newer user message exists, attribute agent to it
+    if (agent.startedAt) {
+      const tsTurn = findTurnByTs(agent.startedAt);
+      if (tsTurn && (!turn || tsTurn.timestamp > turn.timestamp)) {
+        turn = tsTurn;
+      }
+    }
+    if (!turn && agent.startedAt) {
+      turn = findTurnByTs(agent.startedAt);
+    }
     if (turn) turn.agents.push(agent);
   }
 
@@ -1139,6 +1240,14 @@ function handleRequest(req, res) {
   // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+  // Handle CORS preflight
+  if (req.method === 'OPTIONS') {
+    res.writeHead(204);
+    res.end();
+    return;
+  }
 
   // ── API Routes ──
 
@@ -1195,7 +1304,7 @@ function handleRequest(req, res) {
         }
         const cmd = insiders === true ? 'code-insiders' : 'code';
         const { execFile } = require('child_process');
-        execFile(cmd, [folder], { windowsHide: true }, () => {});
+        execFile(cmd, [folder], { windowsHide: true, shell: true }, () => {});
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ ok: true }));
       } catch (e) {

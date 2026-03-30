@@ -1,7 +1,7 @@
 {
-  "name": "ghcp-lens",
-  "displayName": "GitHub Copilot Lens",
-  "version": "1.0.0",
+  "name": "github-copilot-lens",
+  "displayName": "Github-Copilot-Lens",
+  "version": "1.2.0",
   "description": "GitHub Copilot Lens — Session Monitor Dashboard",
   "publisher": "JeonghoonLee",
   "icon": "icon.png",
@@ -17,12 +17,34 @@
     "commands": [
       {
         "command": "ghcpLens.open",
-        "title": "Open Copilot Lens",
-        "category": "Copilot Lens"
+        "title": "Open Dashboard",
+        "category": "GitHub Copilot Lens",
+        "icon": {
+          "light": "resources/icon-activitybar.svg",
+          "dark": "resources/icon-activitybar.svg"
+        }
       }
     ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "copilot-lens",
+          "title": "GitHub Copilot Lens",
+          "icon": "resources/icon-activitybar.svg"
+        }
+      ]
+    },
+    "views": {
+      "copilot-lens": [
+        {
+          "id": "copilot-lens.welcome",
+          "name": "Dashboard",
+          "type": "webview"
+        }
+      ]
+    },
     "configuration": {
-      "title": "Copilot Lens",
+      "title": "GitHub Copilot Lens",
       "properties": {
         "ghcpLens.sessionStatePath": {
           "type": "string",
@@ -35,7 +57,10 @@
   "scripts": {
     "start": "node src/server.js",
     "test": "vitest run --reporter=verbose",
-    "package": "vsce package --no-dependencies"
+    "prevsce": "powershell -Command \"Copy-Item README.md README.github.md; Copy-Item README.vsix.md README.md\"",
+    "postvsce": "powershell -Command \"Copy-Item README.github.md README.md; Remove-Item README.github.md\"",
+    "package": "npm run prevsce && vsce package --no-dependencies && npm run postvsce",
+    "deploy": "npm run package && code --install-extension github-copilot-lens-*.vsix --force"
   },
   "keywords": [
     "copilot",
