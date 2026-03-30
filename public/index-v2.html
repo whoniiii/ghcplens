@@ -541,9 +541,10 @@ body {
   content: '';
   position: absolute; left: -20px; top: 50%; transform: translateY(-50%);
   width: 10px; height: 10px; border-radius: 50%;
-  background: var(--accent); border: 2px solid var(--surface);
+  background: var(--success); border: 2px solid var(--surface);
 }
 .tl-turn.tl-turn-active .tl-time::before {
+  background: var(--accent);
   animation: agent-pulse 1.2s ease-in-out infinite;
 }
 .tl-user {
