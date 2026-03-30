@@ -2,7 +2,7 @@
 
 ## [Unreleased]
 
-## [1.4.0] - 2026-03-30
+## [1.4.1] - 2026-03-30
 
 ### Added
 - **README redesign** — Professional layout with badges, screenshot grid, emoji section headers
