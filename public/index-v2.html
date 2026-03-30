@@ -1836,7 +1836,7 @@ const fetchAll = () => {
         }
         if (newTurns.length > 0) {
           let html = '';
-          newTurns.forEach((turn, idx) => { html += renderTimelineTurn(turn, idx); });
+          newTurns.forEach((turn, idx) => { html += renderTimelineTurn(turn, idx, true); });
           container.insertAdjacentHTML('beforeend', html);
         }
         window._timelineTotalTurns = data.totalTurns;
@@ -1854,9 +1854,11 @@ const fetchAll = () => {
         });
         if (!turnEl) return;
 
-        // Toggle tl-turn-active — active if any agent (including nested children) is running
+        // Toggle tl-turn-active — active if last turn in active session OR any agent running
         const hasRunningDeep = (agents) => agents && agents.some(a => a.status === 'running' || hasRunningDeep(a.children));
-        const isActive = hasRunningDeep(turnData.agents);
+        const isSessionRunning = lastSessions && lastSessions.some(s => s.id === selectedSessionId && s.isActive);
+        const isLastTurn = turnIdx === data.timeline.length - 1;
+        const isActive = hasRunningDeep(turnData.agents) || (isLastTurn && isSessionRunning);
         turnEl.classList.toggle('tl-turn-active', isActive);
 
         // Update total tokens badge
@@ -1980,6 +1982,15 @@ let agentPanelOpen = false;
 let agentData = null;
 
 const openAgentPanel = async (sessionId) => {
+  // Immediate visual feedback — show loading state
+  const btn = document.getElementById('agentHeaderBtn');
+  const prevText = btn ? btn.textContent : '';
+  if (btn) { btn.textContent = '⏳ Loading...'; btn.disabled = true; btn.style.opacity = '0.6'; }
+  const body = document.getElementById('agentPanelBody');
+  if (body) body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-muted);font-size:13px"><span style="animation:agent-pulse 1.2s ease-in-out infinite;display:inline-block;margin-right:8px">●</span> Loading timeline...</div>';
+  document.getElementById('splitContainer').classList.add('has-agent-detail');
+  agentPanelOpen = true;
+  isTimelineView = true;
   try {
     const res = await fetch(`${API_BASE}/api/sessions/${sessionId}/timeline?limit=50&page=1`);
     const data = await res.json();
@@ -1988,11 +1999,11 @@ const openAgentPanel = async (sessionId) => {
     window._timelineTotalTurns = data.totalTurns;
     window._timelineLoading = false;
     renderTimeline(data, false);
-    document.getElementById('splitContainer').classList.add('has-agent-detail');
-    agentPanelOpen = true;
-    isTimelineView = true;
   } catch (e) {
     console.error('Failed to load timeline:', e);
+    if (body) body.innerHTML = '<div style="padding:30px;text-align:center;color:var(--danger)">Failed to load timeline</div>';
+  } finally {
+    if (btn) { btn.textContent = prevText || '▶ ' + t('viewTimeline'); btn.disabled = false; btn.style.opacity = ''; }
   }
 };
 
@@ -2557,9 +2568,12 @@ const renderTimeline = (data, prepend = false) => {
     return;
   }
 
+  // Check if session is currently active — last turn should pulse
+  const isSessionRunning = lastSessions && lastSessions.some(s => s.id === selectedSessionId && s.isActive);
   let turnsHtml = '';
+  const lastIdx = data.timeline.length - 1;
   data.timeline.forEach((turn, idx) => {
-    turnsHtml += renderTimelineTurn(turn, idx);
+    turnsHtml += renderTimelineTurn(turn, idx, idx === lastIdx && isSessionRunning);
   });
 
   if (prepend) {
@@ -2606,10 +2620,10 @@ const loadOlderTimeline = async () => {
   window._timelineLoading = false;
 };
 
-const renderTimelineTurn = (turn, idx) => {
+const renderTimelineTurn = (turn, idx, isActive = false) => {
   const hasRunningDeep = (agents) => agents && agents.some(a => a.status === 'running' || hasRunningDeep(a.children));
-  const hasRunningAgent = hasRunningDeep(turn.agents);
-  let html = `<div class="tl-turn${hasRunningAgent ? ' tl-turn-active' : ''}">`;
+  const isTurnActive = isActive || hasRunningDeep(turn.agents);
+  let html = `<div class="tl-turn${isTurnActive ? ' tl-turn-active' : ''}">`;
 
   // Timestamp marker with date
   const timeStr = turn.timestamp
@@ -2820,6 +2834,9 @@ const updateAgentNodeInPlace = (agentEl, agentData, turnIdx, agentIdx, parentPat
         const childHtml = renderAgentNode(agentData.children[ci], 0, turnIdx, ci, path, parentName);
         subContainer.insertAdjacentHTML('beforeend', childHtml);
       }
+      // Auto-scroll timeline panel to show new sub-agent
+      const panelBody = document.getElementById('agentPanelBody');
+      if (panelBody) requestAnimationFrame(() => { panelBody.scrollTop = panelBody.scrollHeight; });
     }
     // Recursively update existing children
     if (subContainer) {
