@@ -855,7 +855,7 @@ body {
 .path-modal-overlay.visible { opacity: 1; }
 .path-modal {
   background: var(--surface); border-radius: 6px; padding: 40px 36px 32px;
-  width: 460px; max-width: 90vw; box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+  width: 560px; max-width: 90vw; box-shadow: 0 20px 60px rgba(0,0,0,0.25);
   text-align: center; border: 1px solid var(--border);
 }
 .path-modal-logo { font-size: 13px; font-weight: 700; color: var(--accent); margin-bottom: 4px; letter-spacing: -0.3px; display: flex; align-items: center; justify-content: center; gap: 8px; }
@@ -880,8 +880,45 @@ body {
 .path-modal-btn:hover { background: var(--accent); color: #fff; }
 .path-modal-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 .path-modal-error {
-  margin-top: 12px; font-size: 12px; color: var(--danger); min-height: 18px;
+  margin-top: 16px; font-size: 13px; color: var(--text); min-height: 18px;
 }
+.path-modal-error .err-title {
+  font-weight: 600; font-size: 13px; color: var(--danger); margin-bottom: 10px;
+}
+.path-modal-error .err-solutions {
+  background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+  padding: 14px 16px; margin-top: 8px;
+}
+.path-modal-error .err-solutions-title {
+  font-weight: 600; font-size: 12px; color: var(--text); margin-bottom: 10px;
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+.path-modal-error .err-solutions ol {
+  margin: 0; padding-left: 20px; list-style: decimal; text-align: left;
+}
+.path-modal-error .err-solutions ol li {
+  margin-bottom: 8px; font-size: 12px; line-height: 1.6; color: var(--text-muted); text-align: left;
+}
+.path-modal-error .err-solutions ol li:last-child { margin-bottom: 0; }
+.path-modal-error .err-solutions ol li strong {
+  color: var(--text); font-weight: 600;
+}
+.path-modal-error .err-solutions ol li code {
+  background: var(--surface); padding: 2px 6px; border-radius: 3px;
+  font-size: 11px; font-family: 'SF Mono', Monaco, monospace;
+  border: 1px solid var(--border);
+}
+.err-cmd-wrap {
+  display: inline-flex; align-items: center; gap: 4px; margin-top: 2px;
+}
+.err-copy-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 22px; height: 22px; border: 1px solid var(--border); border-radius: 4px;
+  background: var(--surface); color: var(--text-muted); cursor: pointer;
+  font-size: 11px; padding: 0; transition: all 0.15s;
+}
+.err-copy-btn:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+.err-copy-btn.copied { background: var(--success, #22c55e); color: #fff; border-color: var(--success, #22c55e); }
 .path-modal-current {
   margin-top: 20px; font-size: 11px; color: var(--text-muted);
   padding-top: 16px; border-top: 1px solid var(--border);
@@ -916,6 +953,206 @@ body {
 }
 .tl-tool-badge { cursor: pointer; }
 .tl-tool-badge:hover { background: var(--surface-hover); border-color: var(--accent); color: var(--text); }
+
+/* ─── Project Config Section ─── */
+.dp-project-config {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  padding: 8px 12px; background: var(--bg); border: 1px solid var(--border);
+  border-radius: 4px; margin-top: 8px;
+}
+.dp-pc-item {
+  display: flex; align-items: center; gap: 4px;
+  font-size: 12px; color: var(--text-secondary); white-space: nowrap;
+}
+.dp-pc-item .pc-count {
+  font-weight: 700; color: var(--text); font-size: 13px;
+}
+.dp-pc-item .pc-check {
+  font-size: 12px; font-weight: 600; color: var(--text-secondary);
+}
+.dp-pc-item + .dp-pc-item::before {
+  content: '·'; color: var(--text-muted); margin-right: 4px;
+  font-weight: 700; font-size: 14px; line-height: 1;
+}
+.dp-pc-detail-btn {
+  margin-left: auto;
+  padding: 3px 10px; font-size: 11px; font-weight: 500;
+  background: var(--accent-bg); color: var(--accent);
+  border: 1px solid var(--accent); border-radius: 3px;
+  cursor: pointer; transition: all 0.15s;
+  white-space: nowrap;
+}
+.dp-pc-detail-btn:hover {
+  background: var(--accent); color: #fff;
+}
+
+/* ─── Project Config Modal ─── */
+.pc-modal-overlay {
+  display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.55); z-index: 10001;
+  justify-content: center; align-items: center;
+  animation: pcFadeIn 0.15s ease;
+}
+.pc-modal-overlay.visible { display: flex; }
+@keyframes pcFadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes pcSlideUp { from { transform: translateY(12px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+.pc-modal {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 8px; width: 92%; max-width: 960px; height: 75vh;
+  display: flex; flex-direction: column;
+  box-shadow: 0 12px 48px rgba(0,0,0,0.25);
+  animation: pcSlideUp 0.2s ease;
+}
+.pc-modal-header {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 14px 20px; border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.pc-modal-title {
+  font-size: 15px; font-weight: 700; color: var(--text); margin: 0;
+  display: flex; align-items: center; gap: 8px;
+}
+.pc-modal-close {
+  background: none; border: none; font-size: 20px; color: var(--text-muted);
+  cursor: pointer; padding: 2px 6px; line-height: 1; border-radius: 4px;
+  transition: all 0.15s;
+}
+.pc-modal-close:hover { color: var(--text); background: var(--surface-hover); }
+
+/* Tabs */
+.pc-tabs {
+  display: flex; border-bottom: 1px solid var(--border);
+  padding: 0 20px; flex-shrink: 0; gap: 0;
+}
+.pc-tab {
+  padding: 10px 16px; font-size: 12px; font-weight: 600;
+  color: var(--text-muted); background: none; border: none;
+  cursor: pointer; position: relative;
+  transition: color 0.15s;
+  display: flex; align-items: center; gap: 0;
+}
+.pc-tab:hover { color: var(--text-secondary); }
+.pc-tab.active {
+  color: var(--accent);
+}
+.pc-tab.active::after {
+  content: ''; position: absolute; bottom: -1px; left: 8px; right: 8px;
+  height: 2px; background: var(--accent); border-radius: 2px 2px 0 0;
+}
+
+/* Modal body */
+.pc-modal-body {
+  padding: 16px 20px; overflow-y: auto; flex: 1;
+}
+
+/* Agent/Skill Cards Grid */
+.pc-cards {
+  display: grid; grid-template-columns: 1fr;
+  gap: 12px;
+}
+@media (min-width: 600px) {
+  .pc-cards { grid-template-columns: 1fr 1fr; }
+}
+
+.pc-card {
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: 6px; padding: 16px;
+  cursor: pointer; transition: all 0.15s;
+  position: relative;
+}
+.pc-card:hover {
+  border-color: var(--accent); box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+.pc-card-header {
+  display: flex; align-items: flex-start; gap: 12px;
+}
+.pc-card-icon {
+  font-size: 12px; line-height: 1; flex-shrink: 0;
+  width: 36px; height: 36px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--accent-bg); color: var(--accent);
+  border: 1px solid var(--border); border-radius: 8px;
+  font-family: 'SFMono-Regular', Consolas, 'Courier New', monospace;
+  font-weight: 700; letter-spacing: 0.5px;
+}
+.pc-card-expand-arrow {
+  position: absolute; right: 12px; bottom: 10px;
+  font-size: 11px; color: var(--text-muted);
+  opacity: 0; transition: opacity 0.15s;
+}
+.pc-card:hover .pc-card-expand-arrow { opacity: 0.7; }
+.pc-card.expanded .pc-card-expand-arrow { opacity: 1; transform: rotate(90deg); }
+.pc-card-info { flex: 1; min-width: 0; }
+.pc-card-name {
+  font-size: 13px; font-weight: 700; color: var(--text);
+  margin-bottom: 2px;
+}
+.pc-card-desc {
+  font-size: 11px; color: var(--text-secondary); line-height: 1.5;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.pc-card-file {
+  font-size: 10px; color: var(--text-muted); margin-top: 6px;
+  font-family: 'SFMono-Regular', Consolas, 'Courier New', monospace;
+  display: flex; align-items: center; gap: 4px;
+}
+
+/* Card body (expanded) */
+.pc-card-body {
+  max-height: 0; overflow: hidden;
+  transition: max-height 0.25s ease;
+}
+.pc-card.expanded .pc-card-body {
+  max-height: 600px; overflow-y: auto;
+}
+.pc-card.expanded { border-color: var(--accent); }
+.pc-card-body-inner {
+  margin-top: 12px; padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+.pc-card-body-inner pre {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 4px; padding: 12px; font-size: 11px;
+  line-height: 1.6; white-space: pre-wrap; word-break: break-word;
+  color: var(--text); margin: 0;
+  font-family: 'SFMono-Regular', Consolas, 'Courier New', monospace;
+  max-height: 400px; overflow-y: auto;
+}
+
+/* Instructions section */
+.pc-instructions-content {
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: 6px; padding: 16px;
+}
+.pc-instructions-meta {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 12px;
+  padding-bottom: 10px; border-bottom: 1px solid var(--border);
+}
+.pc-instructions-meta .pc-meta-badge {
+  font-size: 10px; font-weight: 600; padding: 2px 8px;
+  background: var(--accent-bg); color: var(--accent);
+  border-radius: 10px;
+}
+.pc-instructions-pre {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 4px; padding: 14px; font-size: 11px;
+  line-height: 1.7; white-space: pre-wrap; word-break: break-word;
+  color: var(--text); margin: 0;
+  font-family: 'SFMono-Regular', Consolas, 'Courier New', monospace;
+  max-height: 500px; overflow-y: auto;
+}
+
+/* Empty state for cards */
+.pc-empty {
+  text-align: center; padding: 40px 20px; color: var(--text-muted);
+  font-size: 12px;
+}
+.pc-empty-icon {
+  font-size: 14px; margin-bottom: 8px; opacity: 0.5;
+  font-weight: 600; letter-spacing: 1px;
+}
 </style>
 </head>
 <body>
@@ -979,11 +1216,11 @@ body {
     <div class="path-modal-logo"><span class="logo-mark"><svg viewBox="0 0 128 128" width="32" height="32"><rect width="128" height="128" rx="24" fill="#2d333b"/><g transform="translate(16,12) scale(6)"><path fill="#e6edf3" fill-rule="evenodd" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82A7.65 7.65 0 0 1 8 4.84c.68.003 1.36.092 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.19 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></g><g transform="translate(82,82)"><line x1="13" y1="13" x2="29" y2="29" stroke="#58a6ff" stroke-width="6" stroke-linecap="round"/><circle cx="0" cy="0" r="22" fill="none" stroke="#58a6ff" stroke-width="4"/><circle cx="0" cy="0" r="19" fill="rgba(88,166,255,0.12)"/></g></svg></span></div>
     <div class="path-modal-title">GitHub Copilot Lens</div>
     <div class="path-modal-subtitle" id="pathModalMsg">
-      Copilot CLI 세션 데이터의 경로를 확인해주세요.<br>
-      자동으로 감지된 경로가 맞다면 바로 시작하세요!
+      Please verify the path to your Copilot CLI session data.<br>
+      If the auto-detected path is correct, just click Connect!
     </div>
     <input class="path-modal-input" id="pathModalInput" 
-      placeholder="예: C:\Users\me\.copilot\session-state" 
+      placeholder="e.g. C:\Users\me\.copilot\session-state" 
       spellcheck="false" autocomplete="off">
     <button class="path-modal-btn" id="pathModalBtn" onclick="submitPathConfig()">Connect</button>
     <div class="path-modal-error" id="pathModalError"></div>
@@ -1012,7 +1249,7 @@ function showPathModal(currentPath) {
   const input = document.getElementById('pathModalInput');
   const current = document.getElementById('pathModalCurrent');
   input.value = currentPath || '';
-  current.textContent = currentPath ? `현재 경로: ${currentPath}` : '';
+  current.textContent = currentPath ? `Current path: ${currentPath}` : '';
   modal.style.display = 'flex';
   requestAnimationFrame(() => modal.classList.add('visible'));
   input.focus();
@@ -1023,6 +1260,26 @@ function hidePathModal() {
   const modal = document.getElementById('pathModal');
   modal.classList.remove('visible');
   setTimeout(() => { modal.style.display = 'none'; }, 300);
+}
+
+function cmdWithCopy(cmd) {
+  const id = 'cp_' + Math.random().toString(36).slice(2, 8);
+  return `<span class="err-cmd-wrap"><code>${cmd}</code><button class="err-copy-btn" id="${id}" onclick="navigator.clipboard.writeText('${cmd}').then(()=>{const b=document.getElementById('${id}');b.textContent='✓';b.classList.add('copied');setTimeout(()=>{b.textContent='⧉';b.classList.remove('copied')},1500)})">⧉</button></span>`;
+}
+
+function buildPathErrorHTML(title) {
+  return `
+    <div class="err-title">${title}</div>
+    <div class="err-solutions">
+      <div class="err-solutions-title">Solutions</div>
+      <ol>
+        <li><strong>Verify the path</strong> — Default session path is <code>~/.copilot/session-state/</code>. Make sure this directory exists.</li>
+        <li><strong>Install via npm</strong> (All platforms) — ${cmdWithCopy('npm install -g @github/copilot')} <span style="color:var(--text-muted);font-size:11px">(requires Node.js v22+)</span></li>
+        <li><strong>Install via Homebrew</strong> (macOS / Linux) — ${cmdWithCopy('brew install copilot-cli')}</li>
+        <li><strong>Install via WinGet</strong> (Windows) — ${cmdWithCopy('winget install GitHub.Copilot')}</li>
+        <li><strong>Run Copilot CLI once</strong> — After installation, run ${cmdWithCopy('copilot')} in your terminal to create the session directory.</li>
+      </ol>
+    </div>`;
 }
 
 async function submitPathConfig() {
@@ -1039,7 +1296,10 @@ async function submitPathConfig() {
       body: JSON.stringify({ sessionStatePath: val })
     });
     const data = await res.json();
-    if (!res.ok) { errEl.textContent = data.error || t('pathCheck') || 'Check the path'; return; }
+    if (!res.ok) {
+      errEl.innerHTML = buildPathErrorHTML(data.error || 'Path not found');
+      return;
+    }
     localStorage.setItem('ghcpLensPathConfirmed', val);
     hidePathModal();
     fetchAll();
@@ -1051,6 +1311,22 @@ async function submitPathConfig() {
 }
 
 async function checkPathConfig() {
+  // Force show connect screen with ?connect query param
+  if (window.location.search.includes('connect')) {
+    try {
+      const res = await fetch(API_BASE + '/api/config');
+      const data = await res.json();
+      showPathModal(data.sessionStatePath);
+    } catch (e) { showPathModal(''); }
+    return;
+  }
+  // Force show "no path" error screen with ?nopath
+  if (window.location.search.includes('nopath')) {
+    showPathModal('');
+    const errEl = document.getElementById('pathModalError');
+    if (errEl) errEl.innerHTML = buildPathErrorHTML('Path not found');
+    return;
+  }
   try {
     const res = await fetch(API_BASE + '/api/config');
     const data = await res.json();
@@ -1093,6 +1369,11 @@ const I18N = {
     memo: '메모', plan: '플랜', bgTasks: '백그라운드 작업', connect: '연결', connecting: '연결 중...',
     cancel: '취소', save: '저장',
     toolInput: '입력', toolOutput: '출력', toolNoData: '도구 데이터가 없습니다', loading: '로딩 중...',
+    projectConfig: '프로젝트 설정', agents: '에이전트', skills: '스킬',
+    copilotInstructions: '인스트럭션', viewDetails: '자세히 보기',
+    noAgents: '설정된 에이전트가 없습니다', noSkills: '설정된 스킬이 없습니다',
+    noInstructions: 'copilot-instructions.md 파일이 없습니다',
+    lines: '줄',
   },
   en: {
     working: 'Working', waiting: 'Asking', idle: 'Idle', completed: 'Ended', unknown: 'Unknown',
@@ -1123,6 +1404,11 @@ const I18N = {
     memo: 'Memo', plan: 'Plan', bgTasks: 'Background Tasks', connect: 'Connect', connecting: 'Connecting...',
     cancel: 'Cancel', save: 'Save',
     toolInput: 'Input', toolOutput: 'Output', toolNoData: 'No tool data available', loading: 'Loading...',
+    projectConfig: 'Project Config', agents: 'Agents', skills: 'Skills',
+    copilotInstructions: 'Instructions', viewDetails: 'View Details',
+    noAgents: 'No agents configured', noSkills: 'No skills configured',
+    noInstructions: 'No copilot-instructions.md found',
+    lines: 'lines',
   },
   ja: {
     working: '実行中',waiting: '質問中', idle: '待機', completed: '終了', unknown: '不明',
@@ -1153,6 +1439,11 @@ const I18N = {
     memo: 'メモ', plan: 'プラン', bgTasks: 'バックグラウンド作業', connect: '接続', connecting: '接続中...',
     cancel: 'キャンセル', save: '保存',
     toolInput: '入力', toolOutput: '出力', toolNoData: 'ツールデータなし', loading: '読み込み中...',
+    projectConfig: 'プロジェクト設定', agents: 'エージェント', skills: 'スキル',
+    copilotInstructions: 'インストラクション', viewDetails: '詳細を見る',
+    noAgents: 'エージェントが設定されていません', noSkills: 'スキルが設定されていません',
+    noInstructions: 'copilot-instructions.mdが見つかりません',
+    lines: '行',
   },
   zh: {
     working: '工作中', waiting: '提问中', idle: '空闲', completed: '结束', unknown: '未知',
@@ -1183,6 +1474,11 @@ const I18N = {
     memo: '备注', plan: '计划', bgTasks: '后台任务', connect: '连接', connecting: '连接中...',
     cancel: '取消', save: '保存',
     toolInput: '输入', toolOutput: '输出', toolNoData: '无工具数据', loading: '加载中...',
+    projectConfig: '项目配置', agents: '代理', skills: '技能',
+    copilotInstructions: '指令', viewDetails: '查看详情',
+    noAgents: '未配置代理', noSkills: '未配置技能',
+    noInstructions: '未找到 copilot-instructions.md',
+    lines: '行',
   }
 };
 let currentLang = localStorage.getItem('lang') || 'en';
@@ -1635,6 +1931,7 @@ const openDetail = (sessionId) => {
         window.turnAgentData = turnAgents.turns;
       }
       renderDetail(detail);
+      loadProjectConfig(sessionId);
     })
     .catch(() => {
       document.getElementById('detailBody').innerHTML = `<div style="padding:40px;text-align:center;color:var(--danger)">${t('loadFail')}</div>`;
@@ -2055,6 +2352,175 @@ const showToolDetailModal = async (toolName, filterKey, filterValue, sessionId) 
   }
 };
 
+/* ─── Project Config (Agents / Skills / Instructions) ─── */
+const projectConfigCache = {};
+
+const AGENT_INITIALS = {
+  'pm': 'PM', 'backend-developer': 'BE', 'ui-developer': 'UI',
+  'tester': 'TE', 'infra-engineer': 'IN', 'release-manager': 'RM',
+};
+const getInitials = (name, type) => {
+  if (type === 'agent') return AGENT_INITIALS[name] || name.slice(0, 2).toUpperCase();
+  return name.slice(0, 2).toUpperCase();
+};
+
+const loadProjectConfig = async (sessionId) => {
+  if (projectConfigCache[sessionId]) {
+    renderProjectConfigSection(sessionId, projectConfigCache[sessionId]);
+    return;
+  }
+  try {
+    const res = await fetch(`${API_BASE}/api/sessions/${sessionId}/project-config`);
+    if (!res.ok) throw new Error('Failed');
+    const data = await res.json();
+    projectConfigCache[sessionId] = data;
+    renderProjectConfigSection(sessionId, data);
+  } catch (e) {
+    const el = document.getElementById('dpProjectConfig');
+    if (el && el.dataset.sessionId === sessionId) {
+      el.innerHTML = '';
+    }
+  }
+};
+
+const renderProjectConfigSection = (sessionId, data) => {
+  const el = document.getElementById('dpProjectConfig');
+  if (!el || el.dataset.sessionId !== sessionId) return;
+
+  const agentCount = data.agents ? data.agents.length : 0;
+  const skillCount = data.skills ? data.skills.length : 0;
+  const hasInstructions = data.copilotInstructions && data.copilotInstructions.exists;
+
+  if (agentCount === 0 && skillCount === 0 && !hasInstructions) {
+    el.innerHTML = '';
+    el.closest('.dp-section').style.display = 'none';
+    return;
+  }
+
+  let html = `<div class="dp-project-config">`;
+  html += `<div class="dp-pc-item"><span>${t('agents')}</span><span class="pc-count">${agentCount}</span></div>`;
+  html += `<div class="dp-pc-item"><span>${t('skills')}</span><span class="pc-count">${skillCount}</span></div>`;
+  html += `<div class="dp-pc-item"><span>${t('copilotInstructions')}</span><span class="pc-check">${hasInstructions ? '✓' : '—'}</span></div>`;
+  html += `<button class="dp-pc-detail-btn" onclick="openProjectConfigModal('${sessionId}')">${t('viewDetails')}</button>`;
+  html += `</div>`;
+
+  el.innerHTML = html;
+};
+
+let pcModalActiveTab = 'agents';
+
+const openProjectConfigModal = (sessionId) => {
+  const data = projectConfigCache[sessionId];
+  if (!data) return;
+  pcModalActiveTab = 'agents';
+  renderProjectConfigModal(data);
+  document.getElementById('pcModalOverlay').classList.add('visible');
+};
+
+const hideProjectConfigModal = () => {
+  document.getElementById('pcModalOverlay').classList.remove('visible');
+};
+
+const switchPcTab = (tab) => {
+  pcModalActiveTab = tab;
+  const data = projectConfigCache[selectedSessionId];
+  if (data) renderProjectConfigModalBody(data);
+  document.querySelectorAll('.pc-tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.tab === tab);
+  });
+};
+
+const renderProjectConfigModal = (data) => {
+  const agentCount = data.agents ? data.agents.length : 0;
+  const skillCount = data.skills ? data.skills.length : 0;
+  const hasInstructions = data.copilotInstructions && data.copilotInstructions.exists;
+  const instrBadge = hasInstructions ? '✓' : '—';
+
+  document.getElementById('pcModalTitle').innerHTML = t('projectConfig');
+
+  const tabsEl = document.getElementById('pcModalTabs');
+  tabsEl.innerHTML = `
+    <button class="pc-tab active" data-tab="agents" onclick="switchPcTab('agents')">${t('agents')} (${agentCount})</button>
+    <button class="pc-tab" data-tab="skills" onclick="switchPcTab('skills')">${t('skills')} (${skillCount})</button>
+    <button class="pc-tab" data-tab="instructions" onclick="switchPcTab('instructions')">${t('copilotInstructions')}</button>
+  `;
+
+  renderProjectConfigModalBody(data);
+};
+
+const renderProjectConfigModalBody = (data) => {
+  const body = document.getElementById('pcModalBody');
+  let html = '';
+
+  if (pcModalActiveTab === 'agents') {
+    const agents = data.agents || [];
+    if (agents.length === 0) {
+      html = `<div class="pc-empty"><div class="pc-empty-icon">--</div>${t('noAgents')}</div>`;
+    } else {
+      html = `<div class="pc-cards">`;
+      agents.forEach((agent, i) => {
+        const initials = getInitials(agent.name, 'agent');
+        html += `<div class="pc-card" onclick="this.classList.toggle('expanded')">`;
+        html += `<div class="pc-card-header">`;
+        html += `<div class="pc-card-icon">${initials}</div>`;
+        html += `<div class="pc-card-info">`;
+        html += `<div class="pc-card-name">${escHtml(agent.name)}</div>`;
+        html += `<div class="pc-card-desc">${escHtml(agent.description || '')}</div>`;
+        if (agent.fileName) html += `<div class="pc-card-file">${escHtml(agent.fileName)}</div>`;
+        html += `</div></div>`;
+        if (agent.body) {
+          html += `<span class="pc-card-expand-arrow">▸</span>`;
+          html += `<div class="pc-card-body"><div class="pc-card-body-inner"><pre>${escHtml(agent.body)}</pre></div></div>`;
+        }
+        html += `</div>`;
+      });
+      html += `</div>`;
+    }
+  } else if (pcModalActiveTab === 'skills') {
+    const skills = data.skills || [];
+    if (skills.length === 0) {
+      html = `<div class="pc-empty"><div class="pc-empty-icon">--</div>${t('noSkills')}</div>`;
+    } else {
+      html = `<div class="pc-cards">`;
+      skills.forEach((skill) => {
+        const initials = getInitials(skill.name, 'skill');
+        html += `<div class="pc-card" onclick="this.classList.toggle('expanded')">`;
+        html += `<div class="pc-card-header">`;
+        html += `<div class="pc-card-icon">${initials}</div>`;
+        html += `<div class="pc-card-info">`;
+        html += `<div class="pc-card-name">${escHtml(skill.name)}</div>`;
+        html += `<div class="pc-card-desc">${escHtml(skill.description || '')}</div>`;
+        if (skill.path) html += `<div class="pc-card-file">${escHtml(skill.path)}</div>`;
+        html += `</div></div>`;
+        const bodyContent = skill.body || skill.description || '';
+        if (bodyContent) {
+          html += `<span class="pc-card-expand-arrow">▸</span>`;
+          html += `<div class="pc-card-body"><div class="pc-card-body-inner"><pre>${escHtml(bodyContent)}</pre></div></div>`;
+        }
+        html += `</div>`;
+      });
+      html += `</div>`;
+    }
+  } else if (pcModalActiveTab === 'instructions') {
+    const ci = data.copilotInstructions;
+    if (!ci || !ci.exists) {
+      html = `<div class="pc-empty"><div class="pc-empty-icon">--</div>${t('noInstructions')}</div>`;
+    } else {
+      html = `<div class="pc-instructions-content">`;
+      html += `<div class="pc-instructions-meta">`;
+      html += `<span class="pc-meta-badge">copilot-instructions.md</span>`;
+      html += `<span style="font-size:11px;color:var(--text-muted)">${ci.lines || 0} ${t('lines')}</span>`;
+      html += `</div>`;
+      html += `<pre class="pc-instructions-pre">${escHtml(ci.content || '')}</pre>`;
+      html += `</div>`;
+    }
+  }
+
+  body.innerHTML = html;
+};
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') hideProjectConfigModal(); });
+
 /* ─── Session Timeline ─── */
 const renderTimeline = (data, prepend = false) => {
   const body = document.getElementById('agentPanelBody');
@@ -2429,6 +2895,9 @@ const renderDetail = (d) => {
   html += `<div class="dp-field"><span class="dp-field-label">${t('updated')}</span><span class="dp-field-value">${formatTs(d.updated_at || d.updatedAt)}</span></div>`;
   html += `</div></div>`;
 
+  // ── Section: Project Config (Agents/Skills/Instructions) ──
+  html += `<div class="dp-section"><div id="dpProjectConfig" data-session-id="${d.id}"><div style="font-size:11px;color:var(--text-muted);padding:4px 0">${t('loading')}</div></div></div>`;
+
   // ── Section: Stats ──
   html += `<div class="dp-section">`;
   html += `<div class="dp-section-title">${t('statsTitle')}</div>`;
@@ -2550,7 +3019,7 @@ const startEditDesc = () => {
 const cancelEditDesc = () => {
   // Re-render to restore original state
   if (selectedSessionId) {
-    fetch(`${API_BASE}/api/sessions/${selectedSessionId}`).then(r => r.json()).then(renderDetail);
+    fetch(`${API_BASE}/api/sessions/${selectedSessionId}`).then(r => r.json()).then(d => { renderDetail(d); loadProjectConfig(selectedSessionId); });
   }
 };
 
@@ -2769,6 +3238,18 @@ const copyText = (text, msg) => {
       <button class="modal-close" onclick="hideModal()">&times;</button>
     </div>
     <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
+<!-- Project Config Modal -->
+<div class="pc-modal-overlay" id="pcModalOverlay" onclick="if(event.target===this)hideProjectConfigModal()">
+  <div class="pc-modal">
+    <div class="pc-modal-header">
+      <h3 class="pc-modal-title" id="pcModalTitle"></h3>
+      <button class="pc-modal-close" onclick="hideProjectConfigModal()">&times;</button>
+    </div>
+    <div class="pc-tabs" id="pcModalTabs"></div>
+    <div class="pc-modal-body" id="pcModalBody"></div>
   </div>
 </div>
 

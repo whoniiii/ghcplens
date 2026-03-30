@@ -46,6 +46,143 @@ function readYaml(filePath) {
   } catch { return null; }
 }
 
+/**
+ * Parse YAML frontmatter from markdown content.
+ * Returns { frontmatter: { key: value, ... }, body: string }
+ * If no frontmatter found, returns { frontmatter: {}, body: content }
+ */
+function parseFrontmatter(content) {
+  if (!content.startsWith('---')) return { frontmatter: {}, body: content };
+  const endIdx = content.indexOf('\n---', 3);
+  if (endIdx === -1) return { frontmatter: {}, body: content };
+
+  const yamlBlock = content.substring(4, endIdx); // skip opening ---\n
+  const body = content.substring(endIdx + 4).trim(); // skip closing ---\n
+  const frontmatter = {};
+  let currentKey = '';
+  let currentValue = '';
+
+  for (const line of yamlBlock.split('\n')) {
+    // New key-value pair (not indented continuation)
+    const kvMatch = line.match(/^(\w[\w_-]*)\s*:\s*(.*)$/);
+    if (kvMatch) {
+      if (currentKey) frontmatter[currentKey] = currentValue.trim();
+      currentKey = kvMatch[1];
+      const val = kvMatch[2].trim();
+      // Handle YAML multiline indicator (> or |)
+      currentValue = (val === '>' || val === '|') ? '' : val;
+    } else if (currentKey && (line.startsWith('  ') || line.startsWith('\t'))) {
+      // Continuation line for multiline value
+      currentValue += (currentValue ? ' ' : '') + line.trim();
+    }
+  }
+  if (currentKey) frontmatter[currentKey] = currentValue.trim();
+  return { frontmatter, body };
+}
+
+/**
+ * Read project's GitHub Copilot configuration based on session cwd.
+ * Reads .github/agents/*.md, .github/skills/*, .github/copilot-instructions.md
+ */
+function getProjectConfig(sessionId) {
+  const sessionDir = path.join(SESSION_STATE_DIR, sessionId);
+  if (!fs.existsSync(sessionDir)) return null;
+
+  const workspace = readYaml(path.join(sessionDir, 'workspace.yaml'));
+  if (!workspace || !workspace.cwd) return null;
+
+  const cwd = workspace.cwd;
+  if (!fs.existsSync(cwd)) return { agents: [], skills: [], copilotInstructions: null };
+
+  const resolvedCwd = path.resolve(cwd);
+
+  // Helper: ensure a path is within cwd (path traversal guard)
+  const safePath = (target) => {
+    const resolved = path.resolve(target);
+    return resolved.startsWith(resolvedCwd) ? resolved : null;
+  };
+
+  // ── 1. Agents: .github/agents/*.md ──
+  const agents = [];
+  const agentsDir = safePath(path.join(cwd, '.github', 'agents'));
+  if (agentsDir) {
+    try {
+      const files = fs.readdirSync(agentsDir).filter(f => f.endsWith('.md'));
+      for (const file of files) {
+        const filePath = safePath(path.join(agentsDir, file));
+        if (!filePath) continue;
+        try {
+          const content = fs.readFileSync(filePath, 'utf-8');
+          const { frontmatter, body } = parseFrontmatter(content);
+          agents.push({
+            name: frontmatter.name || file.replace(/\.md$/, ''),
+            description: frontmatter.description || '',
+            body: body.substring(0, 2000),
+            fileName: file,
+          });
+        } catch {}
+      }
+    } catch {}
+  }
+
+  // ── 2. Skills: .github/skills/*/ ──
+  const skills = [];
+  const skillsDir = safePath(path.join(cwd, '.github', 'skills'));
+  if (skillsDir) {
+    try {
+      const entries = fs.readdirSync(skillsDir);
+      for (const entry of entries) {
+        const entryPath = safePath(path.join(skillsDir, entry));
+        if (!entryPath) continue;
+        try {
+          if (!fs.statSync(entryPath).isDirectory()) continue;
+        } catch { continue; }
+
+        let name = entry;
+        let description = '';
+        let body = '';
+
+        // Try README.md or SKILL.md for frontmatter
+        for (const mdFile of ['README.md', 'SKILL.md']) {
+          const mdPath = safePath(path.join(entryPath, mdFile));
+          if (!mdPath) continue;
+          try {
+            const content = fs.readFileSync(mdPath, 'utf-8');
+            const { frontmatter, body: mdBody } = parseFrontmatter(content);
+            if (frontmatter.name) name = frontmatter.name;
+            if (frontmatter.description) description = frontmatter.description;
+            body = mdBody || '';
+            break; // Use the first file found
+          } catch {}
+        }
+
+        skills.push({ name, description, body, path: entry });
+      }
+    } catch {}
+  }
+
+  // ── 3. Copilot Instructions: .github/copilot-instructions.md ──
+  let copilotInstructions = null;
+  const instructionsPath = safePath(path.join(cwd, '.github', 'copilot-instructions.md'));
+  if (instructionsPath) {
+    try {
+      const content = fs.readFileSync(instructionsPath, 'utf-8');
+      const lines = content.split('\n').length;
+      copilotInstructions = {
+        exists: true,
+        content: content.substring(0, 5000),
+        lines,
+      };
+    } catch {
+      copilotInstructions = { exists: false, content: null, lines: 0 };
+    }
+  } else {
+    copilotInstructions = { exists: false, content: null, lines: 0 };
+  }
+
+  return { agents, skills, copilotInstructions };
+}
+
 function readRecentEvents(sessionDir, count = 30) {
   const eventsFile = path.join(sessionDir, 'events.jsonl');
   try {
@@ -1522,6 +1659,20 @@ function handleRequest(req, res) {
     const toolCalls = getToolCalls(eventsFile, turnIndexFilter, toolNameFilter, iidFilter, parentFilter);
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ toolCalls }));
+    return;
+  }
+
+  // GET /api/sessions/:id/project-config — Project Copilot configuration
+  if (pathname.match(/^\/api\/sessions\/[^/]+\/project-config$/) && req.method === 'GET') {
+    const id = pathname.split('/')[3];
+    const config = getProjectConfig(id);
+    if (!config) {
+      res.writeHead(404, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Session not found' }));
+      return;
+    }
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify(config));
     return;
   }
 
