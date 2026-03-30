@@ -2,6 +2,17 @@
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-03-30
+
+### Added
+- **README redesign** — Professional layout with badges, screenshot grid, emoji section headers
+- **GIF demo** — Animated multi-agent chain demo at the top of README
+- **Sidebar screenshot** — VS Code Activity Bar quick start guide
+
+### Fixed
+- **Turn pulse bug** — Turns with tool calls (e.g. `task_complete`) no longer pulse indefinitely
+- **Auto-scroll on new turns** — Timeline scrolls to bottom when new turns appear during polling
+
 ## [1.3.0] - 2026-03-30
 
 ### Added

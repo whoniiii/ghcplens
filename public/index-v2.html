@@ -1856,6 +1856,8 @@ const fetchAll = () => {
           let html = '';
           newTurns.forEach((turn, idx) => { html += renderTimelineTurn(turn, idx, true); });
           container.insertAdjacentHTML('beforeend', html);
+          // Auto-scroll to bottom when new turns appear
+          requestAnimationFrame(() => { body.scrollTop = body.scrollHeight; });
         }
         window._timelineTotalTurns = data.totalTurns;
       }
@@ -1875,7 +1877,8 @@ const fetchAll = () => {
         // Toggle tl-turn-active — active if any agent running OR still waiting for response
         const hasRunningDeep = (agents) => agents && agents.some(a => a.status === 'running' || hasRunningDeep(a.children));
         const isLastTurn = turnIdx === data.timeline.length - 1;
-        const stillProcessing = isLastTurn && !turnData.assistantMessage && !(turnData.agents && turnData.agents.length > 0);
+        const hasTools = turnData.directToolCalls && turnData.directToolCalls.length > 0;
+        const stillProcessing = isLastTurn && !turnData.assistantMessage && !hasTools && !(turnData.agents && turnData.agents.length > 0);
         const isActive = hasRunningDeep(turnData.agents) || stillProcessing;
         turnEl.classList.toggle('tl-turn-active', isActive);
 
