@@ -677,7 +677,7 @@ body {
 .tl-agent[data-status="done"] { border-left-color: #28a745; }
 .tl-agent[data-status="failed"] { border-left-color: #dc3545; }
 .tl-agent[data-status="running"] { border-left-color: var(--accent); }
-.tl-agent[data-status="running"] .tl-agent-icon {
+.tl-agent[data-status="running"] > .tl-agent-header > .tl-agent-icon {
   animation: agent-pulse 1.2s ease-in-out infinite;
 }
 @keyframes agent-pulse {
