@@ -2815,6 +2815,37 @@ const updateAgentNodeInPlace = (agentEl, agentData, turnIdx, agentIdx, parentPat
       if (metaEl.textContent !== newMeta) metaEl.textContent = newMeta;
     }
   }
+  // Update body content (tool breakdown, stats, result) when agent completes
+  const bodyEl = agentEl.querySelector(':scope > .tl-agent-body');
+  if (bodyEl) {
+    // Add tool breakdown if missing
+    if (!bodyEl.querySelector(':scope > .tl-direct-tools') && agentData.toolBreakdown && Object.keys(agentData.toolBreakdown).length > 0) {
+      const entries = Object.entries(agentData.toolBreakdown).sort((a, b) => b[1] - a[1]);
+      let tbHtml = `<div class="tl-direct-tools" style="margin:4px 0"><span style="font-size:10px;color:var(--text-muted);margin-right:2px;font-weight:600">TOOLS</span>`;
+      entries.forEach(([toolName, count]) => {
+        tbHtml += `<span class="tl-tool-badge${toolName === 'task_complete' ? ' tl-tool-badge--complete' : ''}" onclick="showToolDetailModal('${escHtml(toolName)}', 'parentToolCallId', '${agentData.toolCallId || ''}', '${selectedSessionId}')">${escHtml(toolName)}${count > 1 ? '\u00d7' + count : ''}</span>`;
+      });
+      tbHtml += `</div>`;
+      const promptEl = bodyEl.querySelector(':scope > div:first-child');
+      if (promptEl) promptEl.insertAdjacentHTML('afterend', tbHtml);
+      else bodyEl.insertAdjacentHTML('afterbegin', tbHtml);
+    }
+    // Add result if missing
+    if (!bodyEl.querySelector(':scope > div > .tl-section-label.result') && agentData.finalResult) {
+      const resultId = `tl-result-${path}`;
+      let rHtml = `<div style="margin-top:6px">`;
+      rHtml += `<div class="tl-section-label result">${t('agentResultLabel')}</div>`;
+      rHtml += `<div class="tl-collapsible" id="${resultId}" onclick="toggleTimelineText('${resultId}')">${escHtml(agentData.finalResult)}</div>`;
+      rHtml += `<span class="tl-collapsible-label" data-for="${resultId}" onclick="toggleTimelineText('${resultId}')">${t('showMore')}</span>`;
+      rHtml += `</div>`;
+      // Insert before children container or at end
+      const subAgents = bodyEl.querySelector(':scope > .tl-sub-agents');
+      const callLabel = bodyEl.querySelector(':scope > .tl-call-label');
+      if (callLabel) callLabel.insertAdjacentHTML('beforebegin', rHtml);
+      else if (subAgents) subAgents.insertAdjacentHTML('beforebegin', rHtml);
+      else bodyEl.insertAdjacentHTML('beforeend', rHtml);
+    }
+  }
   // Handle children (sub-agents) — append new ones, recurse into existing
   if (agentData.children && agentData.children.length > 0) {
     const bodyEl = agentEl.querySelector(':scope > .tl-agent-body');
