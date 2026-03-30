@@ -530,6 +530,12 @@ body {
 .tl-time {
   position: relative; font-size: 11px; color: var(--text-muted);
   padding: 4px 0; font-weight: 600;
+  display: flex; align-items: center; gap: 8px;
+}
+.tl-turn-tokens {
+  font-size: 10px; font-weight: 500; color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  padding: 1px 6px; border-radius: 8px;
 }
 .tl-time::before {
   content: '';
@@ -1816,7 +1822,7 @@ const fetchAll = () => {
       if (!container) return;
 
       const lastTlEl = container.querySelector('.tl-turn:last-child');
-      const lastTlTime = lastTlEl ? lastTlEl.querySelector('.tl-time')?.textContent.trim() : '';
+      const lastTlTime = lastTlEl ? (lastTlEl.querySelector('.tl-time-text') || lastTlEl.querySelector('.tl-time'))?.textContent.trim() : '';
       const newLast = data.timeline[data.timeline.length - 1];
 
       if (data.totalTurns !== window._timelineTotalTurns) {
@@ -1843,7 +1849,7 @@ const fetchAll = () => {
         // Find matching DOM element by timestamp
         let turnEl = null;
         allTurnEls.forEach(el => {
-          const elTime = el.querySelector('.tl-time')?.textContent.trim();
+          const elTime = (el.querySelector('.tl-time-text') || el.querySelector('.tl-time'))?.textContent.trim();
           if (elTime === ts) turnEl = el;
         });
         if (!turnEl) return;
@@ -1851,6 +1857,18 @@ const fetchAll = () => {
         // Toggle tl-turn-active based on whether any agent is still running
         const hasRunning = turnData.agents && turnData.agents.some(a => a.status === 'running');
         turnEl.classList.toggle('tl-turn-active', hasRunning);
+
+        // Update total tokens badge
+        if (turnData.totalTokens) {
+          const timeEl = turnEl.querySelector('.tl-time');
+          let tokEl = timeEl?.querySelector('.tl-turn-tokens');
+          const tokText = `${formatTokens(turnData.totalTokens)} tok`;
+          if (tokEl) {
+            if (tokEl.textContent !== tokText) tokEl.textContent = tokText;
+          } else if (timeEl) {
+            timeEl.insertAdjacentHTML('beforeend', `<span class="tl-turn-tokens">${tokText}</span>`);
+          }
+        }
 
         // Add assistant message if missing
         if (!turnEl.querySelector('.tl-assistant') && (turnData.assistantMessage || '').trim()) {
@@ -2595,7 +2613,11 @@ const renderTimelineTurn = (turn, idx) => {
   const timeStr = turn.timestamp
     ? new Date(turn.timestamp).toLocaleDateString('en-GB', { month: '2-digit', day: '2-digit' }) + ' ' + new Date(turn.timestamp).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
     : '';
-  html += `<div class="tl-time">${timeStr}</div>`;
+  html += `<div class="tl-time"><span class="tl-time-text">${timeStr}</span>`;
+  if (turn.totalTokens) {
+    html += `<span class="tl-turn-tokens">${formatTokens(turn.totalTokens)} tok</span>`;
+  }
+  html += `</div>`;
 
   // User message
   if (turn.userMessage) {

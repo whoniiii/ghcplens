@@ -1097,6 +1097,7 @@ function buildTimeline(eventsFile, limit, page) {
               timestamp: evt.timestamp || '',
               userMessage: (d.content || '').trim().substring(0, 500),
               assistantMessage: '',
+              outputTokens: 0,
               directToolCalls: [],
               targetAgent,
               agents: [],
@@ -1143,6 +1144,8 @@ function buildTimeline(eventsFile, limit, page) {
               if (c && c.length > (turn.assistantMessage || '').length) {
                 turn.assistantMessage = c.substring(0, 500);
               }
+              const tokens = d.outputTokens;
+              if (typeof tokens === 'number') turn.outputTokens += tokens;
             }
             // Map toolRequests toolCallIds → interactionId
             if (iid && Array.isArray(d.toolRequests)) {
@@ -1368,8 +1371,19 @@ function buildTimeline(eventsFile, limit, page) {
     children: (a.children || []).map(cleanAgent),
   });
 
+  // Recursively sum all tokens for an agent and its children
+  const sumAgentTokens = (a) => {
+    let total = a.totalOutputTokens || 0;
+    if (a.children) a.children.forEach(c => { total += sumAgentTokens(c); });
+    return total;
+  };
+
   for (const turn of result) {
     turn.agents = turn.agents.map(cleanAgent);
+    // Calculate total tokens for entire turn (direct + all agents recursively)
+    let turnTotal = turn.outputTokens || 0;
+    turn.agents.forEach(a => { turnTotal += sumAgentTokens(a); });
+    turn.totalTokens = turnTotal;
   }
 
   return { timeline: result, page: safePage, totalTurns, totalPages };
