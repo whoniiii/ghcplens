@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mockup — Turn Timeline with Waterfall (Level 2)</title>
+<style>
+  :root {
+    --bg-primary: #1e1e1e;
+    --bg-secondary: #252526;
+    --bg-tertiary: #2d2d30;
+    --bg-hover: #2a2d2e;
+    --bg-selected: #094771;
+    --text-primary: #cccccc;
+    --text-secondary: #969696;
+    --text-tertiary: #6a6a6a;
+    --text-info: #4fc1ff;
+    --text-success: #4ec9b0;
+    --border: #3c3c3c;
+    --border-light: #2d2d30;
+    --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-mono: 'Cascadia Code', 'Fira Code', Consolas, monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--font); font-size: 13px; color: var(--text-primary); background: var(--bg-primary); }
+
+  .app { display: flex; flex-direction: column; height: 100vh; }
+
+  /* ===== Collapsible Header ===== */
+  .top-bar { display: flex; align-items: center; gap: 8px; padding: 8px 14px; background: var(--bg-secondary); border-bottom: 1px solid var(--border); flex-shrink: 0; cursor: pointer; transition: background .12s; }
+  .top-bar:hover { background: var(--bg-tertiary); }
+  .top-dot { width: 8px; height: 8px; border-radius: 50%; background: #1D9E75; flex-shrink: 0; }
+  .top-name { font-size: 14px; font-weight: 500; }
+  .top-ago { font-size: 11px; color: var(--text-tertiary); }
+  .top-pills { display: flex; gap: 6px; margin-left: auto; }
+  .top-pill { font-size: 10px; padding: 2px 8px; border-radius: 4px; background: var(--bg-tertiary); border: 1px solid var(--border-light); color: var(--text-secondary); font-family: var(--font-mono); }
+  .top-pill b { font-weight: 500; color: var(--text-primary); }
+  .top-chev { width: 14px; height: 14px; color: var(--text-tertiary); transition: transform .2s; flex-shrink: 0; margin-left: 8px; }
+  .top-chev.open { transform: rotate(180deg); }
+
+  .top-expand { max-height: 0; overflow: hidden; transition: max-height .3s ease; background: var(--bg-secondary); border-bottom: 1px solid var(--border); }
+  .top-expand.open { max-height: 400px; }
+  .top-inner { padding: 12px 16px 16px; }
+  .top-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 24px; font-size: 12px; margin-bottom: 14px; }
+  .top-meta-l { color: var(--text-tertiary); }
+  .top-meta-v { color: var(--text-secondary); font-family: var(--font-mono); font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .top-stats { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; margin-bottom: 14px; }
+  .top-stat { background: var(--bg-tertiary); border-radius: 8px; padding: 8px; text-align: center; border: 1px solid var(--border-light); }
+  .top-stat-v { font-size: 16px; font-weight: 500; }
+  .top-stat-l { font-size: 9px; color: var(--text-tertiary); margin-top: 2px; text-transform: uppercase; }
+  .top-tools { display: flex; gap: 6px; flex-wrap: wrap; }
+  .top-tool-tag { font-size: 10px; padding: 3px 8px; border-radius: 4px; background: var(--bg-tertiary); color: var(--text-secondary); border: 1px solid var(--border-light); display: flex; align-items: center; gap: 5px; }
+  .top-tool-bar { height: 6px; border-radius: 2px; background: var(--text-info); opacity: .5; }
+  .top-btns { display: flex; gap: 8px; margin-bottom: 12px; }
+  .top-btn { font-size: 11px; padding: 4px 12px; border-radius: 4px; background: transparent; border: 1px solid var(--border); color: var(--text-secondary); cursor: pointer; }
+
+  /* ===== Main Body ===== */
+  .main { display: flex; flex: 1; min-height: 0; }
+
+  /* ===== Left: Turn List + Waterfall ===== */
+  .left { flex: 1; min-width: 0; border-right: 1px solid var(--border); display: flex; flex-direction: column; }
+  .left-head { display: flex; align-items: center; gap: 8px; padding: 6px 12px; border-bottom: 1px solid var(--border); flex-shrink: 0; font-size: 12px; color: var(--text-tertiary); background: var(--bg-secondary); }
+  .scroll { flex: 1; overflow-y: auto; }
+
+  .turn { border-bottom: 1px solid var(--border-light); }
+  .turn-head { display: grid; grid-template-columns: 20px 36px minmax(0,1fr) 56px 46px 56px; align-items: center; gap: 4px; padding: 8px 10px; cursor: pointer; transition: background .1s; }
+  .turn-head:hover { background: var(--bg-hover); }
+  .chev { width: 14px; height: 14px; color: var(--text-tertiary); transition: transform .15s; }
+  .chev.open { transform: rotate(90deg); }
+  .chev.hide { visibility: hidden; }
+  .tnum { font-size: 10px; color: var(--text-tertiary); font-family: var(--font-mono); text-align: right; }
+  .ttime { font-size: 9px; color: var(--text-tertiary); }
+  .tmsg { font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ttok { font-size: 10px; color: var(--text-tertiary); font-family: var(--font-mono); text-align: right; }
+  .tbadge { font-size: 9px; padding: 2px 6px; border-radius: 3px; background: rgba(55,138,221,.15); color: var(--text-info); text-align: center; }
+  .tbadge.none { background: transparent; color: var(--text-tertiary); }
+  .tdur { font-size: 10px; color: var(--text-tertiary); font-family: var(--font-mono); text-align: right; }
+
+  /* Inline Waterfall */
+  .wf-panel { overflow: hidden; max-height: 0; transition: max-height .25s ease; }
+  .wf-panel.open { max-height: 400px; }
+  .wf-inner { padding: 2px 10px 8px 60px; }
+  .wf-row { display: grid; grid-template-columns: minmax(0,110px) minmax(0,1fr) 48px; align-items: center; padding: 4px 4px; cursor: pointer; border-radius: 4px; transition: background .1s; }
+  .wf-row:hover { background: var(--bg-hover); }
+  .wf-row.sel { background: var(--bg-selected); }
+  .wf-ag { display: flex; align-items: center; gap: 5px; overflow: hidden; }
+  .wf-av { width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 8px; font-weight: 500; flex-shrink: 0; }
+  .wf-nm { font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .wf-bar-area { position: relative; height: 20px; }
+  .wf-bar { position: absolute; height: 14px; top: 3px; border-radius: 3px; min-width: 3px; opacity: .75; }
+  .wf-dur { font-size: 10px; color: var(--text-tertiary); font-family: var(--font-mono); text-align: right; }
+  .sdot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+
+  /* ===== Right: Agent Detail Panel ===== */
+  .right { width: 320px; flex-shrink: 0; display: flex; flex-direction: column; background: var(--bg-secondary); }
+  .rp-empty { display: flex; align-items: center; justify-content: center; flex: 1; font-size: 12px; color: var(--text-tertiary); text-align: center; line-height: 1.6; }
+  .rp-toolbar { display: flex; align-items: center; gap: 6px; padding: 7px 12px; border-bottom: 1px solid var(--border); flex-shrink: 0; background: var(--bg-secondary); }
+  .rp-close { cursor: pointer; color: var(--text-tertiary); font-size: 16px; margin-left: auto; }
+  .rp-scroll { flex: 1; overflow-y: auto; padding: 12px; }
+
+  .rp-header { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+  .rp-av { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 500; }
+  .rp-name { font-size: 14px; font-weight: 500; }
+  .rp-st { font-size: 10px; padding: 2px 8px; border-radius: 4px; }
+  .rp-stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-bottom: 14px; }
+  .rp-stat { background: var(--bg-tertiary); border-radius: 8px; padding: 8px; border: 1px solid var(--border-light); }
+  .rp-stat-l { font-size: 9px; color: var(--text-tertiary); text-transform: uppercase; }
+  .rp-stat-v { font-size: 14px; font-weight: 500; margin-top: 2px; }
+  .rp-sec { margin-bottom: 12px; }
+  .rp-sec-t { font-size: 10px; font-weight: 500; color: var(--text-tertiary); letter-spacing: .5px; margin-bottom: 6px; text-transform: uppercase; }
+  .rp-tools { display: flex; flex-wrap: wrap; gap: 4px; }
+  .rp-tool { font-size: 11px; padding: 3px 10px; border-radius: 4px; background: var(--bg-tertiary); color: var(--text-secondary); border: 1px solid var(--border-light); cursor: pointer; transition: all .12s; }
+  .rp-tool:hover { background: rgba(55,138,221,.15); color: var(--text-info); border-color: rgba(55,138,221,.3); }
+  .rp-block { font-size: 12px; padding: 8px 10px; background: var(--bg-tertiary); border-radius: 6px; border: 1px solid var(--border-light); line-height: 1.6; color: var(--text-secondary); }
+  .rp-result { max-height: 100px; overflow-y: auto; }
+
+  /* ===== Modal ===== */
+  .modal-wrap { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,.4); align-items: center; justify-content: center; z-index: 100; }
+  .modal-wrap.show { display: flex; }
+  .modal { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 10px; padding: 16px; width: 420px; max-height: 340px; }
+  .modal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .modal-head span:first-child { font-size: 14px; font-weight: 500; }
+  .modal-x { cursor: pointer; color: var(--text-tertiary); font-size: 18px; }
+  .modal-body { font-size: 12px; font-family: var(--font-mono); line-height: 1.8; color: var(--text-secondary); white-space: pre-wrap; word-break: break-all; overflow-y: auto; max-height: 250px; background: var(--bg-tertiary); padding: 10px; border-radius: 6px; border: 1px solid var(--border-light); }
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- Collapsible Session Header -->
+  <div class="top-bar" onclick="toggleExpand()">
+    <span class="top-dot"></span>
+    <span class="top-name">Discuss TOAD For Oracle</span>
+    <span class="top-ago">43m ago</span>
+    <div class="top-pills">
+      <span class="top-pill"><b>3700</b> turns</span>
+      <span class="top-pill"><b>2.2M</b> tok</span>
+      <span class="top-pill"><b>245</b> agents</span>
+      <span class="top-pill"><b>6577</b> tools</span>
+    </div>
+    <svg class="top-chev" id="top-chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 6l4 4 4-4"/></svg>
+  </div>
+
+  <div class="top-expand" id="top-expand">
+    <div class="top-inner">
+      <div class="top-btns">
+        <span class="top-btn">Open in VSCode</span>
+        <span class="top-btn">Open in Insiders</span>
+      </div>
+      <div class="top-meta">
+        <span class="top-meta-l">Repository</span><span class="top-meta-v">whoniiii/ghcplens</span>
+        <span class="top-meta-l">Branch</span><span class="top-meta-v">master</span>
+        <span class="top-meta-l">Path</span><span class="top-meta-v">00-dev/ghcpstudio</span>
+        <span class="top-meta-l">Session ID</span><span class="top-meta-v">816d3df4-3861-468e-8bd7-a7d31fbd2b30</span>
+        <span class="top-meta-l">Memo</span><span class="top-meta-v">GitHub Copilot Lens 대시보드 개발 세션</span>
+        <span class="top-meta-l">Agents</span><span class="top-meta-v">6 agents / 1 skill / Instructions ✓</span>
+      </div>
+      <div class="top-stats">
+        <div class="top-stat"><div class="top-stat-v">3700</div><div class="top-stat-l">Turns</div></div>
+        <div class="top-stat"><div class="top-stat-v">6577</div><div class="top-stat-l">Tools</div></div>
+        <div class="top-stat"><div class="top-stat-v">245</div><div class="top-stat-l">Agents</div></div>
+        <div class="top-stat"><div class="top-stat-v">2.2M</div><div class="top-stat-l">Tokens</div></div>
+        <div class="top-stat"><div class="top-stat-v">20</div><div class="top-stat-l">Checkpoints</div></div>
+        <div class="top-stat"><div class="top-stat-v">30</div><div class="top-stat-l">Files</div></div>
+      </div>
+      <div class="top-tools">
+        <span class="top-tool-tag">view <div class="top-tool-bar" style="width:60px"></div> 1602</span>
+        <span class="top-tool-tag">edit <div class="top-tool-bar" style="width:44px"></div> 1193</span>
+        <span class="top-tool-tag">powershell <div class="top-tool-bar" style="width:43px"></div> 1170</span>
+        <span class="top-tool-tag">grep <div class="top-tool-bar" style="width:32px"></div> 865</span>
+        <span class="top-tool-tag">report_intent <div class="top-tool-bar" style="width:24px"></div> 663</span>
+        <span class="top-tool-tag">task_complete <div class="top-tool-bar" style="width:12px"></div> 328</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Body: Master-Detail -->
+  <div class="main">
+    <div class="left">
+      <div class="left-head">
+        <span style="font-weight:500;color:var(--text-primary)">Timeline</span>
+        <span style="margin-left:auto">5 turns</span>
+      </div>
+      <div class="scroll" id="turn-list"></div>
+    </div>
+
+    <div class="right" id="rp">
+      <div class="rp-empty" id="rp-empty">Click an agent bar<br>to inspect details</div>
+      <div style="display:none;flex-direction:column;height:100%;width:100%" id="rp-content">
+        <div class="rp-toolbar">
+          <span style="font-size:12px;font-weight:500" id="rp-title">Agent detail</span>
+          <span class="rp-close" onclick="closeDetail()">✕</span>
+        </div>
+        <div class="rp-scroll" id="rp-scroll"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Tool Detail Modal -->
+<div class="modal-wrap" id="modal" onclick="closeModal()">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-head"><span id="m-title">Tool detail</span><span class="modal-x" onclick="closeModal()">✕</span></div>
+    <div class="modal-body" id="m-body"></div>
+  </div>
+</div>
+
+<script>
+// ===== Data =====
+const turns = [
+  { idx:1, time:"21:15", tokens:"15.0K", dur:"4m52s", prompt:"아주복잡한 에이전트 서브에이전트 호출테스트하고 싶어 네스티드로 호출하고...",
+    agents:[
+      {name:"PM",av:"PM",color:"#7F77DD",bg:"#EEEDFE",tc:"#3C3489",s:0,d:100,tok:"2.8K",dl:"4m52s",st:"done",tools:["task x4","report_intent"],prompt:"복잡한 멀티에이전트 호출 테스트를 해주세요. 아래 시나리오대로 진행하세요.",result:"Step 4 완료 — backend-developer가 헬스체크를 수행했습니다 (서버 정상, 111개 세션 로드 확인).\n\n## 최종 종합 보고서\n멀티에이전트 순차 호출 테스트\n\n### 에이전트 호출 요약\n| 순서 | 에이전트 | 작업 | 결과 |\n| 1 | backend-developer | API 엔드포인트 정리 | 13개 식별 |\n| 2 | ui-developer | UI 기능 TOP 3 | 완료 |\n| 3 | tester | 커버리지 보고 | 92개 통과 |\n| 4 | backend-developer | 헬스체크 | 정상 |"},
+      {name:"backend-developer",av:"BE",color:"#1D9E75",bg:"#E1F5EE",tc:"#085041",s:3,d:11,tok:"1.1K",dl:"32s",st:"done",tools:["report_intent","grep","view"],prompt:"API 엔드포인트 정리해줘",result:"src/server.js에 정의된 전체 API 엔드포인트 목록입니다.\n\n| # | 메서드 | 경로 | 설명 |\n| 1 | OPTIONS | * | CORS preflight |\n| 2 | GET | /api/config | 현재 세션 경로 및 상태 반환 |\n| 3 | PUT | /api/config | 세션 상태 경로 업데이트 |\n| 4 | POST | /api/sessions | 세션 목록 조회 |\n... (13개 총)"},
+      {name:"ui-developer",av:"UI",color:"#378ADD",bg:"#E6F1FB",tc:"#0C447C",s:17,d:37,tok:"2.2K",dl:"1m47s",st:"done",tools:["report_intent","view","powershell","task"],prompt:"API 참고해서 UI 기능 3개 정리",result:"## public/index-v2.html 주요 UI 기능 TOP 3\n\n### 1. 좌측 트리 리스트\n모든 Copilot CLI 세션을 프로젝트별로 그룹화된 트리로 표시. 실시간 상태를 컬러 도트로 보여줌.\n\n### 2. 세션 타임라인\n선택한 세션의 전체 대화 턴을 시간순 표시.\n\n### 3. API 호출 모니터링\n호출 API 목록과 응답 시간 통계."},
+      {name:"Explore Agent",av:"Ex",color:"#D4537E",bg:"#FBEAF0",tc:"#72243E",s:22,d:18,tok:"4.6K",dl:"53s",st:"done",dep:1,tools:["grep x3","view x2","powershell"],prompt:"Explore the codebase structure and analyze dependencies",result:"Project structure analysis:\n- 12 source files across 3 main modules\n- 3 test files (92 test cases)\n- Key dependencies: express, ws, chokidar, node-pty\n- Entry point: src/server.js (480 lines)\n- UI: public/index-v2.html (2400 lines)"},
+      {name:"tester",av:"Te",color:"#D85A30",bg:"#FAECE7",tc:"#712B13",s:57,d:18,tok:"2.3K",dl:"53s",st:"done",tools:["report_intent","powershell x2"],prompt:"테스트 커버리지 보고해줘",result:"## 테스트 커버리지 현황 보고서\n\n### 1. 전체 테스트 결과\n- 테스트 파일: 1개 (tests/server.test.js)\n- 전체 테스트: 92개 전부 통과 ✅\n- 소요 시간: 약 7.8초\n\n### 2. 테스트 영역 현황\n- API 호출 테스트: 42개\n- 세션 관리 테스트: 28개\n- 실시간 업데이트 테스트: 22개"},
+      {name:"backend-developer",av:"BE",color:"#1D9E75",bg:"#E1F5EE",tc:"#085041",s:78,d:12,tok:"1.2K",dl:"36s",st:"done",tools:["powershell","report_intent"],prompt:"헬스체크 해줘",result:"모든 헬스체크가 완료되었습니다.\n\n| 항목 | 결과 | 상세 |\n| 서버 상태 | ✅ 실행 중 | PID 9048, 포트 3002 |\n| 세션 | ✅ 111개 | 정상 반환 |\n| GET /api/config | ✅ 200 OK | sessionStatePath 정상 |"}
+    ]},
+  { idx:2, time:"21:19", tokens:"774", dur:"12s", prompt:"니가 생각한 구조를 그려서 보여줘봐. 마크다운으로 이 창에다가", agents:null },
+  { idx:3, time:"21:21", tokens:"720", dur:"8s", prompt:"[Screenshot] 니가 생각한게 이게맞는지 확인하고 수정사항있으면 고쳐 깊게 생각해", agents:null },
+  { idx:4, time:"21:23", tokens:"2.1K", dur:"38s", prompt:"아주좋은데 아까 내가 봤을때, 서브에이전타가 끝났는데 (하위 에이전트 툴 안부른상태, done으로 표시됨) 깜빡 거렸어",
+    agents:[
+      {name:"backend-developer",av:"BE",color:"#1D9E75",bg:"#E1F5EE",tc:"#085041",s:0,d:55,tok:"1.4K",dl:"22s",st:"running",tools:["grep","view","edit"],prompt:"turnEnded 필드를 서버 턴 데이터에 추가하고, 폴링에서 서버 상태 감지 로직을 수정해줘. turnEnded가 true이면 턴이 완전히 끝난 것으로 판단.",result:"turnEnded 필드 추가 작업 진행 중...\n\n1. src/server.js의 턴 데이터 구조에 turnEnded: boolean 추가\n2. 폴링 응답에 turnEnded 포함\n3. assistant.turn_end 이벤트에서 turnEnded = true 설정"},
+      {name:"ui-developer",av:"UI",color:"#378ADD",bg:"#E6F1FB",tc:"#0C447C",s:25,d:50,tok:"631",dl:"17s",st:"done",tools:["report_intent","grep","edit"],prompt:"## Task: Use `turnEnded` field for turn active state detection\n\nChange the pulsing/active logic from checking assistant.message to checking turnEnded boolean from server.",result:"변경 완료했습니다.\n\n**변경 내용** (public/index-v2.html, line 1922):\n\nBefore:\nconst stillProcessing = isLastTurn && !turnData.assistantMessage?.trim();\n\nAfter:\nconst stillProcessing = isLastTurn && !turnData.turnEnded;\n\n**효과:** 턴의 활성 상태(pulsing)를 종전 assistant 메시지 유무가 아니라 백엔드의 `turnEnded` 불리언으로 판단합니다."}
+    ]},
+  { idx:5, time:"21:25", tokens:"41.3K", dur:"6m12s", prompt:"자이번에는 아주아주 더 복잡하게 기존보다 3배 더 복잡한 체인을 만들어서 테스트해. 이번에는 스크린캡처를 할것이니 영어로 인스트럭션 하자",
+    agents:[
+      {name:"PM",av:"PM",color:"#7F77DD",bg:"#EEEDFE",tc:"#3C3489",s:0,d:100,tok:"5.1K",dl:"6m12s",st:"done",tools:["task x8","report_intent"],prompt:"Ultra-complex 8-step agent chain with nested sub-agents",result:"All 8 agents completed successfully. Total execution time: 6m12s."},
+      {name:"backend-developer",av:"BE",color:"#1D9E75",bg:"#E1F5EE",tc:"#085041",s:3,d:15,tok:"2.3K",dl:"55s",st:"done",tools:["grep","view","edit x2"],prompt:"Phase 1: Backend API endpoint setup for new monitoring features",result:"Backend endpoints updated. Added 4 new routes for agent hierarchy tracking."},
+      {name:"ui-developer",av:"UI",color:"#378ADD",bg:"#E6F1FB",tc:"#0C447C",s:12,d:28,tok:"3.8K",dl:"1m40s",st:"done",tools:["view","edit x3","powershell"],prompt:"Phase 2: UI components for waterfall visualization",result:"UI components created for all 8 phases. New waterfall renderer added."},
+      {name:"Explore Agent",av:"Ex",color:"#D4537E",bg:"#FBEAF0",tc:"#72243E",s:16,d:12,tok:"4.2K",dl:"48s",st:"done",dep:1,tools:["grep x4","view x3"],prompt:"Explore full dependency graph and identify circular dependencies",result:"Dependency map: 24 modules, 8 circular references found and documented."},
+      {name:"Sub-explorer",av:"Se",color:"#D4537E",bg:"#FBEAF0",tc:"#72243E",s:19,d:6,tok:"1.8K",dl:"24s",st:"done",dep:2,tools:["grep x2"],prompt:"Deep dive into utils and shared modules",result:"Utils analysis complete. 6 shared modules, 2 deprecated."},
+      {name:"tester",av:"Te",color:"#D85A30",bg:"#FAECE7",tc:"#712B13",s:42,d:18,tok:"3.1K",dl:"1m8s",st:"done",tools:["powershell x3","report_intent"],prompt:"Run full integration test suite with coverage report",result:"All 156 tests passing. Coverage: 87%. No regressions detected."},
+      {name:"backend-developer",av:"BE",color:"#1D9E75",bg:"#E1F5EE",tc:"#085041",s:63,d:14,tok:"2.0K",dl:"52s",st:"done",tools:["edit","powershell"],prompt:"Phase 3: Performance optimization for hot paths",result:"Optimized database queries and caching. 40% latency reduction on /api/sessions."},
+      {name:"perf-tester",av:"PT",color:"#D85A30",bg:"#FAECE7",tc:"#712B13",s:80,d:15,tok:"3.5K",dl:"58s",st:"done",tools:["powershell x5","report_intent"],prompt:"Load test with 1000 concurrent WebSocket connections",result:"Load test results:\n- p50: 42ms\n- p95: 128ms\n- p99: 245ms\n- Throughput: 850 rps\n- Error rate: 0%\n- Memory peak: 340MB"}
+    ]}
+];
+
+let openTurn = -1, selKey = "";
+
+// ===== Header Toggle =====
+let expanded = false;
+function toggleExpand() {
+  expanded = !expanded;
+  document.getElementById("top-expand").classList.toggle("open", expanded);
+  document.getElementById("top-chev").classList.toggle("open", expanded);
+}
+
+// ===== Render Turn List =====
+function render() {
+  const list = document.getElementById("turn-list");
+  list.innerHTML = "";
+  turns.forEach((t, i) => {
+    const hasAg = t.agents && t.agents.length > 0;
+    const el = document.createElement("div");
+    el.className = "turn";
+
+    const h = document.createElement("div");
+    h.className = "turn-head";
+    h.innerHTML = `
+      <svg class="chev ${hasAg && openTurn===i?'open':''} ${!hasAg?'hide':''}" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 4l4 4-4 4"/></svg>
+      <span class="tnum">#${t.idx}<br><span class="ttime">${t.time}</span></span>
+      <span class="tmsg">${t.prompt}</span>
+      <span class="ttok">${t.tokens}</span>
+      <span class="tbadge ${hasAg?'':'none'}">${hasAg?t.agents.length+'ag':'-'}</span>
+      <span class="tdur">${t.dur}</span>`;
+    h.onclick = () => { if(hasAg){ openTurn = openTurn===i?-1:i; render(); }};
+    el.appendChild(h);
+
+    if (hasAg) {
+      const wp = document.createElement("div");
+      wp.className = "wf-panel" + (openTurn===i?" open":"");
+      let w = '<div class="wf-inner">';
+      t.agents.forEach((a, ai) => {
+        const key = i+"-"+ai;
+        const sel = selKey===key ? "sel" : "";
+        const indent = a.dep ? `padding-left:${a.dep * 14}px` : "";
+        w += `<div class="wf-row ${sel}" onclick="event.stopPropagation();selectAgent(${i},${ai})">
+          <div class="wf-ag" style="${indent}">
+            <span class="sdot" style="background:${a.st==='running'?'#378ADD':'#1D9E75'}"></span>
+            <div class="wf-av" style="background:${a.bg};color:${a.tc}">${a.av}</div>
+            <span class="wf-nm">${a.name}</span>
+          </div>
+          <div class="wf-bar-area">
+            <div class="wf-bar" style="left:${a.s}%;width:${Math.max(a.d,3)}%;background:${a.color}"></div>
+          </div>
+          <span class="wf-dur">${a.dl}</span>
+        </div>`;
+      });
+      w += '</div>';
+      wp.innerHTML = w;
+      el.appendChild(wp);
+    }
+    list.appendChild(el);
+  });
+}
+
+// ===== Agent Detail Panel =====
+function selectAgent(ti, ai) {
+  selKey = ti + "-" + ai;
+  const a = turns[ti].agents[ai];
+  document.getElementById("rp-empty").style.display = "none";
+  const rc = document.getElementById("rp-content");
+  rc.style.display = "flex";
+  document.getElementById("rp-title").textContent = a.name;
+
+  const stColor = a.st === "running" ? "var(--text-info)" : "var(--text-success)";
+  const stBg = a.st === "running" ? "rgba(55,138,221,.12)" : "rgba(78,201,176,.12)";
+
+  document.getElementById("rp-scroll").innerHTML = `
+    <div class="rp-header">
+      <div class="rp-av" style="background:${a.bg};color:${a.tc}">${a.av}</div>
+      <span class="rp-name">${a.name}</span>
+      <span class="rp-st" style="background:${stBg};color:${stColor}">${a.st}</span>
+    </div>
+    <div class="rp-stats">
+      <div class="rp-stat"><div class="rp-stat-l">Duration</div><div class="rp-stat-v">${a.dl}</div></div>
+      <div class="rp-stat"><div class="rp-stat-l">Tokens</div><div class="rp-stat-v">${a.tok}</div></div>
+      <div class="rp-stat"><div class="rp-stat-l">Tools</div><div class="rp-stat-v">${a.tools.length}</div></div>
+    </div>
+    <div class="rp-sec">
+      <div class="rp-sec-t">Tools</div>
+      <div class="rp-tools">${a.tools.map(t => `<span class="rp-tool" onclick="openModal('${t}','${a.name}')">${t}</span>`).join('')}</div>
+    </div>
+    <div class="rp-sec">
+      <div class="rp-sec-t">Prompt</div>
+      <div class="rp-block">${a.prompt}</div>
+    </div>
+    <div class="rp-sec">
+      <div class="rp-sec-t">Result</div>
+      <div class="rp-block rp-result">${a.result.replace(/\n/g, '<br>')}</div>
+    </div>`;
+  render();
+}
+
+function closeDetail() {
+  selKey = "";
+  document.getElementById("rp-content").style.display = "none";
+  document.getElementById("rp-empty").style.display = "flex";
+  render();
+}
+
+// ===== Tool Modal =====
+function openModal(tool, agent) {
+  document.getElementById("m-title").textContent = tool + " — " + agent;
+  document.getElementById("m-body").textContent =
+    `Tool: ${tool}\nAgent: ${agent}\nStatus: completed\n\nInput:\n  query: "server.js endpoints"\n  path: "src/"\n  recursive: true\n\nOutput:\n  Found 13 matching results\n  Duration: 0.8s\n  Exit code: 0\n\n--- Raw Output ---\n  src/server.js:45  app.options('*', cors())\n  src/server.js:48  app.get('/api/config', ...)\n  src/server.js:72  app.put('/api/config', ...)\n  src/server.js:95  app.post('/api/sessions', ...)\n  ...`;
+  document.getElementById("modal").classList.add("show");
+}
+function closeModal() { document.getElementById("modal").classList.remove("show"); }
+
+// ===== Init =====
+render();
+openTurn = 0;
+render();
+selectAgent(0, 1);
+</script>
+</body>
+</html>
