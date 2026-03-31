@@ -64,6 +64,11 @@ Remove-Item README.github.md
 code --install-extension dist/github-copilot-lens-X.Y.Z.vsix --force
 ```
 
+### dist/ 폴더 관리 (CRITICAL)
+- **이전 VSIX 파일을 절대 삭제하지 않음** — 모든 버전의 VSIX 파일을 보존
+- 새 VSIX 빌드 시 `--out dist/github-copilot-lens-X.Y.Z.vsix`로 버전별 파일명 사용
+- dist/ 폴더는 히스토리 보관 용도로 활용
+
 ### 버전 규칙 (CRITICAL)
 - **같은 버전 번호로 Marketplace에 재업로드 불가** — 반드시 버전을 올려야 함
 - `package.json`과 `CHANGELOG.md`의 버전이 **반드시 일치**해야 함
