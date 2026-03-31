@@ -2,11 +2,24 @@
 
 ## [Unreleased]
 
+## [1.4.5] - 2026-03-31
+
+### Changed
+- **Activity Bar 아이콘 크기 조정 및 디자인 개선** — Activity Bar 아이콘의 크기와 디자인을 개선하여 가독성 향상
+
 ## [1.4.4] - 2026-03-31
 
 ### Changed
 - **새 Copilot Lens 아이콘** — 확장 아이콘을 새 디자인으로 교체 (투명 모서리, 1024×1024)
-- **Activity Bar 아이콘** — Copilot 마스코트 + 돋보기 디자인의 새 SVG 아이콘 적용
+- **Activity Bar 아이콘 리디자인** — 유저 커스텀 SVG(icon-my.svg) 기반 모노크롬 벡터 아이콘으로 교체. 돋보기 + 바이저 + 눈구멍 컷아웃 + 고스트 로봇 실루엣 구성
+- **대시보드/사이드바 로고 교체** — Octocat SVG 인라인 로고를 icon.png 기반 base64 이미지로 교체 (파비콘, 헤더, 모달 3곳, 사이드바)
+- **VSIX 크기 91.5% 감소** — 13.53MB → 1.15MB. docs/screenshots/ 등 불필요 파일을 .vscodeignore에 추가
+
+### Fixed
+- **CSP img-src 정책** — 사이드바 webview에 `img-src data:` 추가하여 base64 이미지 로딩 수정
+
+### Removed
+- **미사용 파일 정리** — NUL (7.1MB Windows artifact), public/logs.html, 이전 아이콘 파일들 삭제
 
 ## [1.4.3] - 2026-03-30
 

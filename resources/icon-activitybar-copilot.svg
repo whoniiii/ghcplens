@@ -1,21 +1,35 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
-  <!-- Robot head (semi-faded background) -->
-  <circle cx="8.5" cy="8" r="6.2" fill="#C5C5C5" opacity="0.35"/>
-  <!-- Headphone left -->
-  <rect x="1" y="5.5" width="2.5" height="5" rx="1.2" fill="#C5C5C5" opacity="0.45"/>
-  <!-- Headphone right -->
-  <rect x="13.8" y="5.5" width="2.5" height="5" rx="1.2" fill="#C5C5C5" opacity="0.45"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="2 2.5 20 20" fill="none">
+  <!-- Ghost robot silhouette (upper-left, faded) -->
+  <g opacity="0.2">
+    <rect x="3.3" y="4.0" width="8.2" height="6.4" rx="3.2" fill="#C5C5C5"/>
+    <path d="M4.55 6.1C4.55 5.4 5.12 4.83 5.82 4.83H9.02C9.71 4.83 10.29 5.4 10.29 6.1V7.55C10.29 8.8 9.28 9.81 8.03 9.81H6.81C5.56 9.81 4.55 8.8 4.55 7.55V6.1Z" fill="#C5C5C5" opacity="0.35"/>
+    <ellipse cx="6.35" cy="7.1" rx="0.62" ry="0.9" fill="#C5C5C5" opacity="0.55"/>
+    <path d="M4.2 11.0C3.15 12.05 2.75 13.45 2.85 15.1C2.92 16.18 3.68 16.86 4.16 16.65C4.7 16.42 4.82 15.6 5.05 14.75C5.27 13.95 5.67 13.18 6.23 12.35C6.86 13.46 7.25 14.76 7.95 15.98C8.6 17.1 9.6 18.0 10.45 18.2C10.75 17.15 10.65 15.8 10.2 14.62C9.55 12.95 8.35 11.58 7.1 10.8C6.05 10.15 5.0 10.2 4.2 11.0Z" fill="#C5C5C5"/>
+  </g>
 
-  <!-- Goggles band with eye holes -->
+  <!-- Handle -->
+  <rect x="16.55" y="15.55" width="6.2" height="2.15" rx="1.075"
+        transform="rotate(45 16.55 15.55)" fill="#C5C5C5"/>
+
+  <!-- Connector -->
+  <rect x="15.25" y="15.05" width="2.55" height="0.95" rx="0.475"
+        transform="rotate(45 15.25 15.05)" fill="#C5C5C5" opacity="0.7"/>
+
+  <!-- Magnifier ring -->
+  <circle cx="12" cy="12" r="5.5" stroke="#C5C5C5" stroke-width="1.6" fill="none"/>
+
+  <!-- Head outline (subtle frame) -->
+  <rect x="7.75" y="9.95" width="8.5" height="5.65" rx="2.75"
+        fill="none" stroke="#C5C5C5" stroke-width="0.45" opacity="0.4"/>
+
+  <!-- Visor with eye holes cut out (evenodd) -->
   <path fill="#C5C5C5" opacity="0.65" fill-rule="evenodd" d="
-    M4 6.2 Q4 3.8 8.5 3.8 Q13 3.8 13 6.2 V9.8 Q13 12.2 8.5 12.2 Q4 12.2 4 9.8 Z
-    M5.3 8 a1.8 1.6 0 1 0 3.6 0 a1.8 1.6 0 1 0 -3.6 0 Z
-    M8.8 8 a1.8 1.6 0 1 0 3.6 0 a1.8 1.6 0 1 0 -3.6 0 Z
+    M8.55 10.15 C8.03 10.15 7.6 10.58 7.6 11.1 V12.55 C7.6 13.63 8.47 14.5 9.55 14.5 H10.82 C11.07 14.5 11.29 14.36 11.42 14.15 L11.77 13.56 C11.9 13.34 12.1 13.34 12.23 13.56 L12.58 14.15 C12.71 14.36 12.93 14.5 13.18 14.5 H14.45 C15.53 14.5 16.4 13.63 16.4 12.55 V11.1 C16.4 10.58 15.97 10.15 15.45 10.15 Z
+    M10.15 11.08 A0.62 0.92 0 1 1 10.15 12.92 A0.62 0.92 0 1 1 10.15 11.08 Z
+    M13.85 11.08 A0.62 0.92 0 1 1 13.85 12.92 A0.62 0.92 0 1 1 13.85 11.08 Z
   "/>
-  <!-- Smile -->
-  <path d="M7 12.8 Q8.5 14.2 10 12.8" stroke="#C5C5C5" stroke-width="0.8" fill="none" stroke-linecap="round" opacity="0.4"/>
 
-  <!-- Magnifying glass (prominent foreground) -->
-  <circle cx="16.5" cy="16.5" r="5" stroke="#C5C5C5" stroke-width="2" fill="none"/>
-  <line x1="20" y1="20" x2="23.5" y2="23.5" stroke="#C5C5C5" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- Nose bridge -->
+  <path d="M10.95 14.24 C11.27 13.9 11.55 13.4 11.78 12.95 C11.88 12.76 12.12 12.76 12.22 12.95 C12.45 13.4 12.73 13.9 13.05 14.24 C12.7 14.55 12.36 14.72 12 14.72 C11.64 14.72 11.3 14.55 10.95 14.24Z"
+        fill="#C5C5C5" opacity="0.7"/>
 </svg>
