@@ -2,6 +2,20 @@
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-04-01
+
+### Added
+- **Timeline cache (72× faster)** — 세션 데이터를 메모리 캐시하여 캐시 히트 시 72배 빠른 로딩 속도 달성
+- **Mode badges on timeline** — 타임라인 턴에 ⚡ Auto / 📋 Plan 모드 배지 표시
+- **exit_plan_mode tool highlight** — exit_plan_mode 도구 호출 시 주황색 배지로 시각적 강조
+- **Inline loading indicator** — 무한 스크롤 시 인라인 로딩 인디케이터 표시
+- **agentMode field in API** — 타임라인 API 응답에 agentMode 필드 추가
+
+### Fixed
+- **Turn active state detection** — turn_end 이벤트 기반으로 턴 활성 상태 감지 로직 수정
+- **Infinite scroll auto-scroll** — 폴링이 무한 스크롤 중 자동 스크롤을 방해하는 문제 수정
+- **Session state during tool execution** — 도구 실행 중 세션 상태 감지 정확도 개선
+
 ## [1.4.5] - 2026-03-31
 
 ### Changed
