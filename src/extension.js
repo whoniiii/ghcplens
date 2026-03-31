@@ -9,6 +9,7 @@ const vscode = require('vscode');
 const path = require('path');
 const fs = require('fs');
 const { startServer } = require('./server');
+const pkg = require('../package.json');
 
 let serverInstance = null;
 let serverPort = null;
@@ -60,7 +61,6 @@ function activate(context) {
         const localUri = vscode.Uri.parse(`http://localhost:${port}`);
         const externalUri = await vscode.env.asExternalUri(localUri);
         const apiBase = externalUri.toString().replace(/\/$/, '');
-        const pkg = require('../package.json');
         const ver = pkg.version;
         const today = new Date().toISOString().slice(0, 10);
         webviewView.webview.html = `<!DOCTYPE html>
@@ -104,11 +104,12 @@ function activate(context) {
     function openDashboard() { vscode.postMessage({ command: 'openDashboard' }); }
   </script>
 </body></html>`;
-      webviewView.webview.onDidReceiveMessage(message => {
+      const msgDisposable = webviewView.webview.onDidReceiveMessage(message => {
         if (message.command === 'openDashboard') {
           vscode.commands.executeCommand('ghcpLens.open');
         }
       });
+      context.subscriptions.push(msgDisposable);
       } catch (err) {
         webviewView.webview.html = `<html><body style="padding:16px;color:red;">Failed to start server: ${err.message}</body></html>`;
       }
@@ -210,6 +211,9 @@ function activate(context) {
 
 function deactivate() {
   if (serverInstance) {
+    if (typeof serverInstance.closeAllConnections === 'function') {
+      serverInstance.closeAllConnections();
+    }
     serverInstance.close();
     serverInstance = null;
     serverPort = null;

@@ -216,7 +216,7 @@ body {
 
 .st-col-status { width: 20px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
 .st-col-summary {
-  width: 200px; flex-shrink: 0; font-size: 12px; font-weight: 500; color: var(--text);
+  width: var(--col-summary-w, 200px); flex-shrink: 0; font-size: 12px; font-weight: 500; color: var(--text);
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 0 8px;
 }
 .st-col-intent {
@@ -225,7 +225,7 @@ body {
   margin-left: 4px;
 }
 .st-col-memo {
-  width: 140px; flex-shrink: 0; font-size: 11px; color: var(--text-secondary);
+  width: var(--col-memo-w, 140px); flex-shrink: 0; font-size: 11px; color: var(--text-secondary);
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 0 8px;
 }
 .st-col-lastmsg {
@@ -237,7 +237,7 @@ body {
   text-align: right; white-space: nowrap; padding-right: 8px;
 }
 .st-col-time {
-  width: 64px; flex-shrink: 0; font-size: 11px; color: var(--text-muted);
+  width: var(--col-time-w, 64px); flex-shrink: 0; font-size: 11px; color: var(--text-muted);
   text-align: right; white-space: nowrap;
 }
 
@@ -518,6 +518,19 @@ body {
 
 /* ─── Session Timeline ─── */
 .tl-container { padding: 12px 8px; }
+.tl-load-indicator {
+  text-align: center;
+  padding: 8px 0;
+  font-size: 11px;
+  color: var(--text-muted);
+  animation: contentFadeIn 0.2s ease;
+}
+.tl-load-dot {
+  display: inline-block;
+  animation: agent-pulse 1.2s ease-in-out infinite;
+  color: var(--accent);
+  margin-right: 4px;
+}
 .tl-turn {
   position: relative; padding-left: 24px; margin-bottom: 0;
   animation: contentFadeIn 0.15s ease;
@@ -585,6 +598,26 @@ body {
 .tl-tool-badge--complete {
   border-left: 2px solid var(--accent);
   color: var(--text);
+}
+.tl-tool-badge--plan {
+  border-left: 2px solid #f59e0b;
+  color: var(--text);
+}
+.tl-mode-badge {
+  font-size: 9px;
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  margin-left: 6px;
+}
+.tl-mode-autopilot {
+  background: rgba(59, 130, 246, 0.15);
+  color: #3b82f6;
+}
+.tl-mode-plan {
+  background: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
 }
 .tl-agent {
   position: relative; margin: 6px 0; padding-left: 16px;
@@ -1609,6 +1642,8 @@ const renderStats = (sessions) => {
   `;
 };
 
+let lastSessionsHash = '';
+
 const renderSessions = (sessions) => {
   if (!Array.isArray(sessions)) sessions = [];
   renderStats(sessions);
@@ -1714,6 +1749,11 @@ const renderSessions = (sessions) => {
   }
 
   html += '</div>';
+  // Skip innerHTML update if content hasn't changed (avoids unnecessary DOM re-parse)
+  const hash = html.length + '-' + sessions.length + '-' + sessions.map(s => s.id + s.state + (s.turnCount ?? 0) + (s.outputTokens || 0) + (s.updatedAt || '')).join(',')
+    + '-' + selectedSessionId + '-' + (showEmpty ? '1' : '0') + '-' + [...collapsedGroups].join(',');
+  if (hash === lastSessionsHash) return;
+  lastSessionsHash = hash;
   container.innerHTML = html;
 };
 
@@ -1856,8 +1896,10 @@ const fetchAll = () => {
           let html = '';
           newTurns.forEach((turn, idx) => { html += renderTimelineTurn(turn, idx, true); });
           container.insertAdjacentHTML('beforeend', html);
-          // Auto-scroll to bottom when new turns appear
-          requestAnimationFrame(() => { body.scrollTop = body.scrollHeight; });
+          // Only auto-scroll if user is near the bottom (don't interrupt upward scrolling)
+          if (body.scrollHeight - body.scrollTop - body.clientHeight < 100) {
+            requestAnimationFrame(() => { body.scrollTop = body.scrollHeight; });
+          }
         }
         window._timelineTotalTurns = data.totalTurns;
       }
@@ -1877,8 +1919,7 @@ const fetchAll = () => {
         // Toggle tl-turn-active — active if any agent running OR still waiting for response
         const hasRunningDeep = (agents) => agents && agents.some(a => a.status === 'running' || hasRunningDeep(a.children));
         const isLastTurn = turnIdx === data.timeline.length - 1;
-        const hasTools = turnData.directToolCalls && turnData.directToolCalls.length > 0;
-        const stillProcessing = isLastTurn && !turnData.assistantMessage && !hasTools && !(turnData.agents && turnData.agents.length > 0);
+        const stillProcessing = isLastTurn && !turnData.turnEnded;
         const isActive = hasRunningDeep(turnData.agents) || stillProcessing;
         turnEl.classList.toggle('tl-turn-active', isActive);
 
@@ -1906,7 +1947,7 @@ const fetchAll = () => {
         // Update or add direct tools (always refresh badges to reflect latest counts)
         if (turnData.directToolCalls && turnData.directToolCalls.length > 0) {
           let toolsHtml = `<div class="tl-direct-tools"><span style="font-size:10px;color:var(--text-muted);margin-right:2px;font-weight:600">TOOLS</span>`;
-          turnData.directToolCalls.forEach(tc => { toolsHtml += `<span class="tl-tool-badge${tc.toolName === 'task_complete' ? ' tl-tool-badge--complete' : ''}" onclick="showToolDetailModal('${escHtml(tc.toolName)}', 'interactionId', '${turnData.interactionId || ''}', '${selectedSessionId}')">${escHtml(tc.toolName)}${tc.count > 1 ? '\u00d7' + tc.count : ''}</span>`; });
+          turnData.directToolCalls.forEach(tc => { toolsHtml += `<span class="tl-tool-badge${tc.toolName === 'task_complete' ? ' tl-tool-badge--complete' : tc.toolName === 'exit_plan_mode' ? ' tl-tool-badge--plan' : ''}" onclick="showToolDetailModal('${escHtml(tc.toolName)}', 'interactionId', '${turnData.interactionId || ''}', '${selectedSessionId}')">${escHtml(tc.toolName)}${tc.count > 1 ? '\u00d7' + tc.count : ''}</span>`; });
           toolsHtml += `</div>`;
           const existingToolsEl = turnEl.querySelector(':scope > .tl-direct-tools');
           if (existingToolsEl) {
@@ -1962,6 +2003,14 @@ pollTimerId = setInterval(fetchAll, 3000);
 let detailOpen = false;
 
 const openDetail = (sessionId) => {
+  // Cleanup previous session state if switching sessions
+  if (sessionId !== selectedSessionId) {
+    window.turnAgentData = null;
+    window._timelineTotalTurns = 0;
+    window._timelinePage = 0;
+    window._timelineTotalPages = 0;
+    window._timelineLoading = false;
+  }
   selectedSessionId = sessionId;
   if (lastSessions) renderSessions(lastSessions);
   document.getElementById('splitContainer').classList.add('has-detail');
@@ -2204,7 +2253,7 @@ const toggleAgentDetail = (idx) => {
       html += `<div class="tl-direct-tools" style="margin:4px 0">`;
       html += `<span style="font-size:10px;color:var(--text-muted);margin-right:2px;font-weight:600">TOOLS</span>`;
       entries.forEach(([toolName, count]) => {
-        html += `<span class="tl-tool-badge${toolName === 'task_complete' ? ' tl-tool-badge--complete' : ''}">${escHtml(toolName)}${count > 1 ? '\u00d7' + count : ''}</span>`;
+        html += `<span class="tl-tool-badge${toolName === 'task_complete' ? ' tl-tool-badge--complete' : toolName === 'exit_plan_mode' ? ' tl-tool-badge--plan' : ''}">${escHtml(toolName)}${count > 1 ? '\u00d7' + count : ''}</span>`;
       });
       html += `</div>`;
     }
@@ -2344,7 +2393,7 @@ const renderTurnAgentCard = (a, agentIdx, turnIdx) => {
     html += `<div class="tl-direct-tools" style="margin-top:4px">`;
     html += `<span style="font-size:10px;color:var(--text-muted);margin-right:2px;font-weight:600">TOOLS</span>`;
     entries.forEach(([toolName, count]) => {
-      html += `<span class="tl-tool-badge${toolName === 'task_complete' ? ' tl-tool-badge--complete' : ''}">${escHtml(toolName)}${count > 1 ? '\u00d7' + count : ''}</span>`;
+      html += `<span class="tl-tool-badge${toolName === 'task_complete' ? ' tl-tool-badge--complete' : toolName === 'exit_plan_mode' ? ' tl-tool-badge--plan' : ''}">${escHtml(toolName)}${count > 1 ? '\u00d7' + count : ''}</span>`;
     });
     html += `</div>`;
   }
@@ -2604,6 +2653,8 @@ const renderTimeline = (data, prepend = false) => {
       const prevHeight = body.scrollHeight;
       const loader = container.querySelector('.tl-load-more');
       if (loader) loader.remove();
+      const loadIndicator = container.querySelector('.tl-load-indicator');
+      if (loadIndicator) loadIndicator.remove();
       container.insertAdjacentHTML('afterbegin', turnsHtml);
       // Restore scroll so user doesn't jump
       requestAnimationFrame(() => { body.scrollTop = body.scrollHeight - prevHeight; });
@@ -2613,14 +2664,19 @@ const renderTimeline = (data, prepend = false) => {
     html += turnsHtml;
     html += '</div>';
     body.innerHTML = html;
-    // Auto-scroll to bottom (latest = bottom)
-    requestAnimationFrame(() => { body.scrollTop = body.scrollHeight; });
+    // Auto-scroll to bottom (latest = bottom) — double rAF ensures layout is complete
+    requestAnimationFrame(() => { requestAnimationFrame(() => { body.scrollTop = body.scrollHeight; }); });
 
-    // Attach infinite scroll listener
+    // Attach infinite scroll listener (throttled via rAF)
+    let scrollRafId = null;
     body.onscroll = () => {
-      if (body.scrollTop < 80 && !window._timelineLoading && window._timelinePage < window._timelineTotalPages) {
-        loadOlderTimeline();
-      }
+      if (scrollRafId) return;
+      scrollRafId = requestAnimationFrame(() => {
+        scrollRafId = null;
+        if (body.scrollTop < 80 && !window._timelineLoading && window._timelinePage < window._timelineTotalPages) {
+          loadOlderTimeline();
+        }
+      });
     };
   }
 };
@@ -2628,6 +2684,12 @@ const renderTimeline = (data, prepend = false) => {
 const loadOlderTimeline = async () => {
   if (window._timelineLoading || !selectedSessionId) return;
   window._timelineLoading = true;
+  // Add loading indicator at top
+  const body = document.getElementById('agentPanelBody');
+  const container = body?.querySelector('.tl-container');
+  if (container) {
+    container.insertAdjacentHTML('afterbegin', '<div class="tl-load-indicator"><span class="tl-load-dot">●</span> Loading...</div>');
+  }
   const nextPage = window._timelinePage + 1;
   try {
     const res = await fetch(`${API_BASE}/api/sessions/${selectedSessionId}/timeline?limit=50&page=${nextPage}`);
@@ -2637,6 +2699,8 @@ const loadOlderTimeline = async () => {
     renderTimeline(data, true);
   } catch (e) {
     console.error('Failed to load older timeline:', e);
+    const ind = document.querySelector('.tl-load-indicator');
+    if (ind) ind.remove();
   }
   window._timelineLoading = false;
 };
@@ -2650,7 +2714,10 @@ const renderTimelineTurn = (turn, idx, isActive = false) => {
   const timeStr = turn.timestamp
     ? new Date(turn.timestamp).toLocaleDateString('en-GB', { month: '2-digit', day: '2-digit' }) + ' ' + new Date(turn.timestamp).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
     : '';
-  html += `<div class="tl-time"><span class="tl-time-text">${timeStr}</span>`;
+  const modeBadge = turn.agentMode && turn.agentMode !== 'normal'
+    ? `<span class="tl-mode-badge tl-mode-${turn.agentMode}">${turn.agentMode === 'autopilot' ? '⚡ Auto' : '📋 Plan'}</span>`
+    : '';
+  html += `<div class="tl-time"><span class="tl-time-text">${timeStr}</span>${modeBadge}`;
   if (turn.totalTokens) {
     html += `<span class="tl-turn-tokens">${formatTokens(turn.totalTokens)} output tokens</span>`;
   }
@@ -2680,7 +2747,7 @@ const renderTimelineTurn = (turn, idx, isActive = false) => {
     html += `<div class="tl-direct-tools">`;
     html += `<span style="font-size:10px;color:var(--text-muted);margin-right:2px;font-weight:600">TOOLS</span>`;
     turn.directToolCalls.forEach(tc => {
-      html += `<span class="tl-tool-badge${tc.toolName === 'task_complete' ? ' tl-tool-badge--complete' : ''}" onclick="showToolDetailModal('${escHtml(tc.toolName)}', 'interactionId', '${turn.interactionId || ''}', '${selectedSessionId}')">${escHtml(tc.toolName)}${tc.count > 1 ? '\u00d7' + tc.count : ''}</span>`;
+      html += `<span class="tl-tool-badge${tc.toolName === 'task_complete' ? ' tl-tool-badge--complete' : tc.toolName === 'exit_plan_mode' ? ' tl-tool-badge--plan' : ''}" onclick="showToolDetailModal('${escHtml(tc.toolName)}', 'interactionId', '${turn.interactionId || ''}', '${selectedSessionId}')">${escHtml(tc.toolName)}${tc.count > 1 ? '\u00d7' + tc.count : ''}</span>`;
     });
     html += `</div>`;
   }
@@ -2745,7 +2812,7 @@ const renderAgentNode = (agent, depth, turnIdx, agentIdx, parentPath, parentName
     html += `<div class="tl-direct-tools" style="margin:4px 0">`;
     html += `<span style="font-size:10px;color:var(--text-muted);margin-right:2px;font-weight:600">TOOLS</span>`;
     entries.forEach(([toolName, count]) => {
-      html += `<span class="tl-tool-badge${toolName === 'task_complete' ? ' tl-tool-badge--complete' : ''}" onclick="showToolDetailModal('${escHtml(toolName)}', 'parentToolCallId', '${agent.toolCallId || ''}', '${selectedSessionId}')">${escHtml(toolName)}${count > 1 ? '\u00d7' + count : ''}</span>`;
+      html += `<span class="tl-tool-badge${toolName === 'task_complete' ? ' tl-tool-badge--complete' : toolName === 'exit_plan_mode' ? ' tl-tool-badge--plan' : ''}" onclick="showToolDetailModal('${escHtml(toolName)}', 'parentToolCallId', '${agent.toolCallId || ''}', '${selectedSessionId}')">${escHtml(toolName)}${count > 1 ? '\u00d7' + count : ''}</span>`;
     });
     html += `</div>`;
   }
@@ -2843,7 +2910,7 @@ const updateAgentNodeInPlace = (agentEl, agentData, turnIdx, agentIdx, parentPat
       const entries = Object.entries(agentData.toolBreakdown).sort((a, b) => b[1] - a[1]);
       let tbHtml = `<div class="tl-direct-tools" style="margin:4px 0"><span style="font-size:10px;color:var(--text-muted);margin-right:2px;font-weight:600">TOOLS</span>`;
       entries.forEach(([toolName, count]) => {
-        tbHtml += `<span class="tl-tool-badge${toolName === 'task_complete' ? ' tl-tool-badge--complete' : ''}" onclick="showToolDetailModal('${escHtml(toolName)}', 'parentToolCallId', '${agentData.toolCallId || ''}', '${selectedSessionId}')">${escHtml(toolName)}${count > 1 ? '\u00d7' + count : ''}</span>`;
+        tbHtml += `<span class="tl-tool-badge${toolName === 'task_complete' ? ' tl-tool-badge--complete' : toolName === 'exit_plan_mode' ? ' tl-tool-badge--plan' : ''}" onclick="showToolDetailModal('${escHtml(toolName)}', 'parentToolCallId', '${agentData.toolCallId || ''}', '${selectedSessionId}')">${escHtml(toolName)}${count > 1 ? '\u00d7' + count : ''}</span>`;
       });
       tbHtml += `</div>`;
       const promptEl = bodyEl.querySelector(':scope > div:first-child');
@@ -2946,21 +3013,27 @@ document.addEventListener('keydown', (e) => {
     document.body.style.userSelect = 'none';
   });
 
+  let splitRafId = null;
   document.addEventListener('mousemove', (e) => {
     if (!dragging) return;
-    const rect = container.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const total = rect.width;
-    const leftPct = Math.max(30, Math.min(80, (x / total) * 100));
-    left.style.flex = 'none';
-    left.style.width = leftPct + '%';
-    right.style.flex = 'none';
-    right.style.width = (100 - leftPct) + '%';
+    if (splitRafId) return;
+    splitRafId = requestAnimationFrame(() => {
+      splitRafId = null;
+      const rect = container.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const total = rect.width;
+      const leftPct = Math.max(30, Math.min(80, (x / total) * 100));
+      left.style.flex = 'none';
+      left.style.width = leftPct + '%';
+      right.style.flex = 'none';
+      right.style.width = (100 - leftPct) + '%';
+    });
   });
 
   document.addEventListener('mouseup', () => {
     if (!dragging) return;
     dragging = false;
+    if (splitRafId) { cancelAnimationFrame(splitRafId); splitRafId = null; }
     divider.classList.remove('dragging');
     document.body.style.cursor = '';
     document.body.style.userSelect = '';
@@ -2971,18 +3044,12 @@ document.addEventListener('keydown', (e) => {
 const colWidths = { summary: 260, lastmsg: null, stats: 90, time: 64 };
 
 function applyColWidths() {
-  const style = document.getElementById('colWidthStyle') || (() => {
-    const s = document.createElement('style');
-    s.id = 'colWidthStyle';
-    document.head.appendChild(s);
-    return s;
-  })();
-  let css = '';
-  if (colWidths.summary) css += `.st-col-summary { width: ${colWidths.summary}px !important; flex: none !important; }\n`;
-  if (colWidths.memo) css += `.st-col-memo { width: ${colWidths.memo}px !important; }\n`;
-  if (colWidths.time) css += `.st-col-time { width: ${colWidths.time}px !important; }\n`;
-  style.textContent = css;
+  const root = document.documentElement.style;
+  if (colWidths.summary) root.setProperty('--col-summary-w', colWidths.summary + 'px');
+  if (colWidths.memo) root.setProperty('--col-memo-w', colWidths.memo + 'px');
+  if (colWidths.time) root.setProperty('--col-time-w', colWidths.time + 'px');
 }
+applyColWidths(); // Initialize CSS variables with default column widths
 
 (() => {
   let dragCol = null, startX = 0, startW = 0;
@@ -3000,21 +3067,27 @@ function applyColWidths() {
     document.body.style.userSelect = 'none';
   });
 
+  let colRafId = null;
   document.addEventListener('mousemove', (e) => {
     if (!dragCol) return;
-    const diff = e.clientX - startX;
-    const newW = Math.max(60, startW + diff);
-    if (dragCol !== 'lastmsg') {
-      colWidths[dragCol] = newW;
-    } else {
-      // lastmsg is flex, adjust summary instead (shrink/grow summary)
-      colWidths.summary = Math.max(100, startW + diff);
-    }
-    applyColWidths();
+    if (colRafId) return;
+    colRafId = requestAnimationFrame(() => {
+      colRafId = null;
+      const diff = e.clientX - startX;
+      const newW = Math.max(60, startW + diff);
+      if (dragCol !== 'lastmsg') {
+        colWidths[dragCol] = newW;
+      } else {
+        // lastmsg is flex, adjust summary instead (shrink/grow summary)
+        colWidths.summary = Math.max(100, startW + diff);
+      }
+      applyColWidths();
+    });
   });
 
   document.addEventListener('mouseup', () => {
     if (!dragCol) return;
+    if (colRafId) { cancelAnimationFrame(colRafId); colRafId = null; }
     document.querySelectorAll('.col-resize-handle.dragging').forEach(h => h.classList.remove('dragging'));
     dragCol = null;
     document.body.style.cursor = '';

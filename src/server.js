@@ -32,6 +32,18 @@ const scanResultCache = { data: null, ts: 0 };
 const SCAN_CACHE_TTL = 1500;   // 1.5 seconds
 const turnsCache = new Map();   // sessionId → { fileSize, turns[] }
 
+// ── Cache eviction — limit Map size to prevent unbounded memory growth ──
+const MAX_CACHE_SIZE = 500;
+function cacheSet(cache, key, value) {
+  if (cache.size >= MAX_CACHE_SIZE) {
+    const oldest = cache.keys().next().value;
+    cache.delete(oldest);
+  }
+  cache.set(key, value);
+}
+
+const MAX_BODY_SIZE = 1 * 1024 * 1024; // 1MB request body limit
+
 // ── Session State Reader ───────────────────────────────────────────────────
 
 function readYaml(filePath) {
@@ -188,19 +200,22 @@ function readRecentEvents(sessionDir, count = 30) {
   try {
     const stat = fs.statSync(eventsFile);
     const fd = fs.openSync(eventsFile, 'r');
-    const readFrom = Math.max(0, stat.size - EVENT_TAIL_BYTES);
-    const buf = Buffer.alloc(Math.min(stat.size, EVENT_TAIL_BYTES));
-    fs.readSync(fd, buf, 0, buf.length, readFrom);
-    fs.closeSync(fd);
+    try {
+      const readFrom = Math.max(0, stat.size - EVENT_TAIL_BYTES);
+      const buf = Buffer.alloc(Math.min(stat.size, EVENT_TAIL_BYTES));
+      fs.readSync(fd, buf, 0, buf.length, readFrom);
 
-    let lines = buf.toString('utf-8').split('\n').filter(l => l.trim());
-    if (readFrom > 0 && lines.length > 0) lines = lines.slice(1);
+      let lines = buf.toString('utf-8').split('\n').filter(l => l.trim());
+      if (readFrom > 0 && lines.length > 0) lines = lines.slice(1);
 
-    const events = [];
-    for (const line of lines.slice(-count)) {
-      try { events.push(JSON.parse(line)); } catch {}
+      const events = [];
+      for (const line of lines.slice(-count)) {
+        try { events.push(JSON.parse(line)); } catch {}
+      }
+      return events;
+    } finally {
+      fs.closeSync(fd);
     }
-    return events;
   } catch { return []; }
 }
 
@@ -261,7 +276,7 @@ function getFullFileData(sessionDir, sessionId) {
     bgTaskList,
   };
 
-  statsCache.set(sessionId, { fileSize, data });
+  cacheSet(statsCache, sessionId, { fileSize, data });
   return data;
 }
 
@@ -271,8 +286,9 @@ function getSessionState(sessionDir, sessionId) {
 
   const { bgTasks, bgTaskList } = getFullFileData(sessionDir, sessionId);
 
-  // Track pending tool calls from tail events
+  // Track pending tool calls from tail events + unresponded user messages
   const pendingTools = new Map();
+  let hasUnrespondedUserMessage = false;
   for (const ev of events) {
     const t = ev.type || '';
     const d = ev.data || {};
@@ -281,6 +297,12 @@ function getSessionState(sessionDir, sessionId) {
       if (tcid) pendingTools.set(tcid, d);
     } else if (t === 'tool.execution_complete') {
       pendingTools.delete((d.toolCallId || ''));
+    }
+    // Track whether a user.message still awaits an assistant response
+    if (t === 'user.message') {
+      hasUnrespondedUserMessage = true;
+    } else if (t === 'assistant.turn_end' || t === 'session.task_complete' || t === 'session.shutdown') {
+      hasUnrespondedUserMessage = false;
     }
   }
 
@@ -297,6 +319,19 @@ function getSessionState(sessionDir, sessionId) {
   }
 
   if (hasPendingWork) {
+    const lastTs = events[events.length - 1].timestamp || '';
+    if (lastTs) {
+      const age = Date.now() - new Date(lastTs).getTime();
+      if (age > STALE_THRESHOLD_MS) {
+        return { state: 'waiting', waitingContext: 'Session likely waiting for input', bgTasks, bgTaskList };
+      }
+    }
+    return { state: 'working', waitingContext: '', bgTasks, bgTaskList };
+  }
+
+  // If user sent a message but assistant hasn't responded yet, turn is still in progress
+  // (e.g. tools completed but no assistant.message yet — assistant is processing results)
+  if (hasUnrespondedUserMessage) {
     const lastTs = events[events.length - 1].timestamp || '';
     if (lastTs) {
       const age = Date.now() - new Date(lastTs).getTime();
@@ -353,27 +388,30 @@ function getSessionIntent(sessionDir) {
     // Read 512KB tail to find last report_intent (large sessions have huge events)
     const tailBytes = 524288;
     const fd = fs.openSync(eventsFile, 'r');
-    const readFrom = Math.max(0, stat.size - tailBytes);
-    const buf = Buffer.alloc(Math.min(stat.size, tailBytes));
-    fs.readSync(fd, buf, 0, buf.length, readFrom);
-    fs.closeSync(fd);
+    try {
+      const readFrom = Math.max(0, stat.size - tailBytes);
+      const buf = Buffer.alloc(Math.min(stat.size, tailBytes));
+      fs.readSync(fd, buf, 0, buf.length, readFrom);
 
-    let lines = buf.toString('utf-8').split('\n').filter(l => l.trim());
-    if (readFrom > 0 && lines.length > 0) lines = lines.slice(1);
+      let lines = buf.toString('utf-8').split('\n').filter(l => l.trim());
+      if (readFrom > 0 && lines.length > 0) lines = lines.slice(1);
 
-    let intent = '';
-    for (let i = lines.length - 1; i >= 0; i--) {
-      try {
-        const ev = JSON.parse(lines[i]);
-        if (ev.type === 'tool.execution_start' && (ev.data || {}).toolName === 'report_intent') {
-          intent = ((ev.data || {}).arguments || {}).intent || '';
-          break;
-        }
-      } catch {}
+      let intent = '';
+      for (let i = lines.length - 1; i >= 0; i--) {
+        try {
+          const ev = JSON.parse(lines[i]);
+          if (ev.type === 'tool.execution_start' && (ev.data || {}).toolName === 'report_intent') {
+            intent = ((ev.data || {}).arguments || {}).intent || '';
+            break;
+          }
+        } catch {}
+      }
+
+      cacheSet(intentCache, sessionId, { fileSize: stat.size, intent });
+      return intent;
+    } finally {
+      fs.closeSync(fd);
     }
-
-    intentCache.set(sessionId, { fileSize: stat.size, intent });
-    return intent;
   } catch {}
   return '';
 }
@@ -489,30 +527,33 @@ function scanSessions() {
           };
 
           const fd = fs.openSync(eventsFile, 'r');
-          // Read tail (512KB) for recent messages
-          const tailBytes = 524288;
-          const readFrom = Math.max(0, stat.size - tailBytes);
-          const tailBuf = Buffer.alloc(Math.min(stat.size, tailBytes));
-          fs.readSync(fd, tailBuf, 0, tailBuf.length, readFrom);
-          const tailResult = extractUserMessages(tailBuf, readFrom > 0);
+          try {
+            // Read tail (512KB) for recent messages
+            const tailBytes = 524288;
+            const readFrom = Math.max(0, stat.size - tailBytes);
+            const tailBuf = Buffer.alloc(Math.min(stat.size, tailBytes));
+            fs.readSync(fd, tailBuf, 0, tailBuf.length, readFrom);
+            const tailResult = extractUserMessages(tailBuf, readFrom > 0);
 
-          // If tail found messages, use them
-          let firstMsg = tailResult.first;
-          lastUserMessage = tailResult.last;
+            // If tail found messages, use them
+            let firstMsg = tailResult.first;
+            lastUserMessage = tailResult.last;
 
-          // If tail missed messages (small session or messages only at start), read head too
-          if (!firstMsg && readFrom > 0) {
-            const headBytes = Math.min(stat.size, 262144); // 256KB head
-            const headBuf = Buffer.alloc(headBytes);
-            fs.readSync(fd, headBuf, 0, headBytes, 0);
-            const headResult = extractUserMessages(headBuf, false);
-            firstMsg = headResult.first;
-            if (!lastUserMessage) lastUserMessage = headResult.last;
+            // If tail missed messages (small session or messages only at start), read head too
+            if (!firstMsg && readFrom > 0) {
+              const headBytes = Math.min(stat.size, 262144); // 256KB head
+              const headBuf = Buffer.alloc(headBytes);
+              fs.readSync(fd, headBuf, 0, headBytes, 0);
+              const headResult = extractUserMessages(headBuf, false);
+              firstMsg = headResult.first;
+              if (!lastUserMessage) lastUserMessage = headResult.last;
+            }
+
+            if (!summary) summary = firstMsg;
+            cacheSet(msgCache, entry, { fileSize: stat.size, summary: firstMsg, lastUserMessage });
+          } finally {
+            fs.closeSync(fd);
           }
-
-          fs.closeSync(fd);
-          if (!summary) summary = firstMsg;
-          msgCache.set(entry, { fileSize: stat.size, summary: firstMsg, lastUserMessage });
         }
       } catch {}
     }
@@ -1050,9 +1091,24 @@ function getToolCalls(eventsFile, turnIndexFilter, toolNameFilter, iidFilter, pa
 
 // Single-pass events.jsonl parser for hierarchical timeline view.
 
+const timelineCache = new Map(); // eventsFile → { fileSize, allTurns[] }
+
 function buildTimeline(eventsFile, limit, page) {
   limit = Math.max(1, Math.min(limit || 50, 500));
   page = Math.max(1, page || 1);
+
+  // Check cache — reuse parsed data if file hasn't grown
+  let fileSize = 0;
+  try { fileSize = fs.statSync(eventsFile).size; } catch { return { timeline: [], page: 1, totalTurns: 0, totalPages: 1 }; }
+  const cached = timelineCache.get(eventsFile);
+  if (cached && cached.fileSize === fileSize) {
+    const totalTurns = cached.allTurns.length;
+    const totalPages = Math.max(1, Math.ceil(totalTurns / limit));
+    const safePage = Math.min(page, totalPages);
+    const start = totalTurns - safePage * limit;
+    const result = cached.allTurns.slice(Math.max(0, start), start + limit);
+    return { timeline: result, page: safePage, totalTurns, totalPages };
+  }
 
   const turnMap = new Map();        // interactionId → turn object
   const agentMap = new Map();       // toolCallId → agent object
@@ -1096,11 +1152,13 @@ function buildTimeline(eventsFile, limit, page) {
               interactionId: iid,
               timestamp: evt.timestamp || '',
               userMessage: (d.content || '').trim().substring(0, 500),
+              agentMode: d.agentMode || 'normal',
               assistantMessage: '',
               outputTokens: 0,
               directToolCalls: [],
               targetAgent,
               agents: [],
+              turnEnded: false,
             });
             userMsgOrder.push({ iid, ts: evt.timestamp || '' });
           }
@@ -1173,6 +1231,17 @@ function buildTimeline(eventsFile, limit, page) {
             }
           }
         } catch {}
+        continue;
+      }
+
+      // ── assistant.turn_end ──
+      if (line.includes('"assistant.turn_end"')) {
+        // turn_end has no interactionId — mark the most recent turn as ended
+        if (userMsgOrder.length > 0) {
+          const lastIid = userMsgOrder[userMsgOrder.length - 1].iid;
+          const turn = turnMap.get(lastIid);
+          if (turn) turn.turnEnded = true;
+        }
         continue;
       }
 
@@ -1345,12 +1414,6 @@ function buildTimeline(eventsFile, limit, page) {
   // 5. Sort by timestamp, paginate (page 1 = most recent)
   const sorted = Array.from(turnMap.values())
     .sort((a, b) => (a.timestamp || '').localeCompare(b.timestamp || ''));
-  const totalTurns = sorted.length;
-  const totalPages = Math.ceil(totalTurns / limit) || 1;
-  const safePage = Math.min(page, totalPages);
-  const endIdx = totalTurns - ((safePage - 1) * limit);
-  const startIdx = Math.max(0, endIdx - limit);
-  const result = sorted.slice(startIdx, endIdx);
 
   // 6. Clean internal fields from agent objects
   const cleanAgent = (a) => ({
@@ -1378,13 +1441,22 @@ function buildTimeline(eventsFile, limit, page) {
     return total;
   };
 
-  for (const turn of result) {
+  for (const turn of sorted) {
     turn.agents = turn.agents.map(cleanAgent);
-    // Calculate total tokens for entire turn (direct + all agents recursively)
     let turnTotal = turn.outputTokens || 0;
     turn.agents.forEach(a => { turnTotal += sumAgentTokens(a); });
     turn.totalTokens = turnTotal;
   }
+
+  // Cache all cleaned turns for future page requests
+  cacheSet(timelineCache, eventsFile, { fileSize, allTurns: sorted });
+
+  const totalTurns = sorted.length;
+  const totalPages = Math.ceil(totalTurns / limit) || 1;
+  const safePage = Math.min(page, totalPages);
+  const endIdx = totalTurns - ((safePage - 1) * limit);
+  const startIdx = Math.max(0, endIdx - limit);
+  const result = sorted.slice(startIdx, endIdx);
 
   return { timeline: result, page: safePage, totalTurns, totalPages };
 }
@@ -1425,10 +1497,27 @@ function handleRequest(req, res) {
 
   // PUT /api/config — Update session state path
   if (pathname === '/api/config' && req.method === 'PUT') {
-    let body = '';
-    req.on('data', c => body += c);
+    const chunks = [];
+    let totalSize = 0;
+    req.on('error', () => {
+      if (!res.headersSent) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Request error' }));
+      }
+    });
+    req.on('data', chunk => {
+      totalSize += chunk.length;
+      if (totalSize > MAX_BODY_SIZE) {
+        res.writeHead(413, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Request body too large' }));
+        req.destroy();
+        return;
+      }
+      chunks.push(chunk);
+    });
     req.on('end', () => {
       try {
+        const body = Buffer.concat(chunks).toString();
         const { sessionStatePath } = JSON.parse(body);
         if (!sessionStatePath) {
           res.writeHead(400, { 'Content-Type': 'application/json' });
@@ -1456,10 +1545,27 @@ function handleRequest(req, res) {
 
   // POST /api/launch-vscode — Open folder in VSCode or VSCode Insiders
   if (pathname === '/api/launch-vscode' && req.method === 'POST') {
-    let body = '';
-    req.on('data', c => body += c);
+    const chunks = [];
+    let totalSize = 0;
+    req.on('error', () => {
+      if (!res.headersSent) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Request error' }));
+      }
+    });
+    req.on('data', chunk => {
+      totalSize += chunk.length;
+      if (totalSize > MAX_BODY_SIZE) {
+        res.writeHead(413, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Request body too large' }));
+        req.destroy();
+        return;
+      }
+      chunks.push(chunk);
+    });
     req.on('end', () => {
       try {
+        const body = Buffer.concat(chunks).toString();
         const { folder, insiders } = JSON.parse(body);
         if (!folder || !fs.existsSync(folder)) {
           res.writeHead(400, { 'Content-Type': 'application/json' });
@@ -1488,10 +1594,27 @@ function handleRequest(req, res) {
       res.end(JSON.stringify({ error: 'Session not found' }));
       return;
     }
-    let body = '';
-    req.on('data', chunk => body += chunk);
+    const chunks = [];
+    let totalSize = 0;
+    req.on('error', () => {
+      if (!res.headersSent) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Request error' }));
+      }
+    });
+    req.on('data', chunk => {
+      totalSize += chunk.length;
+      if (totalSize > MAX_BODY_SIZE) {
+        res.writeHead(413, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Request body too large' }));
+        req.destroy();
+        return;
+      }
+      chunks.push(chunk);
+    });
     req.on('end', () => {
       try {
+        const body = Buffer.concat(chunks).toString();
         const { description } = JSON.parse(body);
         const metaPath = path.join(sessionDir, 'lens-meta.json');
         let meta = {};
@@ -1591,7 +1714,7 @@ function handleRequest(req, res) {
           } catch {}
         }
       } catch {}
-      turnsCache.set(id, { fileSize: stat.size, turns: allTurns });
+      cacheSet(turnsCache, id, { fileSize: stat.size, turns: allTurns });
     }
 
     const totalTurns = allTurns.length;
