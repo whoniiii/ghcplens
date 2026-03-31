@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+  <!-- Robot head (semi-faded background) -->
+  <circle cx="8.5" cy="8" r="6.2" fill="#C5C5C5" opacity="0.35"/>
+  <!-- Headphone left -->
+  <rect x="1" y="5.5" width="2.5" height="5" rx="1.2" fill="#C5C5C5" opacity="0.45"/>
+  <!-- Headphone right -->
+  <rect x="13.8" y="5.5" width="2.5" height="5" rx="1.2" fill="#C5C5C5" opacity="0.45"/>
+
+  <!-- Goggles band with eye holes -->
+  <path fill="#C5C5C5" opacity="0.65" fill-rule="evenodd" d="
+    M4 6.2 Q4 3.8 8.5 3.8 Q13 3.8 13 6.2 V9.8 Q13 12.2 8.5 12.2 Q4 12.2 4 9.8 Z
+    M5.3 8 a1.8 1.6 0 1 0 3.6 0 a1.8 1.6 0 1 0 -3.6 0 Z
+    M8.8 8 a1.8 1.6 0 1 0 3.6 0 a1.8 1.6 0 1 0 -3.6 0 Z
+  "/>
+  <!-- Smile -->
+  <path d="M7 12.8 Q8.5 14.2 10 12.8" stroke="#C5C5C5" stroke-width="0.8" fill="none" stroke-linecap="round" opacity="0.4"/>
+
+  <!-- Magnifying glass (prominent foreground) -->
+  <circle cx="16.5" cy="16.5" r="5" stroke="#C5C5C5" stroke-width="2" fill="none"/>
+  <line x1="20" y1="20" x2="23.5" y2="23.5" stroke="#C5C5C5" stroke-width="2.5" stroke-linecap="round"/>
+</svg>

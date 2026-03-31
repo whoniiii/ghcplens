@@ -1,7 +1,7 @@
 {
   "name": "github-copilot-lens",
   "displayName": "Github-Copilot-Lens",
-  "version": "1.4.3",
+  "version": "1.4.4",
   "description": "GitHub Copilot Lens — Session Monitor Dashboard",
   "publisher": "JeonghoonLee",
   "icon": "icon.png",
@@ -20,8 +20,8 @@
         "title": "Open Dashboard",
         "category": "GitHub Copilot Lens",
         "icon": {
-          "light": "resources/icon-activitybar.svg",
-          "dark": "resources/icon-activitybar.svg"
+          "light": "resources/icon-activitybar-copilot.svg",
+          "dark": "resources/icon-activitybar-copilot.svg"
         }
       },
       {
@@ -35,7 +35,7 @@
         {
           "id": "copilot-lens",
           "title": "GitHub Copilot Lens",
-          "icon": "resources/icon-activitybar.svg"
+          "icon": "resources/icon-activitybar-copilot.svg"
         }
       ]
     },

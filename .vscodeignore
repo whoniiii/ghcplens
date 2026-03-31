@@ -10,3 +10,8 @@ vitest.config.js
 NUL
 dist
 PROMO.md
+docs
+icon_new.png
+icon-copilot*.png
+gen-icon.js
+resources/image_*
