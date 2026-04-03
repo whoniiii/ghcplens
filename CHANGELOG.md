@@ -2,6 +2,30 @@
 
 ## [Unreleased]
 
+## [1.6.1] - 2026-04-03
+
+### Fixed
+- **VSIX README 수정** — Marketplace에 README.vsix.md가 올바르게 포함되도록 빌드 프로세스 수정
+
+## [1.6.0] - 2026-04-03
+
+### Added
+- **Timeline panel collapse/expand toggle** — 타임라인 모드에서 세션 상세 패널을 ◀| / |▶ 버튼으로 접기/펼치기 가능. 접힌 상태에서 "Session Info" 세로 바 표시
+- **Collapse/expand animation** — 패널 접기/펼치기 시 CSS transition 애니메이션 (0.25s ease)
+- **User message avatar** — 타임라인의 사용자 메시지에 동그라미 아바타 표시 (💜 User / 💙 @에이전트앞2글자)
+- **VSCode/Insiders/Resume quick buttons** — 세션 상세 Summary 위에 3개 액션 버튼 배치
+
+### Changed
+- **Toast notification redesign** — 하단 → 화면 정중앙, accent 색상 배경, scale 팝 애니메이션
+- **VSCode button design unification** — 3개 버튼 모두 accent 테두리/색상으로 통일, SVG `fill="currentColor"`
+- **Timeline detail panel width** — 타임라인 모드에서 세션 상세 패널 가로 크기 15% 축소
+- **Dark theme accent-bg tone** — 다크 테마의 accent-bg를 그레이 테마 수준으로 톤 다운
+
+### Removed
+- **Recent Turns section** — 세션 상세 패널에서 Recent Turns 완전 제거 (355줄 삭제, 퍼포먼스 향상)
+- **Duplicate agent badge** — .tl-target-agent 텍스트 배지 제거 (아바타로 대체)
+- **Temporary mockup files** — v4/v5/v5b/v5c/tl-user 목업 파일 정리
+
 ## [1.5.0] - 2026-04-01
 
 ### Added

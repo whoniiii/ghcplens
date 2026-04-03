@@ -20,7 +20,7 @@
   --border: #373a40; --text: #c1c2c5; --text-secondary: #909296; --text-muted: #5c5f66;
   --accent: #4dabf7; --success: #51cf66; --danger: #ff6b6b; --warning: #fcc419;
   --purple: #b197fc; --orange: #ff922b;
-  --accent-bg: #1c3a5c;
+  --accent-bg: #1e2a3d;
 }
 
 /* Gray theme — enterprise charcoal */
@@ -271,16 +271,15 @@ body {
 
 /* VSCode launch buttons */
 .vscode-btn {
-  padding: 4px 10px; font-size: 11px; border: 1px solid var(--border);
+  padding: 4px 10px; font-size: 11px;
+  border: 1px solid var(--accent);
   border-radius: 2px; cursor: pointer; background: var(--surface);
-  color: var(--text-secondary); transition: all 0.1s; line-height: 1;
+  color: var(--accent); transition: all 0.1s; line-height: 1;
   white-space: nowrap; display: inline-flex; align-items: center; gap: 6px;
 }
-.vscode-btn:hover { background: #007ACC; color: #fff; border-color: #007ACC; }
+.vscode-btn:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
 .vscode-btn:hover svg path { fill: #fff; }
-.vscode-btn.insiders:hover { background: #24903e; color: #fff; border-color: #24903e; }
-.vscode-btn.insiders:hover svg path { fill: #fff; }
-.dp-vscode-row { display: flex; gap: 8px; margin: 8px 0 4px; }
+.dp-vscode-row { display: flex; gap: 6px; margin: 8px 0 4px; flex-wrap: wrap; }
 
 .empty-state {
   text-align: center; padding: 40px 20px; color: var(--text-muted); font-size: 13px;
@@ -311,12 +310,46 @@ body {
 .split-container.has-detail .split-right { flex: 3; min-width: 280px; opacity: 1; }
 .split-container.has-agent-detail .split-left { display: none; }
 .split-container.has-agent-detail .split-divider { display: none; }
-.split-container.has-agent-detail .split-right { flex: 3; min-width: 200px; opacity: 1; }
+.split-container.has-agent-detail .split-right { flex: 2.55; min-width: 170px; opacity: 1; transition: flex 0.25s ease, min-width 0.25s ease, opacity 0.2s ease, padding 0.25s ease; overflow: hidden; }
 .split-container.has-agent-detail .agent-panel {
   display: flex; flex-direction: column; flex: 7; min-width: 300px;
   border-left: 1px solid var(--border);
   animation: panelSlideIn 0.2s ease;
+  transition: flex 0.25s ease;
 }
+.split-container.has-agent-detail .agent-header-btn { display: none !important; }
+/* Detail hidden but timeline stays full-width */
+.split-container.has-agent-detail.detail-hidden .split-right { flex: 0 !important; min-width: 0 !important; opacity: 0; padding: 0; overflow: hidden; border-left-color: transparent; }
+.split-container.has-agent-detail.detail-hidden .agent-panel { flex: 1; }
+/* Detail collapse bar — vertical sidebar when detail is hidden in timeline mode */
+.detail-collapse-bar {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  width: 32px;
+  min-width: 32px;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  cursor: pointer;
+  padding: 12px 4px;
+  gap: 8px;
+  transition: background 0.15s ease;
+}
+.split-container.has-agent-detail .detail-collapse-bar {
+  display: flex;
+  width: 0; min-width: 0; opacity: 0; overflow: hidden; padding: 0; border-right: none;
+  transition: width 0.25s ease, min-width 0.25s ease, opacity 0.2s ease, padding 0.25s ease, background 0.15s ease, border-right 0.25s ease;
+}
+.detail-collapse-bar:hover { background: var(--hover); }
+.collapse-arrow { color: var(--text-muted); display: flex; align-items: center; }
+.collapse-label {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  font-size: 11px;
+  color: var(--text-muted);
+  letter-spacing: 2px;
+}
+.split-container.has-agent-detail.detail-hidden .detail-collapse-bar { width: 32px; min-width: 32px; opacity: 1; padding: 12px 4px; border-right: 1px solid var(--border); }
 .agent-panel { display: none; background: var(--surface); }
 @keyframes panelSlideIn {
   from { opacity: 0; transform: translateX(12px); }
@@ -419,50 +452,6 @@ body {
   min-width: 24px; text-align: right; color: var(--text-muted); font-weight: 600;
 }
 
-/* ─── Turn Agent Cards (conversation-linked) ─── */
-.turn-agents-container {
-  margin: 4px 0 2px 0; padding: 0 0 0 12px;
-  border-left: 2px solid var(--border);
-}
-.turn-agent-card {
-  padding: 6px 10px; margin-bottom: 4px; background: var(--surface);
-  border: 1px solid var(--border); border-radius: 4px; font-size: 11px;
-}
-.turn-agent-header {
-  display: flex; align-items: center; gap: 6px; font-size: 11px;
-}
-.turn-agent-header .ta-icon { flex-shrink: 0; }
-.turn-agent-header .ta-name { font-weight: 600; color: var(--text); }
-.turn-agent-header .ta-status { font-size: 10px; flex-shrink: 0; }
-.turn-agent-header .ta-meta {
-  color: var(--text-muted); font-size: 10px; margin-left: auto; white-space: nowrap;
-}
-.turn-agent-body { margin-top: 4px; }
-.turn-agent-line {
-  display: flex; align-items: flex-start; gap: 4px; font-size: 10px; margin-bottom: 2px;
-}
-.turn-agent-line-label { color: var(--text-muted); flex-shrink: 0; }
-.turn-agent-line-value {
-  color: var(--text-secondary); overflow: hidden; text-overflow: ellipsis;
-  white-space: nowrap; cursor: pointer; flex: 1;
-}
-.turn-agent-line-value.expanded { white-space: pre-wrap; overflow: visible; }
-.turn-no-agents {
-  padding: 4px 10px; margin: 4px 0 2px 12px; font-size: 10px;
-  color: var(--text-muted); border-left: 2px solid var(--border);
-}
-.dp-timeline-item.clickable { cursor: default; }
-.dp-timeline-item.turn-expanded { background: var(--accent-bg); border-radius: 2px; padding: 5px 4px; border-left: 3px solid var(--accent); }
-.dp-timeline-item.turn-expanded .turn-detail-btn { background: var(--accent); color: #fff; border-color: var(--accent); }
-.turn-detail-btn {
-  display: inline-flex; align-items: center; gap: 2px;
-  font-size: 10px; padding: 1px 6px; margin-left: 6px;
-  border: 1px solid var(--border); border-radius: 3px;
-  background: var(--surface); color: var(--text-secondary);
-  cursor: pointer; transition: all 0.15s; vertical-align: middle;
-  flex-shrink: 0;
-}
-.turn-detail-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-bg); }
 .agent-filtered-header {
   display: flex; align-items: center; gap: 8px;
   padding: 10px 12px; border-bottom: 1px solid var(--border); background: var(--bg);
@@ -561,19 +550,37 @@ body {
   animation: agent-pulse 1.2s ease-in-out infinite;
 }
 .tl-user {
-  background: var(--accent-bg); border-radius: 4px;
-  padding: 6px 10px; margin: 4px 0; font-size: 12px;
-  border-left: 3px solid var(--accent);
+  display: flex; align-items: flex-start; gap: 8px;
+  background: var(--accent-bg); border-radius: 6px;
+  padding: 8px 10px; margin: 4px 0; font-size: 12px;
   cursor: pointer; overflow: hidden;
+  transition: background 0.15s ease, filter 0.15s ease;
 }
-.tl-target-agent {
-  display: inline-block;
-  background: rgba(9,105,218,0.1); color: var(--accent);
-  font-size: 11px; font-weight: 600;
-  padding: 1px 7px; border-radius: 3px;
-  margin-right: 4px; vertical-align: baseline;
+.tl-user:hover {
+  background: var(--accent-bg); filter: brightness(1.1);
 }
-.tl-target-agent::before { content: '@'; font-weight: 400; opacity: 0.6; }
+/* 동그라미 아바타 */
+.tl-avatar {
+  flex-shrink: 0;
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 9px; font-weight: 700;
+  letter-spacing: -0.3px;
+  line-height: 1;
+  margin-top: 1px;
+}
+.tl-avatar--user {
+  background: rgba(112, 72, 232, 0.15);
+  color: var(--purple);
+}
+.tl-avatar--agent {
+  background: rgba(9, 105, 218, 0.15);
+  color: var(--accent);
+}
+.tl-user-content {
+  flex: 1; min-width: 0;
+}
 .tl-user .tl-text, .tl-assistant .tl-text {
   overflow: hidden; text-overflow: ellipsis;
   display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
@@ -816,27 +823,7 @@ body {
 }
 .dp-timeline-item:last-child { border-bottom: none; }
 .dp-timeline-time { font-size: 10px; color: var(--text-muted); font-family: 'SFMono-Regular', Consolas, monospace; }
-.dp-timeline-msg {
-  color: var(--text); line-height: 1.4; max-height: 48px; overflow: hidden;
-  text-overflow: ellipsis; cursor: pointer; font-size: 12px;
-}
-.dp-timeline-msg.expanded { max-height: none; }
-.dp-timeline-msg:hover { color: var(--accent); }
-.dp-pagination {
-  display: flex; align-items: center; justify-content: center;
-  gap: 4px; padding: 8px 0; flex-wrap: wrap;
-}
-.dp-pagination button {
-  background: var(--card-bg); border: 1px solid var(--border); border-radius: 4px;
-  color: var(--text); cursor: pointer; padding: 3px 8px; font-size: 11px;
-  min-width: 28px; transition: all 0.15s;
-}
-.dp-pagination button:hover { border-color: var(--accent); color: var(--accent); }
-.dp-pagination button.active { background: var(--accent); color: #fff; border-color: var(--accent); }
-.dp-pagination button:disabled { opacity: 0.4; cursor: default; }
-.dp-pagination .dp-page-info { font-size: 10px; color: var(--text-muted); margin: 0 4px; }
-.dp-turns-loading { text-align: center; padding: 20px; color: var(--text-muted); font-size: 12px; }
-#turnsList { text-align: left; }
+
 
 /* Checkpoint cards */
 .dp-checkpoint {
@@ -873,14 +860,25 @@ body {
 
 /* Toast notification */
 .toast-msg {
-  position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%) translateY(20px);
-  background: #212529; color: #fff;
-  padding: 10px 28px; font-size: 13px; font-weight: 500; z-index: 9999;
-  opacity: 0; transition: opacity 0.3s, transform 0.3s;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.25); border-radius: 6px;
+  position: fixed;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%) scale(0.9);
+  background: var(--accent);
+  color: #fff;
+  padding: 14px 36px;
+  font-size: 14px; font-weight: 600;
+  z-index: 9999;
+  opacity: 0;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  border-radius: 8px;
   white-space: nowrap;
+  pointer-events: none;
 }
-.toast-msg.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.toast-msg.show {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+}
 .dp-file {
   font-size: 11px; font-family: 'SFMono-Regular', Consolas, monospace;
   color: var(--text-secondary); padding: 2px 0; overflow: hidden;
@@ -1244,12 +1242,16 @@ body {
       <h2 id="detailTitle">세션 상세</h2>
       <div style="display:flex;align-items:center;gap:4px">
         <button class="agent-header-btn" id="agentHeaderBtn" style="display:none" onclick="openAgentPanel(selectedSessionId)">▶ View Full Timeline</button>
-        <button class="detail-close" onclick="closeDetail()">✕</button>
+        <button class="detail-close" id="detailCloseBtn" onclick="closeDetail()">✕</button>
       </div>
     </div>
     <div class="detail-panel-body" id="detailBody">
       <div style="padding:40px;text-align:center;color:var(--text-muted)">세션을 선택하세요</div>
     </div>
+  </div>
+  <div class="detail-collapse-bar" id="detailCollapseBar" onclick="toggleDetailPanel()">
+    <span class="collapse-arrow"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="13 7 18 12 13 17"></polyline><line x1="6" y1="4" x2="6" y2="20"></line></svg></span>
+    <span class="collapse-label">Session Info</span>
   </div>
   <div class="agent-panel" id="agentPanel">
     <div class="agent-panel-header">
@@ -1420,7 +1422,7 @@ const I18N = {
     summary: '요약', path: '경로', repo: '저장소', branch: '브랜치',
     sessionId: '세션 ID', created: '생성일', updated: '수정일',
     statsTitle: '통계', toolUsage: '도구 사용', checkpoints: '체크포인트',
-    recentTurns: '최근 턴', timeline: '이벤트 타임라인', filesModified: '수정된 파일',
+    timeline: '이벤트 타임라인', filesModified: '수정된 파일',
     emptySession: '(빈 세션)', noValue: '(없음)', showEmpty: '빈 세션 보기',
     total: '총', turns: '턴', tools: '도구',
     colMemo: '메모', colTurns: '턴', colTokens: '토큰',
@@ -1435,7 +1437,6 @@ const I18N = {
     agentBack: '뒤로', agentTasks: '개 작업', agentSuccess: '성공', agentFailed: '실패',
     agentPromptLabel: '프롬프트', agentResultLabel: '결과', agentToolsLabel: '도구',
     agentTurnsLabel: '턴', agentTokensLabel: '토큰', calledAgents: '호출한 에이전트',
-    noAgentsInTurn: '에이전트 없음', turnAgents: '턴 에이전트',
     showMore: '더 보기', showLess: '접기',
     sessionTimeline: '세션 타임라인', noTimelineData: '타임라인 데이터가 없습니다', viewTimeline: '타임라인 자세히 보기',
     memo: '메모', plan: '플랜', bgTasks: '백그라운드 작업', connect: '연결', connecting: '연결 중...',
@@ -1455,7 +1456,7 @@ const I18N = {
     summary: 'Summary', path: 'Path', repo: 'Repository', branch: 'Branch',
     sessionId: 'Session ID', created: 'Created', updated: 'Updated',
     statsTitle: 'Statistics', toolUsage: 'Tool Usage', checkpoints: 'Checkpoints',
-    recentTurns: 'Recent Turns', timeline: 'Event Timeline', filesModified: 'Modified Files',
+    timeline: 'Event Timeline', filesModified: 'Modified Files',
     emptySession: '(empty)', noValue: '(none)', showEmpty: 'Show empty sessions',
     total: 'Total', turns: 'turns', tools: 'tools',
     colMemo: 'Memo', colTurns: 'Turns', colTokens: 'Tokens',
@@ -1470,7 +1471,6 @@ const I18N = {
     agentBack: 'Back', agentTasks: 'tasks', agentSuccess: 'success', agentFailed: 'failed',
     agentPromptLabel: 'Prompt', agentResultLabel: 'Result', agentToolsLabel: 'Tools',
     agentTurnsLabel: 'Turns', agentTokensLabel: 'Tokens', calledAgents: 'Called Agents',
-    noAgentsInTurn: 'No agents', turnAgents: 'Turn Agents',
     showMore: 'Show more', showLess: 'Collapse',
     sessionTimeline: 'Session Timeline', noTimelineData: 'No timeline data', viewTimeline: 'View Full Timeline',
     memo: 'Memo', plan: 'Plan', bgTasks: 'Background Tasks', connect: 'Connect', connecting: 'Connecting...',
@@ -1490,7 +1490,7 @@ const I18N = {
     summary: '要約', path: 'パス', repo: 'リポジトリ', branch: 'ブランチ',
     sessionId: 'セッションID', created: '作成日', updated: '更新日',
     statsTitle: '統計', toolUsage: 'ツール使用', checkpoints: 'チェックポイント',
-    recentTurns: '最近のターン', timeline: 'イベントタイムライン', filesModified: '変更ファイル',
+    timeline: 'イベントタイムライン', filesModified: '変更ファイル',
     emptySession: '(空)', noValue: '(なし)', showEmpty: '空セッション表示',
     total: '計', turns: 'ターン', tools: 'ツール',
     colMemo: 'メモ', colTurns: 'ターン', colTokens: 'トークン',
@@ -1505,7 +1505,6 @@ const I18N = {
     agentBack: '戻る', agentTasks: '件の作業', agentSuccess: '成功', agentFailed: '失敗',
     agentPromptLabel: 'プロンプト', agentResultLabel: '結果', agentToolsLabel: 'ツール',
     agentTurnsLabel: 'ターン', agentTokensLabel: 'トークン', calledAgents: '呼び出したエージェント',
-    noAgentsInTurn: 'エージェントなし', turnAgents: 'ターンエージェント',
     showMore: '続きを見る', showLess: '折りたたむ',
     sessionTimeline: 'セッションタイムライン', noTimelineData: 'タイムラインデータなし', viewTimeline: 'タイムライン詳細',
     memo: 'メモ', plan: 'プラン', bgTasks: 'バックグラウンド作業', connect: '接続', connecting: '接続中...',
@@ -1525,7 +1524,7 @@ const I18N = {
     summary: '摘要', path: '路径', repo: '仓库', branch: '分支',
     sessionId: '会话ID', created: '创建时间', updated: '更新时间',
     statsTitle: '统计', toolUsage: '工具使用', checkpoints: '检查点',
-    recentTurns: '最近轮次', timeline: '事件时间线', filesModified: '修改文件',
+    timeline: '事件时间线', filesModified: '修改文件',
     emptySession: '(空会话)', noValue: '(无)', showEmpty: '显示空会话',
     total: '共', turns: '轮', tools: '工具',
     colMemo: '备注', colTurns: '轮次', colTokens: '令牌',
@@ -1540,7 +1539,6 @@ const I18N = {
     agentBack: '返回', agentTasks: '个任务', agentSuccess: '成功', agentFailed: '失败',
     agentPromptLabel: '提示', agentResultLabel: '结果', agentToolsLabel: '工具',
     agentTurnsLabel: '轮次', agentTokensLabel: '令牌', calledAgents: '调用的代理',
-    noAgentsInTurn: '无代理', turnAgents: '轮次代理',
     showMore: '展开更多', showLess: '收起',
     sessionTimeline: '会话时间线', noTimelineData: '无时间线数据', viewTimeline: '查看完整时间线',
     memo: '备注', plan: '计划', bgTasks: '后台任务', connect: '连接', connecting: '连接中...',
@@ -1862,13 +1860,9 @@ const fetchAll = () => {
   if (selectedSessionId && detailOpen) {
     const sid = selectedSessionId;
     const dp = fetch(`${API_BASE}/api/sessions/${sid}`).then(r => r.json());
-    const tap = fetch(`${API_BASE}/api/sessions/${sid}/turn-agents`).then(r => r.json()).catch(() => null);
-    Promise.all([dp, tap]).then(([detail, turnAgents]) => {
-      if (turnAgents && turnAgents.turns) window.turnAgentData = turnAgents.turns;
+    dp.then(detail => {
       // Selective update — only change dynamic parts, preserve user state
       updateDetailInPlace(detail);
-      // Silently refresh turns (no flicker)
-      pollRefreshTurns();
     }).catch(() => {});
   }
   // Also refresh timeline panel if open — append new turns + surgically update last turn
@@ -2005,7 +1999,6 @@ let detailOpen = false;
 const openDetail = (sessionId) => {
   // Cleanup previous session state if switching sessions
   if (sessionId !== selectedSessionId) {
-    window.turnAgentData = null;
     window._timelineTotalTurns = 0;
     window._timelinePage = 0;
     window._timelineTotalPages = 0;
@@ -2016,17 +2009,9 @@ const openDetail = (sessionId) => {
   document.getElementById('splitContainer').classList.add('has-detail');
   document.getElementById('detailBody').innerHTML = '<div style="padding:40px;text-align:center;color:var(--text-muted)">불러오는 중...</div>';
   detailOpen = true;
-  window.turnAgentData = null;
-  currentTurnsPage = 1; // Reset to page 1 when opening new session
 
-  const detailPromise = fetch(`${API_BASE}/api/sessions/${sessionId}`).then(r => r.json());
-  const turnAgentPromise = fetch(`${API_BASE}/api/sessions/${sessionId}/turn-agents`).then(r => r.json()).catch(() => null);
-
-  Promise.all([detailPromise, turnAgentPromise])
-    .then(([detail, turnAgents]) => {
-      if (turnAgents && turnAgents.turns) {
-        window.turnAgentData = turnAgents.turns;
-      }
+  fetch(`${API_BASE}/api/sessions/${sessionId}`).then(r => r.json())
+    .then(detail => {
       renderDetail(detail);
       loadProjectConfig(sessionId);
     })
@@ -2036,15 +2021,32 @@ const openDetail = (sessionId) => {
 };
 
 const closeDetail = () => {
+  const container = document.getElementById('splitContainer');
+  const inTimeline = container.classList.contains('has-agent-detail');
+
+  if (inTimeline) {
+    // Timeline mode: hide detail panel, expand timeline to full width
+    container.classList.add('detail-hidden');
+    detailOpen = false;
+    return;
+  }
+
+  // Normal mode: close detail and go back to session list
   selectedSessionId = null;
   if (lastSessions) renderSessions(lastSessions);
-  document.getElementById('splitContainer').classList.remove('has-detail');
-  document.getElementById('splitContainer').classList.remove('has-agent-detail');
+  container.classList.remove('has-detail');
   const left = document.getElementById('splitLeft');
   const right = document.getElementById('splitRight');
   left.style.flex = ''; left.style.width = '';
   right.style.flex = ''; right.style.width = '';
   detailOpen = false;
+};
+
+const toggleDetailPanel = () => {
+  const container = document.getElementById('splitContainer');
+  container.classList.toggle('detail-hidden');
+  const closeBtn = document.getElementById('detailCloseBtn');
+  if (closeBtn) closeBtn.innerHTML = container.classList.contains('detail-hidden') ? '✕' : '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="11 17 6 12 11 7"></polyline><line x1="18" y1="4" x2="18" y2="20"></line></svg>';
 };
 
 /* ─── Agent Panel ─── */
@@ -2058,7 +2060,10 @@ const openAgentPanel = async (sessionId) => {
   if (btn) { btn.textContent = '⏳ Loading...'; btn.disabled = true; btn.style.opacity = '0.6'; }
   const body = document.getElementById('agentPanelBody');
   if (body) body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-muted);font-size:13px"><span style="animation:agent-pulse 1.2s ease-in-out infinite;display:inline-block;margin-right:8px">●</span> Loading timeline...</div>';
+  document.getElementById('splitContainer').classList.remove('detail-hidden');
   document.getElementById('splitContainer').classList.add('has-agent-detail');
+  const closeBtn = document.getElementById('detailCloseBtn');
+  if (closeBtn) closeBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="11 17 6 12 11 7"></polyline><line x1="18" y1="4" x2="18" y2="20"></line></svg>';
   agentPanelOpen = true;
   isTimelineView = true;
   try {
@@ -2078,10 +2083,28 @@ const openAgentPanel = async (sessionId) => {
 };
 
 const closeAgentPanel = () => {
-  document.getElementById('splitContainer').classList.remove('has-agent-detail');
+  const container = document.getElementById('splitContainer');
+  const detailHidden = container.classList.contains('detail-hidden');
+
+  if (detailHidden) {
+    // Full-width timeline: closing agent panel exits timeline entirely → back to session list
+    container.classList.remove('has-agent-detail', 'detail-hidden', 'has-detail');
+    selectedSessionId = null;
+    if (lastSessions) renderSessions(lastSessions);
+    const left = document.getElementById('splitLeft');
+    const right = document.getElementById('splitRight');
+    left.style.flex = ''; left.style.width = '';
+    right.style.flex = ''; right.style.width = '';
+    detailOpen = false;
+  } else {
+    // Normal timeline (detail + agent side-by-side): just close agent panel, keep detail open
+    container.classList.remove('has-agent-detail');
+  }
   agentPanelOpen = false;
   agentData = null;
   isTimelineView = false;
+  const closeBtn = document.getElementById('detailCloseBtn');
+  if (closeBtn) closeBtn.innerHTML = '✕';
 };
 
 const AGENT_TYPE_META = {
@@ -2286,136 +2309,6 @@ const toggleAgentCollapsible = (id) => {
   }
 };
 
-/* ─── Turn Agents (conversation-linked) ─── */
-const toggleTurnAgents = (liEl) => {
-  const ts = liEl.getAttribute('data-ts');
-  const agents = matchTurnAgents(ts);
-
-  // Highlight clicked conversation
-  document.querySelectorAll('.dp-timeline-item.turn-expanded').forEach(el => {
-    el.classList.remove('turn-expanded');
-  });
-  liEl.classList.add('turn-expanded');
-
-  // Get user message text for header
-  const msgEl = liEl.querySelector('.dp-timeline-msg');
-  const userMsg = msgEl ? msgEl.textContent.substring(0, 80) : '';
-
-  // Render in agent panel (right side)
-  const body = document.getElementById('agentPanelBody');
-  const title = document.getElementById('agentPanelTitle');
-  const container = document.getElementById('splitContainer');
-
-  if (!agents || agents.length === 0) {
-    title.textContent = `${t('turnAgents')}`;
-    body.innerHTML = `<div style="padding:30px;text-align:center;color:var(--text-muted)">${t('noAgentsInTurn')}</div>`;
-  } else {
-    title.textContent = `${t('turnAgents')} (${agents.length})`;
-    let html = `<div style="padding:8px 12px;font-size:12px;color:var(--text-muted);border-bottom:1px solid var(--border);background:var(--bg)">`;
-    html += `<span style="margin-right:4px;font-weight:600;font-size:10px;text-transform:uppercase">USER</span>${escHtml(userMsg)}${userMsg.length >= 80 ? '...' : ''}`;
-    html += `</div>`;
-    html += '<div class="turn-agents-container" style="padding:8px">';
-    agents.forEach((a, ai) => {
-      html += renderTurnAgentCard(a, ai, liEl.getAttribute('data-turn-idx'));
-    });
-    html += '</div>';
-    body.innerHTML = html;
-  }
-
-  // Add back button to return to full agent panel
-  const backBtn = document.createElement('button');
-  backBtn.className = 'detail-close';
-  backBtn.style.cssText = 'position:absolute;right:32px;top:8px;font-size:11px;padding:2px 8px;';
-  backBtn.textContent = `${t('agentPanelTitle')}`;
-  backBtn.title = 'Back to all agents';
-  backBtn.onclick = () => {
-    liEl.classList.remove('turn-expanded');
-    if (selectedSessionId) openAgentPanel(selectedSessionId);
-  };
-  const header = document.querySelector('.agent-panel-header');
-  const existingBack = header.querySelector('.turn-back-btn');
-  if (existingBack) existingBack.remove();
-  backBtn.classList.add('turn-back-btn');
-  header.appendChild(backBtn);
-
-  container.classList.add('has-agent-detail');
-  agentPanelOpen = true;
-  isTimelineView = false;
-};
-
-const matchTurnAgents = (ts) => {
-  if (!window.turnAgentData || !ts) return [];
-  // Try exact timestamp match first, then fuzzy (within 2s)
-  for (const turn of window.turnAgentData) {
-    if (turn.timestamp === ts) return turn.agents || [];
-  }
-  // Fuzzy match: compare time within 2 seconds
-  const targetTime = new Date(ts).getTime();
-  if (isNaN(targetTime)) return [];
-  for (const turn of window.turnAgentData) {
-    const turnTime = new Date(turn.timestamp).getTime();
-    if (!isNaN(turnTime) && Math.abs(turnTime - targetTime) < 2000) {
-      return turn.agents || [];
-    }
-  }
-  return [];
-};
-
-const renderTurnAgentCard = (a, agentIdx, turnIdx) => {
-  const icon = getAgentIcon(a.name || a.type);
-  const statusMapT = { done: 'done', completed: 'done', failed: 'failed', running: 'running' };
-  const statusText2 = statusMapT[a.status] || 'unknown';
-  const statusColor2 = a.status === 'done' || a.status === 'completed' ? 'var(--success)' : a.status === 'running' ? 'var(--accent)' : a.status === 'failed' ? 'var(--danger)' : 'var(--text-muted)';
-  const duration = a.duration ? formatDuration(a.duration * 1000) : '';
-  const tools = a.internalToolCalls ?? 0;
-  const tokens = a.totalOutputTokens ?? 0;
-
-  let meta = [];
-  if (duration) meta.push(duration);
-  if (tools) meta.push(`${tools}${t('agentToolsLabel')}`);
-  if (tokens) meta.push(`${formatTokens(tokens)}${t('agentTokensLabel')}`);
-
-  const promptId = `ta-prompt-${turnIdx}-${agentIdx}`;
-  const resultId = `ta-result-${turnIdx}-${agentIdx}`;
-
-  let html = `<div class="turn-agent-card">`;
-  html += `<div class="turn-agent-header">`;
-  html += `<span class="ta-icon">${icon}</span>`;
-  html += `<span class="ta-name">${escHtml(a.name || a.type || 'Agent')}</span>`;
-  html += `<span class="ta-status" style="font-weight:600;color:${statusColor2}">${statusText2}</span>`;
-  html += `<span class="ta-meta">${meta.join(' · ')}</span>`;
-  html += `</div>`;
-
-  // Tool breakdown inline badges
-  const breakdown = a.toolBreakdown;
-  if (breakdown && typeof breakdown === 'object' && Object.keys(breakdown).length > 0) {
-    const entries = Object.entries(breakdown).sort((x, y) => y[1] - x[1]);
-    html += `<div class="tl-direct-tools" style="margin-top:4px">`;
-    html += `<span style="font-size:10px;color:var(--text-muted);margin-right:2px;font-weight:600">TOOLS</span>`;
-    entries.forEach(([toolName, count]) => {
-      html += `<span class="tl-tool-badge${toolName === 'task_complete' ? ' tl-tool-badge--complete' : toolName === 'exit_plan_mode' ? ' tl-tool-badge--plan' : ''}">${escHtml(toolName)}${count > 1 ? '\u00d7' + count : ''}</span>`;
-    });
-    html += `</div>`;
-  }
-
-  html += `<div class="turn-agent-body">`;
-  // Prompt line
-  if (a.agentPrompt) {
-    html += `<div class="turn-agent-line">`;
-    html += `<span class="turn-agent-line-label" style="font-weight:600;font-size:9px;text-transform:uppercase">P</span>`;
-    html += `<span class="turn-agent-line-value" id="${promptId}" onclick="event.stopPropagation();this.classList.toggle('expanded')" title="${escHtml(a.agentPrompt)}">${escHtml(a.agentPrompt)}</span>`;
-    html += `</div>`;
-  }
-  // Result line
-  if (a.finalResult) {
-    html += `<div class="turn-agent-line">`;
-    html += `<span class="turn-agent-line-label" style="font-weight:600;font-size:9px;text-transform:uppercase">R</span>`;
-    html += `<span class="turn-agent-line-value" id="${resultId}" onclick="event.stopPropagation();this.classList.toggle('expanded')" title="${escHtml(a.finalResult)}">${escHtml(a.finalResult)}</span>`;
-    html += `</div>`;
-  }
-  html += `</div></div>`;
-  return html;
-};
 
 /* ─── Generic Modal ─── */
 const showModal = (title, contentHtml) => {
@@ -2725,13 +2618,16 @@ const renderTimelineTurn = (turn, idx, isActive = false) => {
 
   // User message
   if (turn.userMessage) {
-    let agentBadge = '';
-    if (turn.targetAgent) {
-      agentBadge = `<span class="tl-target-agent">${escHtml(turn.targetAgent)}</span>`;
-    }
     html += `<div class="tl-user" onclick="this.classList.toggle('expanded')">`;
-    html += agentBadge;
+    if (turn.targetAgent) {
+      const shortName = turn.targetAgent.substring(0, 2).toUpperCase();
+      html += `<div class="tl-avatar tl-avatar--agent">@${shortName}</div>`;
+    } else {
+      html += `<div class="tl-avatar tl-avatar--user">User</div>`;
+    }
+    html += `<div class="tl-user-content">`;
     html += `<span class="tl-text">${escHtml(turn.userMessage)}</span>`;
+    html += `</div>`;
     html += `</div>`;
   }
 
@@ -3120,12 +3016,12 @@ const renderDetail = (d) => {
   if (d.state === 'waiting' && d.waitingContext) html += `<div class="dp-waiting-box">${escHtml(d.waitingContext)}</div>`;
 
   html += `<div style="margin-top:10px">`;
+  const cwdEsc = (d.cwd || '').replace(/\\/g, '\\\\');
+  html += `<div class="dp-vscode-row"><button class="vscode-btn" onclick="launchVSCode('${cwdEsc}',false,'${d.id}')"><svg width="14" height="14" viewBox="0 0 100 100"><path d="M95.2 8.1L74.5.3c-2.5-1-5.4-.2-7.1 1.9L26.6 45.8 11 34.2c-1.7-1.3-4.1-1.1-5.6.4L.7 39.5c-1 1-1 2.6 0 3.6L13.5 50 .7 56.9c-1 1-1 2.6 0 3.6l4.7 4.9c1.5 1.5 3.9 1.7 5.6.4l15.6-11.6 40.8 43.6c1.7 2.1 4.6 2.9 7.1 1.9l20.7-7.8c1.7-.7 2.8-2.3 2.8-4.1V12.2c0-1.8-1.1-3.4-2.8-4.1zM74.9 71.5L44.2 50l30.7-21.5v43z" fill="currentColor"/></svg> Open in VSCode</button><button class="vscode-btn insiders" onclick="launchVSCode('${cwdEsc}',true,'${d.id}')"><svg width="14" height="14" viewBox="0 0 100 100"><path d="M95.2 8.1L74.5.3c-2.5-1-5.4-.2-7.1 1.9L26.6 45.8 11 34.2c-1.7-1.3-4.1-1.1-5.6.4L.7 39.5c-1 1-1 2.6 0 3.6L13.5 50 .7 56.9c-1 1-1 2.6 0 3.6l4.7 4.9c1.5 1.5 3.9 1.7 5.6.4l15.6-11.6 40.8 43.6c1.7 2.1 4.6 2.9 7.1 1.9l20.7-7.8c1.7-.7 2.8-2.3 2.8-4.1V12.2c0-1.8-1.1-3.4-2.8-4.1zM74.9 71.5L44.2 50l30.7-21.5v43z" fill="currentColor"/></svg> Open in Insiders</button><button class="vscode-btn resume" onclick="copyResume('${d.id}')">▶ Resume</button></div>`;
   html += `<div class="dp-field"><span class="dp-field-label">${t('summary')}</span><span class="dp-field-value">${escHtml(d.summary || t('noValue'))}</span></div>`;
   const memoText = d.description || d.intent || d.summary || '';
   html += `<div class="dp-field"><span class="dp-field-label">${t('memo')}</span><span class="dp-field-value"><span class="dp-desc" id="descDisplay">${escHtml(memoText)}</span><button class="dp-desc-btn" onclick="startEditDesc()">&#9998;</button></span></div>`;
   html += `<div class="dp-field"><span class="dp-field-label">${t('path')}</span><span class="dp-field-value mono">${escHtml(shortenPath(d.cwd))} <button class="copy-icon-btn" onclick="copyText('${escHtml(d.cwd).replace(/\\/g,'\\\\')}',t('copyPath'))" title="${t('copyPathTitle')}"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="1"/><path d="M5 15H4a1 1 0 01-1-1V4a1 1 0 011-1h10a1 1 0 011 1v1"/></svg></button></span></div>`;
-  const cwdEsc = (d.cwd || '').replace(/\\/g, '\\\\');
-  html += `<div class="dp-vscode-row"><button class="vscode-btn" onclick="launchVSCode('${cwdEsc}',false,'${d.id}')"><svg width="14" height="14" viewBox="0 0 100 100"><path d="M95.2 8.1L74.5.3c-2.5-1-5.4-.2-7.1 1.9L26.6 45.8 11 34.2c-1.7-1.3-4.1-1.1-5.6.4L.7 39.5c-1 1-1 2.6 0 3.6L13.5 50 .7 56.9c-1 1-1 2.6 0 3.6l4.7 4.9c1.5 1.5 3.9 1.7 5.6.4l15.6-11.6 40.8 43.6c1.7 2.1 4.6 2.9 7.1 1.9l20.7-7.8c1.7-.7 2.8-2.3 2.8-4.1V12.2c0-1.8-1.1-3.4-2.8-4.1zM74.9 71.5L44.2 50l30.7-21.5v43z" fill="#007ACC"/></svg> Open in VSCode</button><button class="vscode-btn insiders" onclick="launchVSCode('${cwdEsc}',true,'${d.id}')"><svg width="14" height="14" viewBox="0 0 100 100"><path d="M95.2 8.1L74.5.3c-2.5-1-5.4-.2-7.1 1.9L26.6 45.8 11 34.2c-1.7-1.3-4.1-1.1-5.6.4L.7 39.5c-1 1-1 2.6 0 3.6L13.5 50 .7 56.9c-1 1-1 2.6 0 3.6l4.7 4.9c1.5 1.5 3.9 1.7 5.6.4l15.6-11.6 40.8 43.6c1.7 2.1 4.6 2.9 7.1 1.9l20.7-7.8c1.7-.7 2.8-2.3 2.8-4.1V12.2c0-1.8-1.1-3.4-2.8-4.1zM74.9 71.5L44.2 50l30.7-21.5v43z" fill="#24903e"/></svg> Open in Insiders</button></div>`;
   if (d.repository) html += `<div class="dp-field"><span class="dp-field-label">${t('repo')}</span><span class="dp-field-value">${escHtml(d.repository)}</span></div>`;
   if (d.branch) html += `<div class="dp-field"><span class="dp-field-label">${t('branch')}</span><span class="dp-field-value">${escHtml(d.branch)}</span></div>`;
   html += `<div class="dp-field"><span class="dp-field-label">${t('sessionId')}</span><span class="dp-field-value mono" style="font-size:11px">${d.id} <button class="copy-icon-btn" onclick="copyResume('${d.id}')" title="${t('copyResumeTitle')}"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="1"/><path d="M5 15H4a1 1 0 01-1-1V4a1 1 0 011-1h10a1 1 0 011 1v1"/></svg></button></span></div>`;
@@ -3196,12 +3092,6 @@ const renderDetail = (d) => {
     html += `</div>`;
   }
 
-  // ── Section: Conversations (paginated) ──
-  html += `<div class="dp-section" id="turnsSection">`;
-  html += `<div class="dp-section-title">${t('recentTurns')}</div>`;
-  html += `<div id="turnsList"><div class="dp-turns-loading">Loading...</div></div>`;
-  html += `</div>`;
-
   // ── Section: Recent Events ──
   if (d.recentEvents && d.recentEvents.length) {
     html += `<div class="dp-section">`;
@@ -3231,9 +3121,6 @@ const renderDetail = (d) => {
   document.getElementById('detailBody').innerHTML = html;
   const agentBtn = document.getElementById('agentHeaderBtn');
   if (agentBtn) { agentBtn.style.display = 'inline-flex'; agentBtn.textContent = '▶ ' + t('viewTimeline'); }
-  if (selectedSessionId) {
-    setTimeout(() => loadTurnsPage(currentTurnsPage || 1, true), 0);
-  }
 };
 
 // Session description inline edit
@@ -3315,143 +3202,6 @@ const updateDetailInPlace = (d) => {
   // Agent button
   const agentBtn = document.getElementById('agentHeaderBtn');
   if (agentBtn) { agentBtn.style.display = 'inline-flex'; agentBtn.textContent = '▶ ' + t('viewTimeline'); }
-};
-
-// ── Paginated Turns Loader ──
-let currentTurnsPage = 1;
-let totalTurnsPages = 1;
-let lastTotalTurns = 0;
-
-const loadTurnsPage = (page, showLoading = true) => {
-  const container = document.getElementById('turnsList');
-  if (!container || !selectedSessionId) { console.warn('loadTurnsPage: no container or session'); return; }
-  if (showLoading) container.innerHTML = '<div class="dp-turns-loading">Loading...</div>';
-  const url = `${API_BASE}/api/sessions/${selectedSessionId}/turns?page=${page}&pageSize=15`;
-  fetch(url)
-    .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
-    .then(data => {
-      currentTurnsPage = data.page;
-      totalTurnsPages = data.totalPages;
-      lastTotalTurns = data.totalTurns;
-      renderTurnsList(container, data);
-    })
-    .catch(e => {
-      console.error('loadTurnsPage error:', e);
-      container.innerHTML = '<div class="dp-turns-loading" style="color:var(--danger)">로드 실패</div>';
-    });
-};
-
-// Silent poll refresh — updates turns without flicker
-const pollRefreshTurns = () => {
-  const container = document.getElementById('turnsList');
-  if (!container || !selectedSessionId) return;
-  fetch(`${API_BASE}/api/sessions/${selectedSessionId}/turns?page=${currentTurnsPage}&pageSize=15`)
-    .then(r => r.json())
-    .then(data => {
-      // Skip if data identical and content exists
-      const hasContent = container.querySelector('.dp-timeline');
-      if (hasContent && data.totalTurns === lastTotalTurns && data.page === currentTurnsPage) return;
-
-      // On page 1 with existing content: only prepend new items (no full re-render)
-      if (hasContent && currentTurnsPage === 1 && data.page === 1 && data.totalTurns > lastTotalTurns) {
-        const newCount = data.totalTurns - lastTotalTurns;
-        lastTotalTurns = data.totalTurns;
-        totalTurnsPages = data.totalPages;
-        // data.turns is chronological; reversed = newest first. New items are at the end of data.turns.
-        const reversedTurns = data.turns.slice().reverse();
-        const ul = container.querySelector('.dp-timeline');
-        if (ul && newCount > 0) {
-          // Prepend new turns (they're at the top since newest-first)
-          for (let i = Math.min(newCount, reversedTurns.length) - 1; i >= 0; i--) {
-            const turn = reversedTurns[i];
-            const ts = turn.timestamp || '';
-            const hasAgents = window.turnAgentData && matchTurnAgents(ts).length > 0;
-            let li = `<li class="dp-timeline-item clickable" data-ts="${escHtml(ts)}" data-turn-idx="new-${i}">`;
-            li += `<span class="dp-timeline-time">${formatTs(ts)}`;
-            if (hasAgents) li += `<button class="turn-detail-btn" onclick="event.stopPropagation();toggleTurnAgents(this.closest('.dp-timeline-item'))">AGT ${matchTurnAgents(ts).length}</button>`;
-            li += `</span>`;
-            li += `<div class="dp-timeline-msg" onclick="this.classList.toggle('expanded')">${escHtml(turn.content)}</div>`;
-            li += `</li>`;
-            ul.insertAdjacentHTML('afterbegin', li);
-          }
-          // Remove excess items from bottom to keep 15
-          while (ul.children.length > 15) ul.removeChild(ul.lastElementChild);
-        }
-        // Update title and pagination
-        const titleEl = container.closest('.dp-section')?.querySelector('.dp-section-title');
-        if (titleEl) titleEl.textContent = `${t('recentTurns')} (${data.totalTurns})`;
-        const pag = container.querySelector('.dp-pagination');
-        if (pag) pag.outerHTML = renderTurnsPagination(data);
-        return;
-      }
-
-      lastTotalTurns = data.totalTurns;
-      totalTurnsPages = data.totalPages;
-      // Full re-render (page change or first load) — preserve expanded state by timestamp
-      const expandedMsgs = new Set();
-      container.querySelectorAll('.dp-timeline-msg.expanded').forEach(el => {
-        const li = el.closest('.dp-timeline-item');
-        if (li) expandedMsgs.add(li.getAttribute('data-ts'));
-      });
-      const expandedTurn = container.querySelector('.dp-timeline-item.turn-expanded');
-      const expandedTurnTs = expandedTurn ? expandedTurn.getAttribute('data-ts') : null;
-      renderTurnsList(container, data);
-      expandedMsgs.forEach(ts => {
-        const msg = container.querySelector(`.dp-timeline-item[data-ts="${ts}"] .dp-timeline-msg`);
-        if (msg) msg.classList.add('expanded');
-      });
-      if (expandedTurnTs) {
-        const li = container.querySelector(`.dp-timeline-item[data-ts="${expandedTurnTs}"]`);
-        if (li) li.classList.add('turn-expanded');
-      }
-    })
-    .catch(() => {});
-};
-
-const renderTurnsList = (container, data) => {
-  let html = '';
-  html += renderTurnsPagination(data);
-  html += '<ul class="dp-timeline">';
-  data.turns.slice().reverse().forEach((turn, ti) => {
-    const ts = turn.timestamp || '';
-    const hasAgents = window.turnAgentData && matchTurnAgents(ts).length > 0;
-    html += `<li class="dp-timeline-item clickable" data-ts="${escHtml(ts)}" data-turn-idx="${ti}">`;
-    html += `<span class="dp-timeline-time">${formatTs(ts)}`;
-    if (hasAgents) html += `<button class="turn-detail-btn" onclick="event.stopPropagation();toggleTurnAgents(this.closest('.dp-timeline-item'))">AGT ${matchTurnAgents(ts).length}</button>`;
-    html += `</span>`;
-    html += `<div class="dp-timeline-msg" onclick="this.classList.toggle('expanded')">${escHtml(turn.content)}</div>`;
-    html += `</li>`;
-  });
-  html += '</ul>';
-  const titleEl = container.closest('.dp-section')?.querySelector('.dp-section-title');
-  if (titleEl) titleEl.textContent = `${t('recentTurns')} (${data.totalTurns})`;
-  container.innerHTML = html;
-};
-
-const renderTurnsPagination = (data) => {
-  if (data.totalPages <= 1) return '';
-  let html = '<div class="dp-pagination">';
-  html += `<button ${data.page <= 1 ? 'disabled' : ''} onclick="loadTurnsPage(${data.page - 1})">◀</button>`;
-  // Show page numbers with ellipsis
-  const pages = [];
-  const total = data.totalPages;
-  const cur = data.page;
-  pages.push(1);
-  if (cur > 3) pages.push('...');
-  for (let i = Math.max(2, cur - 1); i <= Math.min(total - 1, cur + 1); i++) pages.push(i);
-  if (cur < total - 2) pages.push('...');
-  if (total > 1) pages.push(total);
-  pages.forEach(p => {
-    if (p === '...') {
-      html += `<span class="dp-page-info">…</span>`;
-    } else {
-      html += `<button class="${p === cur ? 'active' : ''}" onclick="loadTurnsPage(${p})">${p}</button>`;
-    }
-  });
-  html += `<button ${data.page >= data.totalPages ? 'disabled' : ''} onclick="loadTurnsPage(${data.page + 1})">▶</button>`;
-  html += `<span class="dp-page-info">${data.totalTurns}건</span>`;
-  html += '</div>';
-  return html;
 };
 
 const copyResume = (sessionId) => {

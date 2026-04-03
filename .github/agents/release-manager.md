@@ -47,21 +47,28 @@ VSIX 빌드 시 **반드시** README를 스왑해야 합니다:
 - `README.vsix.md` = Marketplace용 (절대 URL `raw.githubusercontent.com/...`)
 - Marketplace는 상대경로를 해석 못 함 → `README.vsix.md`를 VSIX에 포함해야 함
 
-**빌드 명령:**
+**🔴 반드시 `npm run package` 사용! (CRITICAL)**
 ```powershell
-# 1. README 스왑
-Copy-Item README.md README.github.md
-Copy-Item README.vsix.md README.md
+# ✅ 올바른 빌드 방법 — prevsce/postvsce 스크립트가 README 스왑을 자동 처리
+npm run package
 
-# 2. VSIX 빌드 (--out으로 dist/ 폴더에 저장)
-npx @vscode/vsce package --out dist/github-copilot-lens-X.Y.Z.vsix
+# ❌ 절대 직접 실행 금지!!! README 스왑이 안 됨!!!
+# npx @vscode/vsce package        ← 금지!
+# npx @vscode/vsce package --no-yarn  ← 금지!
+```
 
-# 3. README 복원
-Copy-Item README.github.md README.md
-Remove-Item README.github.md
+`package.json`에 정의된 스크립트 흐름:
+1. `prevsce` → `README.md`를 백업하고 `README.vsix.md`를 `README.md`로 복사
+2. `vsce package` → VSIX 빌드 (이때 README.md = Marketplace 버전)
+3. `postvsce` → 원래 `README.md` 복원
 
-# 4. VS Code에 설치
-code --install-extension dist/github-copilot-lens-X.Y.Z.vsix --force
+**빌드 후 필수 작업:**
+```powershell
+# dist/ 폴더에 복사
+Copy-Item github-copilot-lens-X.Y.Z.vsix dist\ -Force
+
+# VS Code에 로컬 설치
+code --install-extension github-copilot-lens-X.Y.Z.vsix --force
 ```
 
 ### dist/ 폴더 관리 (CRITICAL)
@@ -94,8 +101,10 @@ git status        # 커밋되지 않은 변경 없어야 함
 - 각 항목은 사용자가 이해할 수 있는 언어로 작성
 
 ### 4단계: VSIX 빌드
-- 위의 "README 스왑 빌드" 절차를 **정확히** 따를 것
+- **`npm run package`** 실행 (prevsce/postvsce가 README 스왑 자동 처리)
+- ⚠️ **절대 `npx @vscode/vsce package` 직접 실행하지 않음** — README 스왑이 안 됨!
 - 빌드 후 `README.md`가 GitHub 버전으로 복원되었는지 **반드시 검증**
+- VSIX 파일을 **반드시 `dist/` 폴더에 복사**
 
 ### 5단계: VS Code 설치 및 테스트
 ```bash
@@ -137,3 +146,35 @@ git push
 - **코드 수정 금지**: `src/`, `public/`, `__tests__/` 직접 수정하지 않음
 - 코드 변경이 필요하면 PM에게 보고하여 해당 에이전트에게 위임
 - 작업 완료 시 빌드 결과, 버전, 체크리스트 상태를 명확히 보고
+
+## 🔥 과거 실수 & 레슨런 (반드시 숙지)
+
+### 실수 1: `npx @vscode/vsce package` 직접 실행
+- **증상**: Marketplace에 GitHub용 README가 올라감 (이미지 깨짐)
+- **원인**: `prevsce`/`postvsce` 스크립트가 실행 안 됨
+- **해결**: 반드시 `npm run package` 사용
+
+### 실수 2: dist/ 폴더에 VSIX 복사 안 함
+- **증상**: dist/에 최신 VSIX가 없어서 이전 버전 배포 위험
+- **해결**: 빌드 후 즉시 `Copy-Item github-copilot-lens-X.Y.Z.vsix dist\ -Force`
+
+### 실수 3: 같은 버전으로 Marketplace 재업로드 시도
+- **증상**: Marketplace가 거부
+- **해결**: 오류 발견 시 patch 버전 올려서 재빌드 (예: 1.6.0 → 1.6.1)
+
+### 배포 원스톱 명령어 (복붙용)
+```powershell
+# 1. 테스트
+npx vitest run
+
+# 2. 빌드 (README 스왑 자동)
+npm run package
+
+# 3. dist 복사 + 로컬 설치
+Copy-Item github-copilot-lens-X.Y.Z.vsix dist\ -Force
+code --install-extension github-copilot-lens-X.Y.Z.vsix --force
+
+# 4. 검증
+Get-ChildItem dist -Name  # 새 VSIX 확인
+# VSCode 리로드 후 사이드바 버전 확인
+```
